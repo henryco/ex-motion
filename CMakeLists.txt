@@ -40,7 +40,7 @@ find_package(spdlog REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTKMM REQUIRED gtkmm-3.0)
 
-if (UNIX)
+if (UNIX AND NOT APPLE)
     # Find v4l2 (video for linux) package
     pkg_check_modules(V4L2 REQUIRED libv4l2)
 endif ()
@@ -49,15 +49,21 @@ endif ()
 add_executable(xmotion src/main.cpp)
 
 
-# Include directories for the specific target
-target_include_directories(${PROJECT_NAME}
-        PRIVATE ${OpenCV_INCLUDE_DIRS}
-        PRIVATE ${GTKMM_INCLUDE_DIRS}
-        PRIVATE ${V4L2_INCLUDE_DIRS})
-
 if (WIN32)
+    # Include directories for the specific target
+    target_include_directories(${PROJECT_NAME}
+            PRIVATE ${OpenCV_INCLUDE_DIRS}
+            PRIVATE ${GTKMM_INCLUDE_DIRS})
+
     # Windows media foundations framework
     target_link_libraries(${PROJECT_NAME} mfplat mf mfreadwrite)
+
+elseif (UNIX AND NOT APPLE)
+    # Include directories for the specific target
+    target_include_directories(${PROJECT_NAME}
+            PRIVATE ${OpenCV_INCLUDE_DIRS}
+            PRIVATE ${GTKMM_INCLUDE_DIRS}
+            PRIVATE ${V4L2_INCLUDE_DIRS})
 endif ()
 
 # Link libraries

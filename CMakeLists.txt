@@ -94,11 +94,9 @@ if (WIN32)
             PRIVATE ${OpenCV_INCLUDE_DIRS}
             PRIVATE ${GTKMM_INCLUDE_DIRS})
 
-    # Windows media foundations framework
-    target_link_libraries(${PROJECT_NAME} mfplat mf mfreadwrite)
-
     # Link libraries
     target_link_libraries(${PROJECT_NAME}
+            mfplat mf mfreadwrite
             PRIVATE ${OpenCV_LIBS}
             PRIVATE ${GTKMM_LIBRARIES}
             PRIVATE OpenGL::GL

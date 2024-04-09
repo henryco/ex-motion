@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(TFLITE_ENABLE_GPU ON CACHE BOOL "Enable TFLite GPU support")
 set(ABSL_PROPAGATE_CXX_STD ON)
-
+set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(CL_TARGET_OPENCL_VERSION 300)
 
 add_subdirectory(external/tensorflow/tensorflow/lite)
@@ -40,9 +40,7 @@ find_package(spdlog REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTKMM REQUIRED gtkmm-3.0)
 
-if (WIN32)
-    # TODO WIN CAMERA
-elseif (UNIX)
+if (UNIX)
     # Find v4l2 (video for linux) package
     pkg_check_modules(V4L2 REQUIRED libv4l2)
 endif ()
@@ -57,6 +55,11 @@ target_include_directories(${PROJECT_NAME}
         PRIVATE ${GTKMM_INCLUDE_DIRS}
         PRIVATE ${V4L2_INCLUDE_DIRS})
 
+if (WIN32)
+    # Windows media foundations framework
+    target_link_libraries(${PROJECT_NAME} mfplat mf mfreadwrite)
+endif ()
+
 # Link libraries
 target_link_libraries(${PROJECT_NAME}
         PRIVATE ${OpenCV_LIBS}
@@ -64,6 +67,7 @@ target_link_libraries(${PROJECT_NAME}
         PRIVATE OpenGL::GL
         PRIVATE spdlog::spdlog
         PRIVATE ${V4L2_LIBRARIES}
+        PRIVATE nlohmann_json::nlohmann_json
         PRIVATE tensorflow-lite
         PRIVATE argparse
         PRIVATE glm)

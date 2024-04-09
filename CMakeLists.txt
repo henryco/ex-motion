@@ -50,6 +50,7 @@ add_executable(xmotion src/main.cpp)
 
 
 if (WIN32)
+
     # Include directories for the specific target
     target_include_directories(${PROJECT_NAME}
             PRIVATE ${OpenCV_INCLUDE_DIRS}
@@ -58,26 +59,42 @@ if (WIN32)
     # Windows media foundations framework
     target_link_libraries(${PROJECT_NAME} mfplat mf mfreadwrite)
 
+    # Link libraries
+    target_link_libraries(${PROJECT_NAME}
+            PRIVATE ${OpenCV_LIBS}
+            PRIVATE ${GTKMM_LIBRARIES}
+            PRIVATE OpenGL::GL
+            PRIVATE spdlog::spdlog
+            PRIVATE nlohmann_json::nlohmann_json
+            PRIVATE tensorflow-lite
+            PRIVATE argparse
+            PRIVATE glm)
+
+    target_compile_options(${PROJECT_NAME}
+            PRIVATE ${GTKMM_CFLAGS_OTHER})
+
 elseif (UNIX AND NOT APPLE)
+
     # Include directories for the specific target
     target_include_directories(${PROJECT_NAME}
             PRIVATE ${OpenCV_INCLUDE_DIRS}
             PRIVATE ${GTKMM_INCLUDE_DIRS}
             PRIVATE ${V4L2_INCLUDE_DIRS})
+
+    # Link libraries
+    target_link_libraries(${PROJECT_NAME}
+            PRIVATE ${OpenCV_LIBS}
+            PRIVATE ${GTKMM_LIBRARIES}
+            PRIVATE OpenGL::GL
+            PRIVATE spdlog::spdlog
+            PRIVATE ${V4L2_LIBRARIES}
+            PRIVATE nlohmann_json::nlohmann_json
+            PRIVATE tensorflow-lite
+            PRIVATE argparse
+            PRIVATE glm)
+
+    target_compile_options(${PROJECT_NAME}
+            PRIVATE ${GTKMM_CFLAGS_OTHER}
+            PRIVATE ${V4L2_CFLAGS_OTHER})
+
 endif ()
-
-# Link libraries
-target_link_libraries(${PROJECT_NAME}
-        PRIVATE ${OpenCV_LIBS}
-        PRIVATE ${GTKMM_LIBRARIES}
-        PRIVATE OpenGL::GL
-        PRIVATE spdlog::spdlog
-        PRIVATE ${V4L2_LIBRARIES}
-        PRIVATE nlohmann_json::nlohmann_json
-        PRIVATE tensorflow-lite
-        PRIVATE argparse
-        PRIVATE glm)
-
-target_compile_options(${PROJECT_NAME}
-        PRIVATE ${GTKMM_CFLAGS_OTHER}
-        PRIVATE ${V4L2_CFLAGS_OTHER})

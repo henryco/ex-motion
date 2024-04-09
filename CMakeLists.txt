@@ -64,14 +64,14 @@ set(SOURCE_FILES
         src/marks/dnn/roi/pose_roi.h
         src/marks/dnn/roi/pose_roi.cpp
         src/marks/dnn/roi/roi_predictor.h
-        src/utils/tp/thread_pool.h
-        src/utils/tp/thread_pool.cpp
-        src/utils/timer/timer.h
-        src/utils/timer/timer.cpp
-        src/utils/loop/delta_loop.h
-        src/utils/loop/delta_loop.cpp
-        src/utils/globals/eox_globals.h
-        src/utils/globals/eox_globals.cpp
+        utils/tp/thread_pool.h
+        utils/tp/thread_pool.cpp
+        utils/timer/timer.h
+        utils/timer/timer.cpp
+        utils/loop/delta_loop.h
+        utils/loop/delta_loop.cpp
+        utils/globals/eox_globals.h
+        utils/globals/eox_globals.cpp
 )
 
 if (UNIX AND NOT APPLE)

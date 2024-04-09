@@ -46,7 +46,45 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 
-add_executable(xmotion src/main.cpp)
+set(SOURCE_FILES
+        src/main.cpp
+        src/marks/sig/velocity_filter.h
+        src/marks/sig/velocity_filter.cpp
+        src/marks/sig/low_pass_filter.h
+        src/marks/sig/low_pass_filter.cpp
+        src/marks/dnn/pose_detector.h
+        src/marks/dnn/pose_detector.cpp
+        src/marks/dnn/blaze_pose.h
+        src/marks/dnn/blaze_pose.cpp
+        src/marks/dnn/dnn_common.h
+        src/marks/dnn/dnn_common.cpp
+        src/marks/dnn/dnn_runner.h
+        src/marks/dnn/ssd/ssd_anchors.h
+        src/marks/dnn/ssd/ssd_anchors.cpp
+        src/marks/dnn/roi/pose_roi.h
+        src/marks/dnn/roi/pose_roi.cpp
+        src/marks/dnn/roi/roi_predictor.h
+        src/utils/tp/thread_pool.h
+        src/utils/tp/thread_pool.cpp
+        src/utils/timer/timer.h
+        src/utils/timer/timer.cpp
+        src/utils/loop/delta_loop.h
+        src/utils/loop/delta_loop.cpp
+        src/utils/globals/eox_globals.h
+        src/utils/globals/eox_globals.cpp
+)
+
+if (UNIX AND NOT APPLE)
+
+    list(APPEND SOURCE_FILES platforms/unix/v4l2/linux_video.h)
+    list(APPEND SOURCE_FILES platforms/unix/v4l2/linux_video.cpp)
+
+elseif (WIN32)
+
+endif ()
+
+
+add_executable(xmotion ${SOURCE_FILES})
 
 
 if (WIN32)

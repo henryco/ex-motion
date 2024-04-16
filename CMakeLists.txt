@@ -72,6 +72,11 @@ set(SOURCE_FILES
         utils/loop/delta_loop.cpp
         utils/globals/eox_globals.h
         utils/globals/eox_globals.cpp
+        src/boot/boot.h
+        src/boot/file_boot.cpp
+        src/boot/file_boot.h
+        src/boot/gtk_boot.cpp
+        src/boot/gtk_boot.h
 )
 
 if (UNIX AND NOT APPLE)

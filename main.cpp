@@ -1,9 +1,10 @@
-#include <argparse/argparse.hpp>
+#include "argparse/argparse.hpp"
 #include <spdlog/spdlog.h>
 #include <filesystem>
-#include "boot/boot.h"
-#include "boot/gtk_boot.h"
-#include "boot/file_boot.h"
+
+#include "xmotion/boot/boot.h"
+#include "xmotion/boot/gtk_boot.h"
+#include "xmotion/boot/file_boot.h"
 
 int main(int argc, char **argv) {
 

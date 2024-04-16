@@ -2,7 +2,7 @@
 // Created by henryco on 11/26/23.
 //
 
-#include "eox_globals.h"
+#include "../xmotion/utils/eox_globals.h"
 
 namespace eox::globals {
 

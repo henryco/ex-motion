@@ -3,8 +3,8 @@
 //
 
 #include <iostream>
-#include "thread_pool.h"
-#include "../globals/eox_globals.h"
+#include "../xmotion/utils/thread_pool.h"
+#include "../xmotion/utils/eox_globals.h"
 
 namespace eox::util {
 

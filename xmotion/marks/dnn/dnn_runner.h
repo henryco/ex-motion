@@ -5,8 +5,8 @@
 #ifndef STEREOX_DNN_RUNNER_H
 #define STEREOX_DNN_RUNNER_H
 
-#include <tensorflow/lite/interpreter.h>
-#include <tensorflow/lite/kernels/register.h>
+#include "tensorflow/lite/interpreter.h"
+#include "tensorflow/lite/kernels/register.h"
 #include <filesystem>
 //#include <spdlog/logger.h>
 //#include <spdlog/sinks/stdout_color_sinks.h>

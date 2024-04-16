@@ -2,7 +2,7 @@
 // Created by henryco on 1/7/24.
 //
 
-#include "pose_roi.h"
+#include "../xmotion/marks/dnn/roi/pose_roi.h"
 
 #include <cmath>
 

@@ -2,7 +2,7 @@
 // Created by henryco on 12/29/23.
 //
 
-#include "blaze_pose.h"
+#include "../xmotion/marks/dnn/blaze_pose.h"
 #include <filesystem>
 
 namespace eox::dnn {

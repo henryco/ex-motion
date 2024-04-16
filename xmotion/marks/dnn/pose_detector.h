@@ -7,8 +7,8 @@
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <tensorflow/lite/interpreter.h>
-#include <tensorflow/lite/kernels/register.h>
+#include "tensorflow/lite/interpreter.h"
+#include "tensorflow/lite/kernels/register.h"
 #include <opencv2/core/mat.hpp>
 
 #include "ssd/ssd_anchors.h"

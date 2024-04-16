@@ -47,36 +47,36 @@ endif ()
 
 
 set(SOURCE_FILES
-        src/main.cpp
-        src/marks/sig/velocity_filter.h
-        src/marks/sig/velocity_filter.cpp
-        src/marks/sig/low_pass_filter.h
-        src/marks/sig/low_pass_filter.cpp
-        src/marks/dnn/pose_detector.h
-        src/marks/dnn/pose_detector.cpp
-        src/marks/dnn/blaze_pose.h
-        src/marks/dnn/blaze_pose.cpp
-        src/marks/dnn/dnn_common.h
-        src/marks/dnn/dnn_common.cpp
-        src/marks/dnn/dnn_runner.h
-        src/marks/dnn/ssd/ssd_anchors.h
-        src/marks/dnn/ssd/ssd_anchors.cpp
-        src/marks/dnn/roi/pose_roi.h
-        src/marks/dnn/roi/pose_roi.cpp
-        src/marks/dnn/roi/roi_predictor.h
-        utils/tp/thread_pool.h
-        utils/tp/thread_pool.cpp
-        utils/timer/timer.h
-        utils/timer/timer.cpp
-        utils/loop/delta_loop.h
-        utils/loop/delta_loop.cpp
-        utils/globals/eox_globals.h
-        utils/globals/eox_globals.cpp
-        src/boot/boot.h
-        src/boot/file_boot.cpp
-        src/boot/file_boot.h
-        src/boot/gtk_boot.cpp
-        src/boot/gtk_boot.h
+        main.cpp
+        xmotion/marks/sig/velocity_filter.h
+        xmotion/marks/sig/low_pass_filter.h
+        xmotion/marks/dnn/pose_detector.h
+        xmotion/marks/dnn/blaze_pose.h
+        xmotion/marks/dnn/dnn_common.h
+        xmotion/marks/dnn/dnn_runner.h
+        xmotion/marks/dnn/ssd/ssd_anchors.h
+        xmotion/marks/dnn/roi/pose_roi.h
+        xmotion/marks/dnn/roi/roi_predictor.h
+        xmotion/utils/thread_pool.h
+        xmotion/utils/timer.h
+        xmotion/utils/delta_loop.h
+        xmotion/utils/eox_globals.h
+        xmotion/boot/boot.h
+        xmotion/boot/file_boot.h
+        xmotion/boot/gtk_boot.h
+        sources/velocity_filter.cpp
+        sources/low_pass_filter.cpp
+        sources/pose_detector.cpp
+        sources/blaze_pose.cpp
+        sources/dnn_common.cpp
+        sources/ssd_anchors.cpp
+        sources/pose_roi.cpp
+        sources/thread_pool.cpp
+        sources/timer.cpp
+        sources/delta_loop.cpp
+        sources/eox_globals.cpp
+        sources/file_boot.cpp
+        sources/gtk_boot.cpp
 )
 
 if (UNIX AND NOT APPLE)

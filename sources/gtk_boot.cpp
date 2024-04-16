@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "gtk_boot.h"
+#include "../xmotion/boot/gtk_boot.h"
 
 namespace xm {
     void GtkBoot::boot(int &argc, char **&argv) {

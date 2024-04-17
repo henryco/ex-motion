@@ -18,7 +18,7 @@ namespace xm {
                 spdlog::stdout_color_mt("file_boot");
 
     protected:
-        std::string project_dir;
+        std::string project_conf;
 
     public:
         void boot(int &argc, char **&argv) override;

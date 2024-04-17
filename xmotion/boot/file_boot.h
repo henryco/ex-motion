@@ -30,6 +30,11 @@ namespace xm {
         void project(const char *argv) override;
 
         void update(float delta, float latency, float fps);
+
+    private:
+        void prepare_gui();
+        void prepare_loop();
+        void prepare_ocv();
     };
 
 } // xm

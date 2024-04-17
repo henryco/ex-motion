@@ -85,6 +85,9 @@ set(SOURCE_FILES
         sources/simple_shader.cpp
         sources/gl_image.cpp
         sources/simple_image_window.cpp
+        sources/small_button.cpp
+        xmotion/gtk/small_button.h
+        xmotion/gtk/gtk_utils.h
 )
 
 if (UNIX AND NOT APPLE)

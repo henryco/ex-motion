@@ -3,11 +3,12 @@
 //
 
 #include <filesystem>
-#include "../xmotion/boot/file_boot.h"
-
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/ocl.hpp>
 #include <gtkmm/application.h>
+
+#include "../xmotion/boot/file_boot.h"
+#include "../xmotion/gtk/small_button.h"
 
 namespace xm {
 
@@ -33,33 +34,49 @@ namespace xm {
     }
 
     int FileBoot::boot(int &argc, char **&argv) {
-
-        {
-            // init opencl
-            cv::ocl::setUseOpenCL(true);
-            if (!cv::ocl::useOpenCL()) {
-                std::cerr << "OpenCL is not available..." << '\n';
-                std::exit(1);
-            }
-            std::cout << "OpenCV version: " << CV_VERSION << '\n';
-        }
-
         int n_argc = 1;
         const auto app = Gtk::Application::create(
                 n_argc,
                 argv,
                 "dev.tindersamurai.xmotion"
         );
+        prepare_ocv();
+        prepare_gui();
+        prepare_loop();
+        return app->run(*window);
+    }
+
+
+    void FileBoot::prepare_ocv() { // NOLINT(*-convert-member-functions-to-static)
+        // init opencl
+        cv::ocl::setUseOpenCL(true);
+        if (!cv::ocl::useOpenCL()) {
+            std::cerr << "OpenCL is not available..." << '\n';
+            std::exit(1);
+        }
+        std::cout << "OpenCV version: " << CV_VERSION << '\n';
+    }
+
+    void FileBoot::prepare_gui() {
+        auto button = Gtk::make_managed<xm::SmallButton>("c");
+        button->proxy().signal_clicked().connect([this](){
+            log->info("click");
+        });
 
         window = std::make_unique<xm::SimpleImageWindow>();
         window->init(640, 480, {"test1", "test2"});
+        window->add_one(*button);
         window->scale(1);
+        window->show_all_children();
+    }
 
-        deltaLoop.setFunc([this](float d, float l, float f) { update(d, l, f); });
+    void FileBoot::prepare_loop() {
+        deltaLoop.setFunc([this](float d, float l, float f) {
+            update(d, l, f);
+        });
         deltaLoop.setFps(300);
         deltaLoop.start();
-
-        return app->run(*window);
     }
+
 
 } // xm

@@ -18,7 +18,7 @@ namespace xm {
         eox::xgtk::GLImage glImage;
         Gtk::Box layout_h;
 
-        int frames = 0;
+        int fps = 0;
 
     protected:
         void on_dispatcher_signal();
@@ -29,6 +29,8 @@ namespace xm {
         SimpleImageWindow();
 
         void refresh(const std::vector<cv::Mat>& _frames);
+
+        void refresh();
 
         void init(int width, int height, const std::vector<std::string>& ids);
 

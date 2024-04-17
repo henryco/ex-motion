@@ -6,6 +6,8 @@
 #define XMOTION_FILE_BOOT_H
 
 #include "boot.h"
+#include "../utils/delta_loop.h"
+#include "../gtk/simple_image_window.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -18,12 +20,16 @@ namespace xm {
                 spdlog::stdout_color_mt("file_boot");
 
     protected:
+        std::unique_ptr<xm::SimpleImageWindow> window;
+        eox::util::DeltaLoop deltaLoop;
         std::string project_conf;
 
     public:
         int boot(int &argc, char **&argv) override;
 
         void project(const char *argv) override;
+
+        void update(float delta, float latency, float fps);
     };
 
 } // xm

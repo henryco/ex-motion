@@ -18,6 +18,10 @@ namespace xm {
         dispatcher.emit();
     }
 
+    void SimpleImageWindow::refresh() {
+        dispatcher.emit();
+    }
+
     void SimpleImageWindow::onResize(const Gtk::Allocation &allocation) {
         glImage.resize(allocation.get_width(), allocation.get_height());
     }

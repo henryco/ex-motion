@@ -4,13 +4,18 @@
 
 #include <filesystem>
 #include "../xmotion/boot/file_boot.h"
-#include "../xmotion/gtk/simple_image_window.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/ocl.hpp>
 #include <gtkmm/application.h>
 
 namespace xm {
+
+    void FileBoot::update(float delta, float _, float fps) {
+        log->info("update: {}, {}", delta, fps);
+
+        window->refresh();
+    }
 
     void FileBoot::project(const char *argv) {
         project_conf = std::string(argv);
@@ -46,15 +51,15 @@ namespace xm {
                 "dev.tindersamurai.xmotion"
         );
 
-        xm::SimpleImageWindow window;
-        window.init(640, 480, {"test1", "test2"});
-        window.scale(1);
+        window = std::make_unique<xm::SimpleImageWindow>();
+        window->init(640, 480, {"test1", "test2"});
+        window->scale(1);
 
-        // TODO START LOOP
+        deltaLoop.setFunc([this](float d, float l, float f) { update(d, l, f); });
+        deltaLoop.setFps(300);
+        deltaLoop.start();
 
-        return app->run(window);
+        return app->run(*window);
     }
-
-
 
 } // xm

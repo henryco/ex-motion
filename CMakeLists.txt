@@ -64,6 +64,10 @@ set(SOURCE_FILES
         xmotion/boot/boot.h
         xmotion/boot/file_boot.h
         xmotion/boot/gtk_boot.h
+        xmotion/ogl/texture_1.h
+        xmotion/ogl/simple_shader.h
+        xmotion/gtk/gl_image.h
+        xmotion/gtk/simple_image_window.h
         sources/velocity_filter.cpp
         sources/low_pass_filter.cpp
         sources/pose_detector.cpp
@@ -77,6 +81,10 @@ set(SOURCE_FILES
         sources/eox_globals.cpp
         sources/file_boot.cpp
         sources/gtk_boot.cpp
+        sources/texture_1.cpp
+        sources/simple_shader.cpp
+        sources/gl_image.cpp
+        sources/simple_image_window.cpp
 )
 
 if (UNIX AND NOT APPLE)

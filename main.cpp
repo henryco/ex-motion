@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
     try {
         director->project(program.get<std::string>("--project").c_str());
-        director->boot(argc, argv);
+        return director->boot(argc, argv);
     } catch (...) {
         std::cerr << "Debug Report: An exception occurred" << '\n';
     }

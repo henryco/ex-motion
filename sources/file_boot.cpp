@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include "../xmotion/boot/file_boot.h"
+#include "../xmotion/gtk/simple_image_window.h"
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/ocl.hpp>
@@ -26,7 +27,7 @@ namespace xm {
         }
     }
 
-    void FileBoot::boot(int &argc, char **&argv) {
+    int FileBoot::boot(int &argc, char **&argv) {
 
         {
             // init opencl
@@ -45,8 +46,13 @@ namespace xm {
                 "dev.tindersamurai.xmotion"
         );
 
-        // TODO
-        app->run();
+        xm::SimpleImageWindow window;
+        window.init(640, 480, {"test1", "test2"});
+        window.scale(1);
+
+        // TODO START LOOP
+
+        return app->run(window);
     }
 
 

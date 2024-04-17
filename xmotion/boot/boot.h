@@ -16,7 +16,7 @@ namespace xm {
 
         virtual void project(const char *argv) = 0;
 
-        virtual void boot(int &argc, char **&argv) = 0;
+        virtual int boot(int &argc, char **&argv) = 0;
     };
 
 } // xm

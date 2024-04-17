@@ -21,7 +21,7 @@ namespace xm {
         std::string project_conf;
 
     public:
-        void boot(int &argc, char **&argv) override;
+        int boot(int &argc, char **&argv) override;
 
         void project(const char *argv) override;
     };

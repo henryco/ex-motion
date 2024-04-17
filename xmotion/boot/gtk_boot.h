@@ -11,7 +11,7 @@ namespace xm {
 
     class GtkBoot : public xm::Boot {
     public:
-        void boot(int &argc, char **&argv) override;
+        int boot(int &argc, char **&argv) override;
 
         void project(const char *argv) override;
     };

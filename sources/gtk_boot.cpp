@@ -12,7 +12,7 @@ namespace xm {
         return -1;
     }
 
-    void GtkBoot::project(const char *argv) {
+    void GtkBoot::open_project(const char *argv) {
 
     }
 } // xm

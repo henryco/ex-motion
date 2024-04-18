@@ -14,7 +14,7 @@ namespace xm {
     public:
         virtual ~Boot()= default;
 
-        virtual void project(const char *argv) = 0;
+        virtual void open_project(const char *argv) = 0;
 
         virtual int boot(int &argc, char **&argv) = 0;
     };

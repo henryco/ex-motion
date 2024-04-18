@@ -18,7 +18,7 @@ namespace xm {
         window->refresh();
     }
 
-    void FileBoot::project(const char *argv) {
+    void FileBoot::open_project(const char *argv) {
         project_path = xm::data::prepare_project_file(argv);
         config = xm::data::config_from_file(project_path);
     }

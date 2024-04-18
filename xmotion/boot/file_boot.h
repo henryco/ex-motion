@@ -29,7 +29,7 @@ namespace xm {
     public:
         int boot(int &argc, char **&argv) override;
 
-        void project(const char *argv) override;
+        void open_project(const char *argv) override;
 
         void update(float delta, float latency, float fps);
 

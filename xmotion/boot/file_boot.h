@@ -8,6 +8,7 @@
 #include "boot.h"
 #include "../utils/delta_loop.h"
 #include "../gtk/simple_image_window.h"
+#include "../data/json_config.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -22,7 +23,8 @@ namespace xm {
     protected:
         std::unique_ptr<xm::SimpleImageWindow> window;
         eox::util::DeltaLoop deltaLoop;
-        std::string project_conf;
+        xm::data::JsonConfig config;
+        std::string project_path;
 
     public:
         int boot(int &argc, char **&argv) override;

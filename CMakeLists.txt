@@ -88,6 +88,8 @@ set(SOURCE_FILES
         sources/small_button.cpp
         xmotion/gtk/small_button.h
         xmotion/gtk/gtk_utils.h
+        xmotion/data/json_config.h
+        sources/json_config.cpp
 )
 
 if (UNIX AND NOT APPLE)

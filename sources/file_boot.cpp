@@ -21,6 +21,8 @@ namespace xm {
     void FileBoot::open_project(const char *argv) {
         project_path = xm::data::prepare_project_file(argv);
         config = xm::data::config_from_file(project_path);
+
+        log->info("type: {}", config.type);
     }
 
     void FileBoot::prepare_ocv() { // NOLINT(*-convert-member-functions-to-static)
@@ -39,9 +41,9 @@ namespace xm {
         });
 
         window = std::make_unique<xm::SimpleImageWindow>();
-        window->init(640, 480, {"test1", "test2"});
+        window->init(config.camera[0].width, config.camera[0].height, {"test1", "test2"});
+        window->scale(config.gui.scale);
         window->add_one(*button);
-        window->scale(1);
         window->show_all_children();
     }
 

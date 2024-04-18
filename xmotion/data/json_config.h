@@ -11,54 +11,44 @@
 
 namespace xm::data {
 
-    class Camera {
-    public:
+    enum ConfigType {
+        INVALID = -1,
+        CALIBRATION
+    };
+
+    typedef struct {
         std::string id;
         std::string name;
         std::string codec;
-        int width{};
-        int height{};
-        int buffer{};
-        int fps{};
-        bool fast{};
+        int width;
+        int height;
+        int buffer;
+        int fps;
+        bool fast;
+    } Camera;
 
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Camera, id, name, codec, width, height, buffer, fps, fast)
-    };
-
-    class Gui {
-    public:
+    typedef struct {
         float scale;
+    } Gui;
 
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Gui, scale)
-    };
+    typedef struct {
+        int columns;
+        int rows;
+        float size;
+    } Pattern;
 
-    class Pattern {
-    public:
-        int columns{};
-        int rows{};
-        float size{};
-
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Pattern, columns, rows, size)
-    };
-
-    class Calibration {
-    public:
+    typedef struct {
         Pattern pattern;
-        int total{};
-        int delay{};
+        int total;
+        int delay;
+    } Calibration;
 
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(Calibration, pattern, total, delay)
-    };
-
-    class JsonConfig {
-    public:
-        std::string type;
+    typedef struct {
+        ConfigType type;
         std::vector<Camera> camera;
         Calibration calibration;
         Gui gui;
-
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE(JsonConfig, type, camera, calibration, gui)
-    };
+    } JsonConfig;
 
     JsonConfig config_from_file(const std::string &file);
 

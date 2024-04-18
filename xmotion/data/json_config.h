@@ -46,6 +46,7 @@ namespace xm::data {
     typedef struct {
         ConfigType type;
         std::vector<Camera> camera;
+        std::vector<std::string> camera_names;
         Calibration calibration;
         Gui gui;
     } JsonConfig;

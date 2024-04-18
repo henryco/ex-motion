@@ -43,6 +43,11 @@ namespace xm::data {
         j.at("type").get_to(c.type);
         j.at("camera").get_to(c.camera);
 
+        c.camera_names = {};
+        for (const auto &item: c.camera) {
+            c.camera_names.push_back(item.name + " [ " + item.id + " ]");
+        }
+
         c.gui = j.value("gui", (Gui) {
                 .scale = 1.f
         });

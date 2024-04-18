@@ -35,7 +35,7 @@ namespace eox::v4l2 {
      * @note This function requires the v4l2 library to be installed.
      * In general it is already installed in most of linux distributions.
      */
-    std::vector<eox::v4l2::V4L2_QueryCtrl> get_camera_props(uint device_id);
+    std::vector<eox::v4l2::V4L2_QueryCtrl> get_camera_props(const std::string &device_id);
 
     /**
      * @brief Sets the camera property for a given device.
@@ -49,7 +49,7 @@ namespace eox::v4l2 {
      *
      * @return True if the camera property was set successfully, false otherwise.
      */
-    bool set_camera_prop(uint device_id, uint prop_id, int prop_value);
+    bool set_camera_prop(const std::string &device_id, uint prop_id, int prop_value);
 
     /**
      * @brief Sets the camera property for a given device using v4l2 library.
@@ -59,7 +59,7 @@ namespace eox::v4l2 {
      *
      * @return True if the camera property was successfully set, false otherwise.
      */
-    bool set_camera_prop(uint device_id, V4L2_Control control);
+    bool set_camera_prop(const std::string &device_id, V4L2_Control control);
 
     /**
      * @brief Sets the camera properties for the specified device.
@@ -73,7 +73,7 @@ namespace eox::v4l2 {
      *
      * @see eox::v4l2::V4L2_Control
      */
-    std::vector<bool> set_camera_prop(uint device_id, std::vector<V4L2_Control> controls);
+    std::vector<bool> set_camera_prop(const std::string &device_id, std::vector<V4L2_Control> controls);
 
     /**
      * @brief Reset the settings of the specified video device to its default values.
@@ -83,7 +83,7 @@ namespace eox::v4l2 {
      *
      * @param device_id The ID of the video device to reset the settings of.
      */
-    void reset_defaults(uint device_id);
+    void reset_defaults(const std::string &device_id);
 
     /**
      * @brief Writes the V4L2 control to the output stream.
@@ -108,7 +108,7 @@ namespace eox::v4l2 {
      * @param device_id The unique identifier for the V4L2 device.
      * @param controls A vector of V4L2_Control objects representing the controls to be written.
      */
-    void write_control(std::ostream &os, uint device_id, const std::vector<V4L2_Control> &controls);
+    void write_control(std::ostream &os, const std::string &device_id, const std::vector<V4L2_Control> &controls);
 
     /**
      * @brief Reads control values from the given input stream.
@@ -156,7 +156,7 @@ namespace eox::v4l2 {
      * @note The function will continue reading from the stream until EOF is reached. It is assumed that the
      *       stream is well-formed and correctly formatted according to the expected V4L2 control data structure.
      */
-    std::map<uint, std::vector<V4L2_Control>> read_controls(std::istream &is);
+    std::map<std::string, std::vector<V4L2_Control>> read_controls(std::istream &is);
 }
 
 

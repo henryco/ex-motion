@@ -11,10 +11,9 @@
 #include <sys/ioctl.h>
 #include <map>
 
-std::vector<eox::v4l2::V4L2_QueryCtrl> eox::v4l2::get_camera_props(uint id) {
+std::vector<eox::v4l2::V4L2_QueryCtrl> eox::v4l2::get_camera_props(const std::string &device) {
     std::vector<eox::v4l2::V4L2_QueryCtrl> properties;
 
-    const std::string device = "/dev/video" + std::to_string(id);
     const int file_descriptor = open(device.c_str(), O_RDWR);
 
     if (file_descriptor == -1) {
@@ -63,7 +62,7 @@ std::vector<eox::v4l2::V4L2_QueryCtrl> eox::v4l2::get_camera_props(uint id) {
     return properties;
 }
 
-bool eox::v4l2::set_camera_prop(uint device_id, uint prop_id, int prop_value) {
+bool eox::v4l2::set_camera_prop(const std::string &device_id, uint prop_id, int prop_value) {
     // not the most efficient way to pass data, but it's ok
     return set_camera_prop(device_id, {
             .id = prop_id,
@@ -71,7 +70,7 @@ bool eox::v4l2::set_camera_prop(uint device_id, uint prop_id, int prop_value) {
     });
 }
 
-bool eox::v4l2::set_camera_prop(uint device_id, eox::v4l2::V4L2_Control control) {
+bool eox::v4l2::set_camera_prop(const std::string &device_id, eox::v4l2::V4L2_Control control) {
     // not the most efficient way to pass data, but it's ok.
     return set_camera_prop(
             device_id,
@@ -79,8 +78,7 @@ bool eox::v4l2::set_camera_prop(uint device_id, eox::v4l2::V4L2_Control control)
     )[0];
 }
 
-std::vector<bool> eox::v4l2::set_camera_prop(uint device_id, std::vector<eox::v4l2::V4L2_Control> controls) {
-    const std::string device = "/dev/video" + std::to_string(device_id);
+std::vector<bool> eox::v4l2::set_camera_prop(const std::string &device, std::vector<eox::v4l2::V4L2_Control> controls) {
     const int file_descriptor = open(device.c_str(), O_RDWR);
 
     std::vector<bool> results(controls.size());
@@ -111,7 +109,7 @@ std::vector<bool> eox::v4l2::set_camera_prop(uint device_id, std::vector<eox::v4
     return results;
 }
 
-void eox::v4l2::reset_defaults(uint device_id) {
+void eox::v4l2::reset_defaults(const std::string &device_id) {
     const auto props = get_camera_props(device_id);
     std::vector<eox::v4l2::V4L2_Control> controls;
 
@@ -133,12 +131,15 @@ void eox::v4l2::write_control(std::ostream &os, const eox::v4l2::V4L2_Control &c
     os.write(data, sizeof(eox::v4l2::serial_v4l2_control));
 }
 
-void eox::v4l2::write_control(std::ostream &os, uint device_id, const std::vector<eox::v4l2::V4L2_Control>& controls) {
+void eox::v4l2::write_control(std::ostream &os, const std::string &device_id, const std::vector<eox::v4l2::V4L2_Control>& controls) {
     const uint32_t header[] = {
-            (uint32_t) device_id,
-            (uint32_t) controls.size()
+            (uint32_t) controls.size(),
+            (uint32_t) device_id.length(),
     };
+
     os.write(reinterpret_cast<const char *>(header), sizeof(header));
+    os.write(device_id.c_str(), (uint32_t) device_id.length());
+
     for (const auto &control: controls) {
         eox::v4l2::write_control(os, control);
     }
@@ -162,17 +163,20 @@ std::vector<eox::v4l2::V4L2_Control> eox::v4l2::read_control(std::istream &is, s
     return vec;
 }
 
-std::map<uint, std::vector<eox::v4l2::V4L2_Control>> eox::v4l2::read_controls(std::istream &is) {
-    std::map<uint, std::vector<eox::v4l2::V4L2_Control>> map;
+std::map<std::string, std::vector<eox::v4l2::V4L2_Control>> eox::v4l2::read_controls(std::istream &is) {
+    std::map<std::string, std::vector<eox::v4l2::V4L2_Control>> map;
 
     while (is.peek() != EOF) {
         uint32_t header[2];
         is.read(reinterpret_cast<char *>(header), sizeof(header));
 
-        const uint device_id = header[0];
-        const size_t total = header[1];
+        const size_t total_controls = header[0];
+        const size_t device_id_len = header[1];
 
-        map.emplace(device_id, eox::v4l2::read_control(is, total));
+        char *c_str = new char[device_id_len];
+        is.read(c_str, (long) device_id_len);
+
+        map.emplace(std::string(c_str), eox::v4l2::read_control(is, total_controls));
     }
 
     return map;

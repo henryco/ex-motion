@@ -48,16 +48,18 @@ namespace xm {
         window->show_all_children();
     }
 
-    void FileBoot::prepare_loop() {
+    void FileBoot::prepare_cam() {
         camera.setFastMode(config.camera.fast);
         for (const auto &c: config.camera.capture) {
             camera.open(c.id, c.codec, c.width, c.height, c.fps, c.buffer);
         }
+    }
 
+    void FileBoot::prepare_loop() {
         deltaLoop.setFunc([this](float d, float l, float f) {
             update(d, l, f);
         });
-//        deltaLoop.setFps(300);
+        deltaLoop.setFps(300);
         deltaLoop.start();
     }
 
@@ -70,6 +72,7 @@ namespace xm {
         );
         prepare_ocv();
         prepare_gui();
+        prepare_cam();
         prepare_loop();
         return app->run(*window);
     }

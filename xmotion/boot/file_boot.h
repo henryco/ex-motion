@@ -39,6 +39,7 @@ namespace xm {
         void prepare_gui();
         void prepare_loop();
         void prepare_ocv();
+        void prepare_cam();
     };
 
 } // xm

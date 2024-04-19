@@ -24,8 +24,10 @@ namespace xm {
 
     void SimpleImageWindow::on_dispatcher_signal() {
         glImage.update();
-        if (fps_changed)
-            set_title("fps: " + std::to_string((int) fps));
+        if (fps_changed && fps < 1000)
+            set_title("approx. fps: " + std::to_string((int) fps));
+        else if (fps_changed && fps >= 1000)
+            set_title("approx. fps: >= 1000");
         fps_changed = false;
     }
 
@@ -50,7 +52,7 @@ namespace xm {
 
     void SimpleImageWindow::setFps(int _fps) {
         const auto old = fps;
-        fps = _fps;
+        fps = std::min(_fps, 1000);
         if (old != fps)
             fps_changed = true;
     }

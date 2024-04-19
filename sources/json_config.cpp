@@ -93,4 +93,15 @@ namespace xm::data {
     std::string prepare_project_file(const char *c_str) {
         return prepare_project_file(std::string(c_str));
     }
+
+    std::string prepare_project_dir(const std::string &path) {
+        std::filesystem::path file = path;
+        if (is_directory(file))
+            return path;
+        return file.parent_path().string();
+    }
+
+    std::string prepare_project_dir(const char *c_str) {
+        return prepare_project_dir(std::string(c_str));
+    }
 }

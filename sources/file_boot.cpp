@@ -38,7 +38,7 @@ namespace xm {
     void FileBoot::prepare_gui() {
         auto button = Gtk::make_managed<xm::SmallButton>("c");
         button->proxy().signal_clicked().connect([this]() {
-            log->info("click");
+            // TODO: camera config
         });
 
         window = std::make_unique<xm::SimpleImageWindow>();
@@ -49,9 +49,23 @@ namespace xm {
     }
 
     void FileBoot::prepare_cam() {
+        const auto project_dir = xm::data::prepare_project_dir(project_path);
         camera.setFastMode(config.camera.fast);
         for (const auto &c: config.camera.capture) {
             camera.open(c.id, c.codec, c.width, c.height, c.fps, c.buffer);
+
+            std::filesystem::path file = c.name + ".xcam";
+            std::filesystem::path conf = project_dir / file;
+
+            if (!std::filesystem::exists(conf)) {
+                log->debug("No configuration file found for camera device: {} | {} ", c.id, c.name);
+                continue;
+            }
+
+            std::ifstream is(conf);
+            log->debug("reading configuration for camera device: {} | {}", c.id, c.name);
+            camera.read(is, c.id, c.name);
+            is.close();
         }
     }
 

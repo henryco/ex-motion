@@ -64,6 +64,10 @@ namespace xm::data {
 
     std::string prepare_project_file(const char *c_str);
 
+    std::string prepare_project_dir(const std::string &path);
+
+    std::string prepare_project_dir(const char *c_str);
+
 } // xm
 
 #endif //XMOTION_JSON_CONFIG_H

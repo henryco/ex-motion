@@ -39,6 +39,7 @@ namespace xm {
 
     void SimpleImageWindow::on_dispatcher_signal() {
         glImage.update();
+//        set_title("fps: ");
     }
 
     void SimpleImageWindow::scale(float scale) {

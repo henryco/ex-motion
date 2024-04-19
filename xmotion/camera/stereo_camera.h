@@ -84,10 +84,7 @@ namespace xm {
 
         void release();
 
-        /**
-         * @see eox::StereoCamera::open(std::vector<CameraProp> props)
-         */
-        void open(const std::string &id, const std::string &codec, int width, int height, int fps = 30, int buffer = 2);
+        void open(const std::string &device_id, const std::string &codec, int width, int height, int fps = 30, int buffer = 2);
 
         std::map<std::string, cv::Mat> captureWithId();
 

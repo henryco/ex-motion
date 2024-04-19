@@ -31,9 +31,12 @@ namespace xm {
             return;
         }
 
+        log->info("1");
         const auto api = xm::cap::video_capture_api();
+        log->info("2");
         const auto idx = xm::cap::index_from_id(id);
 
+        log->info("3");
         std::vector<int> params;
         params.assign({
             cv::CAP_PROP_FOURCC, fourCC(codec.c_str()),
@@ -42,7 +45,7 @@ namespace xm {
             cv::CAP_PROP_FPS, fps,
             cv::CAP_PROP_BUFFERSIZE, buffer
         });
-
+        log->info("4");
         captures[id] = cv::VideoCapture(idx, api, params);
     }
 

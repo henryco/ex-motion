@@ -15,7 +15,7 @@ int xm::cap::index_from_id(const std::string &id) {
     // returns: X
     if (id.length() < 9)
         throw std::runtime_error("invalid device id: " + id);
-    return std::stoi(id.substr(0, 9));
+    return std::stoi(id.substr(9));
 }
 
 xm::cap::camera_controls xm::cap::query_controls(const std::string &id) {

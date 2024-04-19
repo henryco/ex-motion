@@ -14,8 +14,10 @@
 namespace xm {
 
     void FileBoot::update(float delta, float _, float fps) {
-//        log->info("update: {}, {}", delta, fps);
-        window->refresh();
+        log->info("update: {}, {}", delta, fps);
+
+        const auto frames = camera.capture();
+        window->refresh(frames);
     }
 
     void FileBoot::open_project(const char *argv) {
@@ -36,7 +38,7 @@ namespace xm {
 
     void FileBoot::prepare_gui() {
         auto button = Gtk::make_managed<xm::SmallButton>("c");
-        button->proxy().signal_clicked().connect([this](){
+        button->proxy().signal_clicked().connect([this]() {
             log->info("click");
         });
 
@@ -48,10 +50,15 @@ namespace xm {
     }
 
     void FileBoot::prepare_loop() {
+        camera.setFastMode(config.camera.fast);
+        for (const auto &c: config.camera.capture) {
+            camera.open(c.id, c.codec, c.width, c.height, c.fps, c.buffer);
+        }
+
         deltaLoop.setFunc([this](float d, float l, float f) {
             update(d, l, f);
         });
-        deltaLoop.setFps(300);
+//        deltaLoop.setFps(300);
         deltaLoop.start();
     }
 

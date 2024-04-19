@@ -89,6 +89,10 @@ namespace xm {
          */
         void open(const std::string &id, const std::string &codec, int width, int height, int fps = 30, int buffer = 2);
 
+        std::map<std::string, cv::Mat> captureWithId();
+
+        std::vector<cv::Mat> capture();
+
         void setControl(const std::string &device_id, uint prop_id, int value);
 
         void resetControls(const std::string &device_id);

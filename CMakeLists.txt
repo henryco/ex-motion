@@ -90,14 +90,19 @@ set(SOURCE_FILES
         xmotion/gtk/gtk_utils.h
         xmotion/data/json_config.h
         sources/json_config.cpp
+        xmotion/camera/stereo_camera.h
+        sources/stereo_camera.cpp
 )
 
 if (UNIX AND NOT APPLE)
 
+    list(APPEND SOURCE_FILES platforms/unix/v4l2/linux_cap.cpp)
     list(APPEND SOURCE_FILES platforms/unix/v4l2/linux_video.h)
     list(APPEND SOURCE_FILES platforms/unix/v4l2/linux_video.cpp)
 
 elseif (WIN32)
+
+    list(APPEND SOURCE_FILES platforms/unix/v4l2/windows_cap.cpp)
 
 endif ()
 

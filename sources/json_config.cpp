@@ -11,20 +11,31 @@ namespace xm::data {
         {CALIBRATION, "calibration"},
     })
 
-    void from_json(const nlohmann::json &j, Camera &c) {
+    void from_json(const nlohmann::json &j, Capture &c) {
         j.at("id").get_to(c.id);
         j.at("name").get_to(c.name);
         j.at("width").get_to(c.width);
         j.at("height").get_to(c.height);
-
         c.codec = j.value("codec", "MJPG");
         c.buffer = j.value("buffer", 2);
-        c.fast = j.value("fast", false);
         c.fps = j.value("fps", 30);
+    }
+
+    void from_json(const nlohmann::json &j, Camera &c) {
+        j.at("capture").get_to(c.capture);
+        c.fast = j.value("fast", false);
+
+        c._names = {};
+        c._ids = {};
+        for (const auto &d: c.capture) {
+            c._names.push_back(d.name);
+            c._ids.push_back(d.id);
+        }
     }
 
     void from_json(const nlohmann::json &j, Gui &g) {
         g.scale = j.value("scale", 1.f);
+        g.fps = j.value("fps", 144);
     }
 
     void from_json(const nlohmann::json &j, Pattern &p) {
@@ -42,11 +53,6 @@ namespace xm::data {
     void from_json(const nlohmann::json &j, JsonConfig &c) {
         j.at("type").get_to(c.type);
         j.at("camera").get_to(c.camera);
-
-        c.camera_names = {};
-        for (const auto &item: c.camera) {
-            c.camera_names.push_back(item.name + " [ " + item.id + " ]");
-        }
 
         c.gui = j.value("gui", (Gui) {
                 .scale = 1.f

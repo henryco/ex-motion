@@ -24,11 +24,19 @@ namespace xm::data {
         int height;
         int buffer;
         int fps;
+    } Capture;
+
+    typedef struct {
+        std::vector<Capture> capture;
         bool fast;
+
+        std::vector<std::string> _names;
+        std::vector<std::string> _ids;
     } Camera;
 
     typedef struct {
         float scale;
+        int fps;
     } Gui;
 
     typedef struct {
@@ -45,10 +53,9 @@ namespace xm::data {
 
     typedef struct {
         ConfigType type;
-        std::vector<Camera> camera;
-        std::vector<std::string> camera_names;
-        Calibration calibration;
         Gui gui;
+        Camera camera;
+        Calibration calibration;
     } JsonConfig;
 
     JsonConfig config_from_file(const std::string &file);

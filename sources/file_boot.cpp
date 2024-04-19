@@ -41,7 +41,7 @@ namespace xm {
         });
 
         window = std::make_unique<xm::SimpleImageWindow>();
-        window->init(config.camera[0].width, config.camera[0].height, config.camera_names);
+        window->init(config.camera.capture[0].width, config.camera.capture[0].height, config.camera._names);
         window->scale(config.gui.scale);
         window->add_one(*button);
         window->show_all_children();

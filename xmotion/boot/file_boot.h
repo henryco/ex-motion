@@ -9,6 +9,7 @@
 #include "../utils/delta_loop.h"
 #include "../gtk/simple_image_window.h"
 #include "../data/json_config.h"
+#include "../camera/stereo_camera.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -24,6 +25,7 @@ namespace xm {
         std::unique_ptr<xm::SimpleImageWindow> window;
         eox::util::DeltaLoop deltaLoop;
         xm::data::JsonConfig config;
+        xm::StereoCamera camera;
         std::string project_path;
 
     public:

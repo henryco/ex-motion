@@ -105,10 +105,10 @@ namespace eox::v4l2 {
      * to the stream. This is typically used for saving or transmitting the state of V4L2 controls.
      *
      * @param os Reference to the output stream where control data will be written.
-     * @param device_id The unique identifier for the V4L2 device.
+     * @param name The unique NAME for the V4L2 device.
      * @param controls A vector of V4L2_Control objects representing the controls to be written.
      */
-    void write_control(std::ostream &os, const std::string &device_id, const std::vector<V4L2_Control> &controls);
+    void write_control(std::ostream &os, const std::string &name, const std::vector<V4L2_Control> &controls);
 
     /**
      * @brief Reads control values from the given input stream.
@@ -149,7 +149,7 @@ namespace eox::v4l2 {
      * @param is An input stream (std::istream&) from which V4L2 control data is read. The stream should be in
      *           binary format and must be already opened and in a good state.
      *
-     * @return std::map<uint, std::vector<eox::v4l2::V4L2_Control>> - A map where each key is a device ID and
+     * @return std::map<std::string, std::vector<eox::v4l2::V4L2_Control>> - A map where each key is a device NAME and
      *         the corresponding value is a vector of V4L2_Control structures for that device. If no data is read,
      *         or if the input stream is not in the expected format, the returned map may be empty.
      *

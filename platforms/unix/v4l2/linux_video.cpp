@@ -131,14 +131,14 @@ void eox::v4l2::write_control(std::ostream &os, const eox::v4l2::V4L2_Control &c
     os.write(data, sizeof(eox::v4l2::serial_v4l2_control));
 }
 
-void eox::v4l2::write_control(std::ostream &os, const std::string &device_id, const std::vector<eox::v4l2::V4L2_Control>& controls) {
+void eox::v4l2::write_control(std::ostream &os, const std::string &name, const std::vector<eox::v4l2::V4L2_Control>& controls) {
     const uint32_t header[] = {
             (uint32_t) controls.size(),
-            (uint32_t) device_id.length(),
+            (uint32_t) name.length(),
     };
 
     os.write(reinterpret_cast<const char *>(header), sizeof(header));
-    os.write(device_id.c_str(), (uint32_t) device_id.length());
+    os.write(name.c_str(), (uint32_t) name.length());
 
     for (const auto &control: controls) {
         eox::v4l2::write_control(os, control);
@@ -171,10 +171,10 @@ std::map<std::string, std::vector<eox::v4l2::V4L2_Control>> eox::v4l2::read_cont
         is.read(reinterpret_cast<char *>(header), sizeof(header));
 
         const size_t total_controls = header[0];
-        const size_t device_id_len = header[1];
+        const size_t device_name_len = header[1];
 
-        char *c_str = new char[device_id_len];
-        is.read(c_str, (long) device_id_len);
+        char *c_str = new char[device_name_len];
+        is.read(c_str, (long) device_name_len);
 
         map.emplace(std::string(c_str), eox::v4l2::read_control(is, total_controls));
     }

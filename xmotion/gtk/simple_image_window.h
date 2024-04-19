@@ -18,6 +18,7 @@ namespace xm {
         eox::xgtk::GLImage glImage;
         Gtk::Box layout_h;
 
+        bool fps_changed = false;
         int fps = 0;
 
     protected:
@@ -37,6 +38,8 @@ namespace xm {
         void add_one(Gtk::Widget &widget, Gtk::PackOptions packOptions = Gtk::PACK_EXPAND_WIDGET);
 
         void scale(float scale);
+
+        void setFps(int fps);
     };
 
 } // xm

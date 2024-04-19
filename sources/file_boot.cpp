@@ -14,9 +14,8 @@
 namespace xm {
 
     void FileBoot::update(float delta, float _, float fps) {
-        log->info("update: {}, {}", delta, fps);
-
         const auto frames = camera.capture();
+        window->setFps((int) fps);
         window->refresh(frames);
     }
 

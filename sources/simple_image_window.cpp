@@ -22,6 +22,13 @@ namespace xm {
         dispatcher.emit();
     }
 
+    void SimpleImageWindow::on_dispatcher_signal() {
+        glImage.update();
+        if (fps_changed)
+            set_title("fps: " + std::to_string((int) fps));
+        fps_changed = false;
+    }
+
     void SimpleImageWindow::onResize(const Gtk::Allocation &allocation) {
         glImage.resize(allocation.get_width(), allocation.get_height());
     }
@@ -37,13 +44,15 @@ namespace xm {
         layout_h.pack_start(widget, packOptions);
     }
 
-    void SimpleImageWindow::on_dispatcher_signal() {
-        glImage.update();
-//        set_title("fps: ");
-    }
-
     void SimpleImageWindow::scale(float scale) {
         glImage.scale(scale);
+    }
+
+    void SimpleImageWindow::setFps(int _fps) {
+        const auto old = fps;
+        fps = _fps;
+        if (old != fps)
+            fps_changed = true;
     }
 
 } // xm

@@ -6,6 +6,7 @@
 #define XMOTION_FILE_BOOT_H
 
 #include "../gtk/simple_image_window.h"
+#include "../gtk/cam_params_window.h"
 #include "../data/json_config.h"
 #include "../camera/stereo_camera.h"
 #include "updated_boot.h"
@@ -21,10 +22,12 @@ namespace xm {
                 spdlog::stdout_color_mt("file_boot");
 
     protected:
+        std::unique_ptr<xm::CamParamsWindow> params_window;
         std::unique_ptr<xm::SimpleImageWindow> window;
+
         xm::data::JsonConfig config;
-        xm::StereoCamera camera;
         std::string project_path;
+        xm::StereoCamera camera;
 
     public:
         int boostrap(int &argc, char **&argv) override;

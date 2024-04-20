@@ -32,7 +32,8 @@ namespace xm {
     }
 
     void SimpleImageWindow::onResize(const Gtk::Allocation &allocation) {
-        glImage.resize(allocation.get_width(), allocation.get_height());
+//        glImage.resize(allocation.get_width(), allocation.get_height());
+        // TODO FIXME
     }
 
     void SimpleImageWindow::init(int width, int height, const std::vector<std::string>& ids) {

@@ -73,6 +73,8 @@ set(SOURCE_FILES
         xmotion/data/json_config.h
         xmotion/camera/stereo_camera.h
         xmotion/gtk/gtk_utils.h
+        xmotion/gtk/gtk_cam_params.h
+        xmotion/gtk/cam_params_window.h
         sources/velocity_filter.cpp
         sources/low_pass_filter.cpp
         sources/pose_detector.cpp
@@ -94,8 +96,8 @@ set(SOURCE_FILES
         sources/json_config.cpp
         sources/stereo_camera.cpp
         sources/updated_boot.cpp
-        xmotion/gtk/gtk_cam_params.h
         sources/gtk_cam_params.cpp
+        sources/cam_params_window.cpp
 )
 
 if (UNIX AND NOT APPLE)

@@ -28,7 +28,15 @@ namespace xm {
     void FileBoot::prepare_gui() {
         auto button_conf = Gtk::make_managed<xm::SmallButton>("c");
         button_conf->proxy().signal_clicked().connect([this]() {
-            // TODO: camera config
+            if (params_window->get_visible()) {
+                params_window->hide();
+                window->activate_focus();
+                params_window->unset_focus();
+            } else {
+                params_window->show();
+                window->unset_focus();
+                params_window->activate_focus();
+            }
         });
 
         auto button_start = Gtk::make_managed<xm::SmallButton>("s");
@@ -41,7 +49,13 @@ namespace xm {
         window->scale(config.gui.scale);
         window->add_one(*button_conf);
         window->add_one(*button_start);
+        window->set_resizable(false);
         window->show_all_children();
+
+        params_window = std::make_unique<xm::CamParamsWindow>();
+        params_window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+        params_window->set_visible(false);
+        // TODO
     }
 
     void FileBoot::prepare_cam() {

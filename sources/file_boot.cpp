@@ -4,7 +4,6 @@
 
 #include <filesystem>
 #include <opencv2/opencv.hpp>
-#include <opencv2/core/ocl.hpp>
 #include <gtkmm/application.h>
 #include <fstream>
 
@@ -24,15 +23,6 @@ namespace xm {
         config = xm::data::config_from_file(project_path);
 
         log->info("type: {}", config.type);
-    }
-
-    void FileBoot::prepare_ocv() { // NOLINT(*-convert-member-functions-to-static)
-        cv::ocl::setUseOpenCL(true);
-        if (!cv::ocl::useOpenCL()) {
-            log->error("OpenCL is not available...");
-            std::exit(1);
-        }
-        log->info("OpenCV version: {}", CV_VERSION);
     }
 
     void FileBoot::prepare_gui() {
@@ -75,25 +65,16 @@ namespace xm {
         }
     }
 
-    void FileBoot::prepare_loop() {
-        deltaLoop.setFunc([this](float d, float l, float f) {
-            update(d, l, f);
-        });
-        deltaLoop.setFps(300);
-        deltaLoop.start();
-    }
-
-    int FileBoot::boot(int &argc, char **&argv) {
+    int FileBoot::boostrap(int &argc, char **&argv) {
         int n_argc = 1;
         const auto app = Gtk::Application::create(
                 n_argc,
                 argv,
                 "dev.tindersamurai.xmotion"
         );
-        prepare_ocv();
-        prepare_gui();
         prepare_cam();
-        prepare_loop();
+        prepare_gui();
+        start_loop(300);
         return app->run(*window);
     }
 

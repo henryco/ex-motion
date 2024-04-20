@@ -4,11 +4,11 @@
 
 #include <opencv2/core/ocl.hpp>
 #include <iostream>
-#include "../xmotion/boot/extended_boot.h"
+#include "../xmotion/boot/updated_boot.h"
 
 namespace xm {
 
-    int ExtendedBoot::boot(int &argc, char **&argv) {
+    int UpdatedBoot::boot(int &argc, char **&argv) {
         std::cout << "OpenCV version: " << CV_VERSION << '\n';
         cv::ocl::setUseOpenCL(true);
         if (!cv::ocl::useOpenCL()) {
@@ -20,17 +20,23 @@ namespace xm {
         deltaLoop.setFunc([this](float d, float l, float f) {
             update(d, l, f);
         });
-
-        const auto result = boostrap(argc, argv);
-        if (result != 0)
-            return result;
-
-        deltaLoop.start();
-
-        return result;
+        return boostrap(argc, argv);
     }
 
-    void ExtendedBoot::setTargetFps(int fps) {
+    void UpdatedBoot::set_loop_fps(int fps) {
         deltaLoop.setFps(fps);
+    }
+
+    void UpdatedBoot::start_loop() {
+        deltaLoop.start();
+    }
+
+    void UpdatedBoot::start_loop(int fps) {
+        set_loop_fps(fps);
+        start_loop();
+    }
+
+    void UpdatedBoot::stop_loop() {
+        deltaLoop.stop();
     }
 } // xm

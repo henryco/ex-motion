@@ -2,15 +2,15 @@
 // Created by henryco on 4/20/24.
 //
 
-#ifndef XMOTION_EXTENDED_BOOT_H
-#define XMOTION_EXTENDED_BOOT_H
+#ifndef XMOTION_UPDATED_BOOT_H
+#define XMOTION_UPDATED_BOOT_H
 
 #include "boot.h"
 #include "../utils/delta_loop.h"
 
 namespace xm {
 
-    class ExtendedBoot : public xm::Boot {
+    class UpdatedBoot : public xm::Boot {
 
     protected:
         eox::util::DeltaLoop deltaLoop;
@@ -19,7 +19,13 @@ namespace xm {
 
         int boot(int &argc, char **&argv) final;
 
-        virtual void setTargetFps(int fps) final;
+        virtual void set_loop_fps(int fps) final;
+
+        virtual void start_loop(int fps) final;
+
+        virtual void start_loop() final;
+
+        virtual void stop_loop() final;
 
         virtual int boostrap(int &argc, char **&argv) = 0;
 
@@ -28,4 +34,4 @@ namespace xm {
 
 } // xm
 
-#endif //XMOTION_EXTENDED_BOOT_H
+#endif //XMOTION_UPDATED_BOOT_H

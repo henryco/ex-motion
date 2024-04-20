@@ -68,7 +68,7 @@ set(SOURCE_FILES
         xmotion/ogl/simple_shader.h
         xmotion/gtk/gl_image.h
         xmotion/gtk/simple_image_window.h
-        xmotion/boot/extended_boot.h
+        xmotion/boot/updated_boot.h
         xmotion/gtk/small_button.h
         xmotion/data/json_config.h
         xmotion/camera/stereo_camera.h
@@ -93,7 +93,7 @@ set(SOURCE_FILES
         xmotion/gtk/gtk_utils.h
         sources/json_config.cpp
         sources/stereo_camera.cpp
-        sources/extended_boot.cpp
+        sources/updated_boot.cpp
 )
 
 if (UNIX AND NOT APPLE)

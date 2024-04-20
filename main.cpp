@@ -1,7 +1,6 @@
 #include "argparse/argparse.hpp"
 #include <spdlog/spdlog.h>
 #include <filesystem>
-#include <execinfo.h>
 
 #include "xmotion/boot/boot.h"
 #include "xmotion/boot/gtk_boot.h"
@@ -10,6 +9,11 @@
 namespace xm::error {
 
 #ifdef _WIN32
+
+#include <windows.h>
+#include <DbgHelp.h>
+
+#pragma comment(lib, "Dbghelp.lib")
     void printStackTrace() {
         // Honestly I have no idea if this would work
 
@@ -30,15 +34,18 @@ namespace xm::error {
 
         free(symbol);
     }
+
 #else
+#include <execinfo.h>
+
     void printStackTrace() {
-        void* array[10];
+        void *array[10];
 
         // get void*'s for all entries on the stack
         const int size = backtrace(array, 10);
 
         // print out all the frames
-        char** messages = backtrace_symbols(array, size);
+        char **messages = backtrace_symbols(array, size);
 
         for (size_t i = 0; i < size; ++i) { // Using size_t for loop counter
             std::cerr << messages[i] << std::endl;

@@ -72,6 +72,7 @@ set(SOURCE_FILES
         xmotion/gtk/small_button.h
         xmotion/data/json_config.h
         xmotion/camera/stereo_camera.h
+        xmotion/gtk/gtk_utils.h
         sources/velocity_filter.cpp
         sources/low_pass_filter.cpp
         sources/pose_detector.cpp
@@ -90,7 +91,6 @@ set(SOURCE_FILES
         sources/gl_image.cpp
         sources/simple_image_window.cpp
         sources/small_button.cpp
-        xmotion/gtk/gtk_utils.h
         sources/json_config.cpp
         sources/stereo_camera.cpp
         sources/updated_boot.cpp

@@ -36,11 +36,15 @@ namespace xm {
         // TODO FIXME
     }
 
-    void SimpleImageWindow::init(int width, int height, const std::vector<std::string>& ids) {
+    void SimpleImageWindow::init(int width, int height, const std::vector<std::string>& ids, bool vertical) {
         layout_h.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
         layout_v.set_orientation(Gtk::ORIENTATION_VERTICAL);
 
-        glImage.init(ids.size(), width, height, ids);
+        if (vertical)
+            glImage.init(ids.size(), 1, ids.size(), width, height, ids);
+        else
+            glImage.init(1, ids.size(), ids.size(), width, height, ids);
+
         layout_h.pack_start(glImage, Gtk::PACK_EXPAND_WIDGET);
         layout_h.pack_start(layout_v, Gtk::PACK_SHRINK);
         add(layout_h);

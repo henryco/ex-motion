@@ -34,7 +34,7 @@ namespace xm {
 
         void refresh();
 
-        void init(int width, int height, const std::vector<std::string>& ids);
+        void init(int width, int height, const std::vector<std::string>& ids, bool vertical = false);
 
         void add_one(Gtk::Widget &widget, Gtk::PackOptions packOptions = Gtk::PACK_SHRINK);
 

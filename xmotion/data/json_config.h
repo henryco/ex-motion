@@ -35,6 +35,7 @@ namespace xm::data {
     } Camera;
 
     typedef struct {
+        bool vertical;
         float scale;
         int fps;
     } Gui;

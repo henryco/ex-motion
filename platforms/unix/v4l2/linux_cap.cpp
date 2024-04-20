@@ -11,11 +11,11 @@ int xm::cap::video_capture_api() {
 }
 
 int xm::cap::index_from_id(const std::string &id) {
-    // expects: dev/videoX
+    // expects: /dev/videoX
     // returns: X
-    if (id.length() < 9)
+    if (id.length() < 10)
         throw std::runtime_error("invalid device id: " + id);
-    return std::stoi(id.substr(9));
+    return std::stoi(id.substr(10));
 }
 
 xm::cap::camera_controls xm::cap::query_controls(const std::string &id) {

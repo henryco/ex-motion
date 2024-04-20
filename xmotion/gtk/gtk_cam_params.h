@@ -14,7 +14,6 @@ namespace eox::xgtk {
 
     typedef struct {
         uint id;
-        uint type;
         std::string name;
         int min;
         int max;

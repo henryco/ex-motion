@@ -17,6 +17,7 @@ namespace xm {
         Glib::Dispatcher dispatcher;
         eox::xgtk::GLImage glImage;
         Gtk::Box layout_h;
+        Gtk::Box layout_v;
 
         bool fps_changed = false;
         int fps = 0;
@@ -35,7 +36,7 @@ namespace xm {
 
         void init(int width, int height, const std::vector<std::string>& ids);
 
-        void add_one(Gtk::Widget &widget, Gtk::PackOptions packOptions = Gtk::PACK_EXPAND_WIDGET);
+        void add_one(Gtk::Widget &widget, Gtk::PackOptions packOptions = Gtk::PACK_SHRINK);
 
         void scale(float scale);
 

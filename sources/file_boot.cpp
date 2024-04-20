@@ -36,15 +36,21 @@ namespace xm {
     }
 
     void FileBoot::prepare_gui() {
-        auto button = Gtk::make_managed<xm::SmallButton>("c");
-        button->proxy().signal_clicked().connect([this]() {
+        auto button_conf = Gtk::make_managed<xm::SmallButton>("c");
+        button_conf->proxy().signal_clicked().connect([this]() {
             // TODO: camera config
+        });
+
+        auto button_start = Gtk::make_managed<xm::SmallButton>("s");
+        button_start->proxy().signal_clicked().connect([this]() {
+            // TODO: start
         });
 
         window = std::make_unique<xm::SimpleImageWindow>();
         window->init(config.camera.capture[0].width, config.camera.capture[0].height, config.camera._names);
         window->scale(config.gui.scale);
-        window->add_one(*button);
+        window->add_one(*button_conf);
+        window->add_one(*button_start);
         window->show_all_children();
     }
 

@@ -36,14 +36,19 @@ namespace xm {
     }
 
     void SimpleImageWindow::init(int width, int height, const std::vector<std::string>& ids) {
+        layout_h.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+        layout_v.set_orientation(Gtk::ORIENTATION_VERTICAL);
+
         glImage.init(ids.size(), width, height, ids);
-        add_one(glImage);
+        layout_h.pack_start(glImage, Gtk::PACK_EXPAND_WIDGET);
+        layout_h.pack_start(layout_v, Gtk::PACK_SHRINK);
         add(layout_h);
+
         show_all_children();
     }
 
     void SimpleImageWindow::add_one(Gtk::Widget &widget, Gtk::PackOptions packOptions) {
-        layout_h.pack_start(widget, packOptions);
+        layout_v.pack_start(widget, packOptions);
     }
 
     void SimpleImageWindow::scale(float scale) {

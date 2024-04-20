@@ -94,6 +94,8 @@ set(SOURCE_FILES
         sources/json_config.cpp
         sources/stereo_camera.cpp
         sources/updated_boot.cpp
+        xmotion/gtk/gtk_cam_params.h
+        sources/gtk_cam_params.cpp
 )
 
 if (UNIX AND NOT APPLE)

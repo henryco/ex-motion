@@ -68,6 +68,10 @@ set(SOURCE_FILES
         xmotion/ogl/simple_shader.h
         xmotion/gtk/gl_image.h
         xmotion/gtk/simple_image_window.h
+        xmotion/boot/extended_boot.h
+        xmotion/gtk/small_button.h
+        xmotion/data/json_config.h
+        xmotion/camera/stereo_camera.h
         sources/velocity_filter.cpp
         sources/low_pass_filter.cpp
         sources/pose_detector.cpp
@@ -86,12 +90,10 @@ set(SOURCE_FILES
         sources/gl_image.cpp
         sources/simple_image_window.cpp
         sources/small_button.cpp
-        xmotion/gtk/small_button.h
         xmotion/gtk/gtk_utils.h
-        xmotion/data/json_config.h
         sources/json_config.cpp
-        xmotion/camera/stereo_camera.h
         sources/stereo_camera.cpp
+        sources/extended_boot.cpp
 )
 
 if (UNIX AND NOT APPLE)

@@ -12,7 +12,7 @@ namespace xm {
 
     class Boot {
     public:
-        virtual ~Boot()= default;
+        virtual ~Boot() = default;
 
         virtual void open_project(const char *argv) = 0;
 

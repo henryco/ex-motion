@@ -9,50 +9,15 @@
 #include <string>
 #include <vector>
 
+#include <fstream>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <opencv2/videoio.hpp>
+
 #include "../utils/thread_pool.h"
+#include "../../platforms/agnostic_cap.h"
 
 namespace xm {
-
-    namespace cap {
-
-        typedef struct {
-            uint id;
-            std::string name;
-            int min;
-            int max;
-            int step;
-            int default_value;
-            int value;
-        } camera_control;
-
-        typedef struct {
-            /**
-             * device id
-             */
-            std::string id;
-
-            /**
-             * device controls
-             */
-            std::vector<camera_control> controls;
-
-        } camera_controls;
-
-        int video_capture_api();
-
-        int index_from_id(const std::string &id);
-
-        camera_controls query_controls(const std::string &id);
-
-        void set_control_value(const std::string &device_id, uint prop_id, int value);
-
-        void save(std::ostream &output_stream, const std::string &name, const camera_controls &control);
-
-        camera_controls read(std::istream &input_stream, const std::string &name);
-    }
 
     typedef struct {
         std::string device_id;
@@ -120,9 +85,9 @@ namespace xm {
 
         [[nodiscard]] bool getFastMode() const;
 
-        [[nodiscard]] std::vector<xm::cap::camera_controls> getControls() const;
+        [[nodiscard]] std::vector<platform::cap::camera_controls> getControls() const;
 
-        [[nodiscard]] xm::cap::camera_controls getControls(const std::string &device_id) const;
+        [[nodiscard]] platform::cap::camera_controls getControls(const std::string &device_id) const;
 
         [[nodiscard]] uint getDeviceIndex(const std::string &device_id) const;
 

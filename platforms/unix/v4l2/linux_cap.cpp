@@ -3,14 +3,14 @@
 // Linux specific camera functions
 //
 
-#include "../../../xmotion/camera/stereo_camera.h"
+#include "../../agnostic_cap.h"
 #include "linux_video.h"
 
-int xm::cap::video_capture_api() {
+int platform::cap::video_capture_api() {
     return 200; //V4L2
 }
 
-int xm::cap::index_from_id(const std::string &id) {
+int platform::cap::index_from_id(const std::string &id) {
     // expects: /dev/videoX
     // returns: X
     if (id.length() < 10)
@@ -18,7 +18,7 @@ int xm::cap::index_from_id(const std::string &id) {
     return std::stoi(id.substr(10));
 }
 
-xm::cap::camera_controls xm::cap::query_controls(const std::string &id) {
+platform::cap::camera_controls platform::cap::query_controls(const std::string &id) {
     const auto control = eox::v4l2::get_camera_props(id);
     std::vector<camera_control> controls;
 
@@ -40,11 +40,11 @@ xm::cap::camera_controls xm::cap::query_controls(const std::string &id) {
     return {.id = id,.controls = controls};
 }
 
-void xm::cap::set_control_value(const std::string &device_id, uint prop_id, int value) {
+void platform::cap::set_control_value(const std::string &device_id, uint prop_id, int value) {
     eox::v4l2::set_camera_prop(device_id, prop_id, value);
 }
 
-void xm::cap::save(std::ostream &output_stream, const std::string &name, const camera_controls &control) {
+void platform::cap::save(std::ostream &output_stream, const std::string &name, const camera_controls &control) {
     int32_t backend_header[1] = {(int32_t) video_capture_api()};
     output_stream.write(reinterpret_cast<const char *>(backend_header), sizeof(backend_header));
 
@@ -56,7 +56,7 @@ void xm::cap::save(std::ostream &output_stream, const std::string &name, const c
     eox::v4l2::write_control(output_stream, name, vec);
 }
 
-xm::cap::camera_controls xm::cap::read(std::istream &input_stream, const std::string &name) {
+platform::cap::camera_controls platform::cap::read(std::istream &input_stream, const std::string &name) {
     if (input_stream.peek() == EOF)
         throw std::runtime_error("Cannot read camera settings from file, file is empty [" + name + "]");
 

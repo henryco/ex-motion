@@ -38,8 +38,8 @@ namespace xm {
         if (prop.width <= 0 || prop.height <=0)
             throw std::runtime_error("Frame width or height cannot be <= 0 for device: " + prop.name);
 
-        const auto api = xm::cap::video_capture_api();
-        const auto idx = xm::cap::index_from_id(prop.device_id);
+        const auto api = platform::cap::video_capture_api();
+        const auto idx = platform::cap::index_from_id(prop.device_id);
 
         std::vector<int> params;
         params.assign({
@@ -146,28 +146,28 @@ namespace xm {
         return vec;
     }
 
-    std::vector<xm::cap::camera_controls> StereoCamera::getControls() const {
-        std::vector<xm::cap::camera_controls> vec;
+    std::vector<platform::cap::camera_controls> StereoCamera::getControls() const {
+        std::vector<platform::cap::camera_controls> vec;
         vec.reserve(captures.size());
         for (const auto &item: captures)
-            vec.emplace_back(xm::cap::query_controls(item.first));
+            vec.emplace_back(platform::cap::query_controls(item.first));
         return vec;
     }
 
-    xm::cap::camera_controls StereoCamera::getControls(const std::string &device_id) const {
+    platform::cap::camera_controls StereoCamera::getControls(const std::string &device_id) const {
         if (!captures.contains(device_id))
             throw std::runtime_error("No such device: " + device_id);
-        return xm::cap::query_controls(device_id);
+        return platform::cap::query_controls(device_id);
     }
 
     void StereoCamera::setControl(const std::string &device_id, uint prop_id, int value) {
         if (!captures.contains(device_id))
             throw std::runtime_error("No such device: " + device_id);
-        xm::cap::set_control_value(device_id, prop_id, value);
+        platform::cap::set_control_value(device_id, prop_id, value);
     }
 
     void StereoCamera::resetControls(const std::string &device_id) {
-        const auto controls = xm::cap::query_controls(device_id).controls;
+        const auto controls = platform::cap::query_controls(device_id).controls;
         for (const auto &control: controls)
             setControl(device_id, control.id, control.default_value);
     }
@@ -180,7 +180,7 @@ namespace xm {
     void StereoCamera::save(std::ostream &output_stream, const std::string &device_id, const std::string &name) const {
         try {
             const auto controls = getControls(device_id);
-            xm::cap::save(output_stream, name, controls);
+            platform::cap::save(output_stream, name, controls);
         } catch (std::exception &e) {
             log->warn("Error during capture device save: {}", e.what());
             return;
@@ -191,7 +191,7 @@ namespace xm {
 
     void StereoCamera::read(std::istream &input_stream, const std::string &device_id, const std::string &name) {
         try {
-            const auto controls = xm::cap::read(input_stream, name);
+            const auto controls = platform::cap::read(input_stream, name);
             resetControls(device_id);
             for (const auto &control: controls.controls)
                 setControl(device_id, control.id, control.value);
@@ -216,6 +216,6 @@ namespace xm {
     }
 
     uint StereoCamera::getDeviceIndex(const std::string &device_id) const {
-        return xm::cap::index_from_id(device_id);
+        return platform::cap::index_from_id(device_id);
     }
 }

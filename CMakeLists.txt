@@ -48,6 +48,9 @@ endif ()
 
 set(SOURCE_FILES
         main.cpp
+
+        platforms/agnostic_cap.h
+
         xmotion/marks/sig/velocity_filter.h
         xmotion/marks/sig/low_pass_filter.h
         xmotion/marks/dnn/pose_detector.h
@@ -79,6 +82,7 @@ set(SOURCE_FILES
         xmotion/algo/i_logic.h
         xmotion/algo/calibration.h
         xmotion/algo/triangulation.h
+
         sources/velocity_filter.cpp
         sources/low_pass_filter.cpp
         sources/pose_detector.cpp
@@ -117,7 +121,7 @@ if (UNIX AND NOT APPLE)
 
 elseif (WIN32)
 
-    list(APPEND SOURCE_FILES platforms/unix/v4l2/windows_cap.cpp)
+    list(APPEND SOURCE_FILES platforms/win32/direct_show/windows_cap.cpp)
 
 endif ()
 

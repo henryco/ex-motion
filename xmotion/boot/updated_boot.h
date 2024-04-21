@@ -30,6 +30,9 @@ namespace xm {
         virtual int boostrap(int &argc, char **&argv) = 0;
 
         virtual void update(float delta, float latency, float fps) = 0;
+
+    private:
+        static void print_ocv_ocl_stats();
     };
 
 } // xm

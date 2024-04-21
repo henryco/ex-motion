@@ -24,6 +24,8 @@ namespace xm::data {
         int height;
         int buffer;
         int fps;
+        bool flip_h;
+        bool flip_v;
     } Capture;
 
     typedef struct {

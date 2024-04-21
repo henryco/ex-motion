@@ -19,6 +19,8 @@ namespace xm::data {
         c.codec = j.value("codec", "MJPG");
         c.buffer = j.value("buffer", 2);
         c.fps = j.value("fps", 30);
+        c.flip_h = j.value("flip_h", false);
+        c.flip_v = j.value("flip_v", false);
     }
 
     void from_json(const nlohmann::json &j, Camera &c) {

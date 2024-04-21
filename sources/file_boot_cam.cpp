@@ -11,7 +11,16 @@ namespace xm {
         const auto project_dir = xm::data::prepare_project_dir(project_path);
         camera.setFastMode(config.camera.fast);
         for (const auto &c: config.camera.capture) {
-            camera.open(c.id, c.codec, c.width, c.height, c.fps, c.buffer);
+            camera.open({
+                                .device_id = c.id,
+                                .codec = c.codec,
+                                .width = c.width,
+                                .height = c.height,
+                                .fps = c.fps,
+                                .buffer = c.buffer,
+                                .flip_h = c.flip_h,
+                                .flip_v = c.flip_v
+                        });
             on_camera_read(c.id, c.name);
         }
     }
@@ -28,6 +37,8 @@ namespace xm {
             std::ofstream os(conf);
             camera.save(os, device_id, c.name);
             os.close();
+
+            log->debug("saved camera settings for: {} | {}", device_id, c.name);
             return;
         }
     }
@@ -50,11 +61,13 @@ namespace xm {
 
     int FileBoot::on_camera_update(const std::string &device_id, uint id, int value) {
         camera.setControl(device_id, id, value);
+        log->debug("updated camera settings for: {} | {}:{}", device_id, id, value);
         return value;
     }
 
     void FileBoot::on_camera_reset(const std::string &device_id) {
         camera.resetControls(device_id);
+        log->debug("reset camera settings for: {} | {}", device_id);
     }
 
 }

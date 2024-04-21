@@ -25,25 +25,25 @@ namespace xm {
         captures.clear();
     }
 
-    void StereoCamera::open(const std::string &id, const std::string &codec, int w, int h, int fps, int buffer) {
-        if (captures.contains(id) && captures.at(id).isOpened()) {
-            log->warn("capture: {} is already open", id);
+    void StereoCamera::open(const SCamProp &prop) {
+        if (captures.contains(prop.device_id) && captures.at(prop.device_id).isOpened()) {
+            log->warn("capture: {} is already open", prop.device_id);
             return;
         }
 
         const auto api = xm::cap::video_capture_api();
-        const auto idx = xm::cap::index_from_id(id);
+        const auto idx = xm::cap::index_from_id(prop.device_id);
 
         std::vector<int> params;
         params.assign({
-            cv::CAP_PROP_FOURCC, fourCC(codec.c_str()),
-            cv::CAP_PROP_FRAME_WIDTH, w,
-            cv::CAP_PROP_FRAME_HEIGHT, h,
-            cv::CAP_PROP_FPS, fps,
-            cv::CAP_PROP_BUFFERSIZE, buffer
-        });
+                              cv::CAP_PROP_FOURCC, fourCC(prop.codec.c_str()),
+                              cv::CAP_PROP_FRAME_WIDTH, prop.width,
+                              cv::CAP_PROP_FRAME_HEIGHT, prop.height,
+                              cv::CAP_PROP_FPS, prop.fps,
+                              cv::CAP_PROP_BUFFERSIZE, prop.buffer
+                      });
 
-        captures[id] = cv::VideoCapture(idx, api, params);
+        captures[prop.device_id] = cv::VideoCapture(idx, api, params);
     }
 
     std::map<std::string, cv::Mat> StereoCamera::captureWithId() {

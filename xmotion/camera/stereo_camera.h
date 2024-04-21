@@ -54,6 +54,17 @@ namespace xm {
         camera_controls read(std::istream &input_stream, const std::string &name);
     }
 
+    typedef struct {
+        std::string device_id;
+        std::string codec;
+        int width;
+        int height;
+        int fps;
+        int buffer;
+        bool flip_h;
+        bool flip_v;
+    } SCamProp;
+
     class StereoCamera {
 
         static inline const auto log =
@@ -84,7 +95,7 @@ namespace xm {
 
         void release();
 
-        void open(const std::string &device_id, const std::string &codec, int width, int height, int fps = 30, int buffer = 2);
+        void open(const SCamProp &prop);
 
         std::map<std::string, cv::Mat> captureWithId();
 

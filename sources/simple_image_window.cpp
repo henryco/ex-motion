@@ -41,9 +41,9 @@ namespace xm {
         layout_v.set_orientation(Gtk::ORIENTATION_VERTICAL);
 
         if (vertical)
-            glImage.init(ids.size(), 1, ids.size(), width, height, ids);
+            glImage.init(ids.size(), 1, ids.size(), width, height, ids, GL_BGR);
         else
-            glImage.init(1, ids.size(), ids.size(), width, height, ids);
+            glImage.init(1, ids.size(), ids.size(), width, height, ids, GL_BGR);
 
         layout_h.pack_start(glImage, Gtk::PACK_EXPAND_WIDGET);
         layout_h.pack_start(layout_v, Gtk::PACK_SHRINK);

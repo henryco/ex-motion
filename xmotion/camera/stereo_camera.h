@@ -73,7 +73,7 @@ namespace xm {
     protected:
 
         /**
-         * {name: capture}
+         * {id: capture}
          */
         std::map<std::string, cv::VideoCapture> captures{};
 

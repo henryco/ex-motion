@@ -28,7 +28,7 @@ namespace xm {
     void StereoCamera::open(const SCamProp &prop) {
 
         auto cpy = prop; // TODO: RECALL HOW COPY/REFERENCES work in c++
-        name_props[prop.name] = cpy;
+        properties.push_back(cpy);
 
         if (captures.contains(prop.device_id) && captures.at(prop.device_id).isOpened()) {
             log->warn("capture: {} is already open", prop.device_id);
@@ -51,8 +51,6 @@ namespace xm {
     }
 
     std::map<std::string, cv::Mat> StereoCamera::captureWithName() {
-        std::map<std::string, cv::Mat> frames;
-
         if (captures.empty()) {
             log->warn("StereoCamera is not initialized");
             return {};
@@ -61,7 +59,7 @@ namespace xm {
         if (!executor) {
             log->debug("no active executors, creating one");
 
-            // there is no assigned executors
+            // there is no assigned executors, create one
             executor = std::make_shared<eox::util::ThreadPool>();
             executor->start(captures.size());
         }
@@ -97,8 +95,7 @@ namespace xm {
                     }));
         }
 
-        // TODO: FLIPPING and CROPPING
-
+        std::map<std::string, cv::Mat> frames;
         for (auto &future: results) {
             auto pair = future.get();
             if (pair.second.empty()) {
@@ -108,7 +105,33 @@ namespace xm {
             frames[pair.first] = pair.second;
         }
 
-        return frames;
+        // CROPPING AND FLIPPING
+        std::map<std::string, cv::Mat> images;
+        for (const auto &property: properties) {
+            auto &src = frames.at(property.device_id);
+            cv::Mat dst;
+
+            // whole frame
+            if (property.x == 0 && property.y == 0 && property.w == property.width && property.h == property.height)
+                dst = src;
+            // sub region
+            else
+                dst = src(cv::Rect(property.x, property.y, property.w, property.h));
+
+            // flip x and y
+            if (property.flip_x && property.flip_y)
+                cv::flip(dst, dst, -1);
+            // flip x
+            else if (property.flip_x && !property.flip_y)
+                cv::flip(dst, dst, 1);
+            // flip y
+            else if (property.flip_y && !property.flip_x)
+                cv::flip(dst, dst, 0);
+
+            images[property.name] = dst;
+        }
+
+        return images;
     }
 
     std::vector<cv::Mat> StereoCamera::capture() {

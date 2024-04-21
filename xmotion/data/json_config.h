@@ -17,6 +17,18 @@ namespace xm::data {
     };
 
     typedef struct {
+        int x;
+        int y;
+        int w;
+        int h;
+    } Region;
+
+    typedef struct {
+        bool x;
+        bool y;
+    } Flip;
+
+    typedef struct {
         std::string id;
         std::string name;
         std::string codec;
@@ -24,8 +36,8 @@ namespace xm::data {
         int height;
         int buffer;
         int fps;
-        bool flip_h;
-        bool flip_v;
+        Flip flip;
+        Region region;
     } Capture;
 
     typedef struct {

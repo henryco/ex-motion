@@ -19,8 +19,12 @@ namespace xm {
                                 .height = c.height,
                                 .fps = c.fps,
                                 .buffer = c.buffer,
-                                .flip_h = c.flip_h,
-                                .flip_v = c.flip_v
+                                .flip_x = c.flip.x,
+                                .flip_y = c.flip.y,
+                                .x = c.region.x,
+                                .y = c.region.y,
+                                .w = c.region.w,
+                                .h = c.region.h,
                         });
             on_camera_read(c.id, c.name);
         }

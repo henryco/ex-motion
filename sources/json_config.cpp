@@ -11,16 +11,34 @@ namespace xm::data {
         {CALIBRATION, "calibration"},
     })
 
+    void from_json(const nlohmann::json &j, Flip &f) {
+        f.x = j.value("x", false);
+        f.y = j.value("y", false);
+    }
+
+    void from_json(const nlohmann::json &j, Region &r) {
+        j.at("w").get_to(r.w);
+        j.at("h").get_to(r.h);
+        r.x = j.value("x", 0);
+        r.y = j.value("y", 0);
+    }
+
     void from_json(const nlohmann::json &j, Capture &c) {
         j.at("id").get_to(c.id);
         j.at("name").get_to(c.name);
         j.at("width").get_to(c.width);
         j.at("height").get_to(c.height);
+        j.at("flip").get_to(c.flip);
         c.codec = j.value("codec", "MJPG");
         c.buffer = j.value("buffer", 2);
         c.fps = j.value("fps", 30);
-        c.flip_h = j.value("flip_h", false);
-        c.flip_v = j.value("flip_v", false);
+
+        c.region = j.value("region", (Region) {
+            .x = 0,
+            .y = 0,
+            .w = c.width,
+            .h = c.height
+        });
     }
 
     void from_json(const nlohmann::json &j, Camera &c) {
@@ -58,7 +76,9 @@ namespace xm::data {
         j.at("camera").get_to(c.camera);
 
         c.gui = j.value("gui", (Gui) {
-                .scale = 1.f
+                .vertical = false,
+                .scale = 1.f,
+                .fps = 300
         });
 
         if (c.type == ConfigType::CALIBRATION) {

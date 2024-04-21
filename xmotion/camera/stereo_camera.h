@@ -62,8 +62,12 @@ namespace xm {
         int height;
         int fps;
         int buffer;
-        bool flip_h;
-        bool flip_v;
+        bool flip_x;
+        bool flip_y;
+        int x;
+        int y;
+        int w;
+        int h;
     } SCamProp;
 
     class StereoCamera {
@@ -78,7 +82,7 @@ namespace xm {
          */
         std::map<std::string, cv::VideoCapture> captures{};
 
-        std::map<std::string, SCamProp> name_props{};
+        std::vector<SCamProp> properties{};
 
         /**
          * threadpool

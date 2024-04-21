@@ -35,6 +35,10 @@ namespace xm {
         window->add_one(*button_start);
         window->set_resizable(false);
         window->show_all_children();
+        window->signal_delete_event().connect([this](GdkEventAny* any_event) {
+            stop_loop();
+            return false;
+        });
 
         params_window = std::make_unique<xm::CamParamsWindow>();
         params_window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);

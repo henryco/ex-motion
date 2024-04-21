@@ -84,7 +84,7 @@ std::vector<bool> eox::v4l2::set_camera_prop(const std::string &device, std::vec
     std::vector<bool> results(controls.size());
 
     if (file_descriptor == -1) {
-        std::cerr << "Cannot open video device: " << device << std::endl;
+        std::cerr << "Cannot open video device: " << device << '\n';
         return results;
     }
 
@@ -93,7 +93,7 @@ std::vector<bool> eox::v4l2::set_camera_prop(const std::string &device, std::vec
         for (int i = 0; i < controls.size(); ++i) {
             auto &control = controls[i];
             if (ioctl(file_descriptor, VIDIOC_S_CTRL, &control) == -1) {
-                std::cerr << "Cannot set control value: " << control.id << std::endl;
+                std::cerr << "[" << device << "] Cannot set control value: " << control.id << '\n';
                 results[i] = false;
             } else {
                 results[i] = true;
@@ -126,12 +126,13 @@ void eox::v4l2::reset_defaults(const std::string &device_id) {
 }
 
 void eox::v4l2::write_control(std::ostream &os, const eox::v4l2::V4L2_Control &control) {
-    const eox::v4l2::serial_v4l2_control serial = { .id = control.id, .value = control.value };
+    const eox::v4l2::serial_v4l2_control serial = {.id = control.id, .value = control.value};
     const auto data = reinterpret_cast<const char *>(&serial);
     os.write(data, sizeof(eox::v4l2::serial_v4l2_control));
 }
 
-void eox::v4l2::write_control(std::ostream &os, const std::string &name, const std::vector<eox::v4l2::V4L2_Control>& controls) {
+void eox::v4l2::write_control(std::ostream &os, const std::string &name,
+                              const std::vector<eox::v4l2::V4L2_Control> &controls) {
     const uint32_t header[] = {
             (uint32_t) controls.size(),
             (uint32_t) name.length(),
@@ -149,8 +150,8 @@ eox::v4l2::V4L2_Control eox::v4l2::read_control(std::istream &is) {
     eox::v4l2::serial_v4l2_control data;
     is.read(reinterpret_cast<char *>(&data), sizeof(eox::v4l2::serial_v4l2_control));
     return {
-        .id = data.id,
-        .value = data.value
+            .id = data.id,
+            .value = data.value
     };
 }
 
@@ -176,7 +177,11 @@ std::map<std::string, std::vector<eox::v4l2::V4L2_Control>> eox::v4l2::read_cont
         char *c_str = new char[device_name_len];
         is.read(c_str, (long) device_name_len);
 
-        map.emplace(std::string(c_str), eox::v4l2::read_control(is, total_controls));
+        const std::string name(c_str);
+        map.emplace(
+                name.substr(0, name.length() - 1),
+                eox::v4l2::read_control(is, total_controls)
+        );
     }
 
     return map;

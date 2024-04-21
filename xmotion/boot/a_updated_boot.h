@@ -2,10 +2,10 @@
 // Created by henryco on 4/20/24.
 //
 
-#ifndef XMOTION_UPDATED_BOOT_H
-#define XMOTION_UPDATED_BOOT_H
+#ifndef XMOTION_A_UPDATED_BOOT_H
+#define XMOTION_A_UPDATED_BOOT_H
 
-#include "boot.h"
+#include "i_boot.h"
 #include "../utils/delta_loop.h"
 
 namespace xm {
@@ -37,4 +37,4 @@ namespace xm {
 
 } // xm
 
-#endif //XMOTION_UPDATED_BOOT_H
+#endif //XMOTION_A_UPDATED_BOOT_H

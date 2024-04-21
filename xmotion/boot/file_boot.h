@@ -9,7 +9,7 @@
 #include "../gtk/cam_params_window.h"
 #include "../data/json_config.h"
 #include "../camera/stereo_camera.h"
-#include "updated_boot.h"
+#include "a_updated_boot.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>

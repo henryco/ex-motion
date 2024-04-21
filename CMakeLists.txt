@@ -61,14 +61,14 @@ set(SOURCE_FILES
         xmotion/utils/timer.h
         xmotion/utils/delta_loop.h
         xmotion/utils/eox_globals.h
-        xmotion/boot/boot.h
+        xmotion/boot/i_boot.h
         xmotion/boot/file_boot.h
         xmotion/boot/gtk_boot.h
         xmotion/ogl/texture_1.h
         xmotion/ogl/simple_shader.h
         xmotion/gtk/gl_image.h
         xmotion/gtk/simple_image_window.h
-        xmotion/boot/updated_boot.h
+        xmotion/boot/a_updated_boot.h
         xmotion/gtk/small_button.h
         xmotion/data/json_config.h
         xmotion/camera/stereo_camera.h
@@ -99,7 +99,7 @@ set(SOURCE_FILES
         sources/small_button.cpp
         sources/json_config.cpp
         sources/stereo_camera.cpp
-        sources/updated_boot.cpp
+        sources/a_updated_boot.cpp
         sources/gtk_cam_params.cpp
         sources/cam_params_window.cpp
         sources/gtk_config_stack.cpp

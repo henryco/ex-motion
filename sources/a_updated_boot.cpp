@@ -4,7 +4,7 @@
 
 #include <opencv2/core/ocl.hpp>
 #include <iostream>
-#include "../xmotion/boot/updated_boot.h"
+#include "../xmotion/boot/a_updated_boot.h"
 
 namespace xm {
 

@@ -5,7 +5,7 @@
 #ifndef XMOTION_GTK_BOOT_H
 #define XMOTION_GTK_BOOT_H
 
-#include "boot.h"
+#include "i_boot.h"
 
 namespace xm {
 

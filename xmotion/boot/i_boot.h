@@ -2,8 +2,8 @@
 // Created by henryco on 4/16/24.
 //
 
-#ifndef XMOTION_BOOT_H
-#define XMOTION_BOOT_H
+#ifndef XMOTION_I_BOOT_H
+#define XMOTION_I_BOOT_H
 
 /**
  * Interface class
@@ -21,4 +21,4 @@ namespace xm {
 
 } // xm
 
-#endif //XMOTION_BOOT_H
+#endif //XMOTION_I_BOOT_H

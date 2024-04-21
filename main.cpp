@@ -2,7 +2,7 @@
 #include <spdlog/spdlog.h>
 #include <filesystem>
 
-#include "xmotion/boot/boot.h"
+#include "xmotion/boot/i_boot.h"
 #include "xmotion/boot/gtk_boot.h"
 #include "xmotion/boot/file_boot.h"
 

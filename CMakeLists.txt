@@ -76,6 +76,9 @@ set(SOURCE_FILES
         xmotion/gtk/gtk_cam_params.h
         xmotion/gtk/cam_params_window.h
         xmotion/gtk/gtk_config_stack.h
+        xmotion/algo/i_logic.h
+        xmotion/algo/calibration.h
+        xmotion/algo/triangulation.h
         sources/velocity_filter.cpp
         sources/low_pass_filter.cpp
         sources/pose_detector.cpp
@@ -102,6 +105,8 @@ set(SOURCE_FILES
         sources/gtk_config_stack.cpp
         sources/file_boot_gui.cpp
         sources/file_boot_cam.cpp
+        sources/calibration.cpp
+        sources/triangulation.cpp
 )
 
 if (UNIX AND NOT APPLE)

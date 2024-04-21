@@ -116,7 +116,7 @@ namespace xm {
                 dst = src;
             // sub region
             else
-                dst = src(cv::Rect(property.x, property.y, property.w, property.h));
+                dst = src(cv::Rect(property.x, property.y, property.w, property.h)).clone();
 
             // flip x and y
             if (property.flip_x && property.flip_y)

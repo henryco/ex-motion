@@ -50,6 +50,7 @@ namespace xm {
         });
         params_window->onReset([this](const std::string &device_id) {
             on_camera_reset(device_id);
+            // TODO FIXME
         });
         params_window->onSave([this](const std::string &device_id) {
             on_camera_save(device_id);

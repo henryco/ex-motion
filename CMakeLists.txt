@@ -122,6 +122,8 @@ if (UNIX AND NOT APPLE)
 elseif (WIN32)
 
     list(APPEND SOURCE_FILES platforms/win32/direct_show/windows_cap.cpp)
+    list(APPEND SOURCE_FILES platforms/win32/direct_show/windows_video.h)
+    list(APPEND SOURCE_FILES platforms/win32/direct_show/windows_video.cpp)
 
 endif ()
 

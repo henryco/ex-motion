@@ -26,8 +26,8 @@ namespace xm {
             // TODO: start
         });
 
-        const auto cam = config.camera;
-        const auto gui = config.gui;
+        const auto &cam = config.camera;
+        const auto &gui = config.gui;
         window = std::make_unique<xm::SimpleImageWindow>();
         window->init(cam.capture[0].width, cam.capture[0].height, cam._names, gui.vertical);
         window->scale(config.gui.scale);
@@ -40,6 +40,16 @@ namespace xm {
         params_window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
         params_window->set_visible(false);
         params_window->set_size_request(-1, (int) (gui.scale * (float) cam.capture[0].height));
+
+        params_window->onUpdate([this](const std::string &device_id, uint id, int value) -> int {
+            return on_camera_update(device_id, id, value);
+        });
+        params_window->onReset([this](const std::string &device_id) {
+            on_camera_reset(device_id);
+        });
+        params_window->onSave([this](const std::string &device_id) {
+            on_camera_save(device_id);
+        });
 
         for (const auto &cap: config.camera.capture) {
             const auto props = camera.getControls(cap.id);
@@ -56,7 +66,7 @@ namespace xm {
                                       .value = c.value
                               });
             }
-            params_window->add_camera(cap.name, vec);
+            params_window->add_camera(cap.id, cap.name, vec);
         }
         params_window->init();
     }

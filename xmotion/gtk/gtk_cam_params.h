@@ -27,9 +27,9 @@ namespace eox::xgtk {
         static inline const auto log =
                 spdlog::stdout_color_mt("gtk_cam_params");
 
-        std::function<int(uint, int)> onUpdateCallback{};
-        std::function<void()> onResetCallback = [](){};
-        std::function<void()> onSaveCallback = [](){};
+        std::function<int(uint, int)> onUpdateCallback = [](uint a, int b) { return b; };
+        std::function<void()> onResetCallback = []() {};
+        std::function<void()> onSaveCallback = []() {};
 
         sigc::connection debounce_connection;
         bool programmatic_change = false;
@@ -47,7 +47,7 @@ namespace eox::xgtk {
 
         void onSave(std::function<void()> callback);
 
-        void setProperties(const std::vector<GtkCamProp>& properties);
+        void setProperties(const std::vector<GtkCamProp> &properties);
     };
 
 } // eox

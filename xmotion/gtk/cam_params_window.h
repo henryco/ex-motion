@@ -23,9 +23,21 @@ namespace xm {
         eox::xgtk::GtkConfigStack config_stack;
         Gtk::Box layout_v;
 
+        std::function<int(const std::string &, uint, int)> on_update;
+        std::function<void(const std::string &)> on_reset;
+        std::function<void(const std::string &)> on_save;
+
     public:
-        void add_camera(const std::string &name, const std::vector<eox::xgtk::GtkCamProp>& props);
+        void add_camera(const std::string &device_id, const std::string &name,
+                        const std::vector<eox::xgtk::GtkCamProp> &props);
+
         void init();
+
+        void onUpdate(std::function<int(const std::string &, uint, int)> function);
+
+        void onReset(std::function<void(const std::string &)> function);
+
+        void onSave(std::function<void(const std::string &)> function);
     };
 
 } // xm

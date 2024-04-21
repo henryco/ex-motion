@@ -41,6 +41,13 @@ namespace xm {
 
         void prepare_cam();
 
+        int on_camera_update(const std::string &device_id, uint id, int value);
+
+        void on_camera_reset(const std::string &device_id);
+
+        void on_camera_save(const std::string &device_id);
+
+        void on_camera_read(const std::string &device_id, const std::string &name);
     };
 
 } // xm

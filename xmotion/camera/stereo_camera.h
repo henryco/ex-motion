@@ -56,6 +56,7 @@ namespace xm {
 
     typedef struct {
         std::string device_id;
+        std::string name;
         std::string codec;
         int width;
         int height;
@@ -77,6 +78,8 @@ namespace xm {
          */
         std::map<std::string, cv::VideoCapture> captures{};
 
+        std::map<std::string, SCamProp> name_props{};
+
         /**
          * threadpool
          */
@@ -97,7 +100,7 @@ namespace xm {
 
         void open(const SCamProp &prop);
 
-        std::map<std::string, cv::Mat> captureWithId();
+        std::map<std::string, cv::Mat> captureWithName();
 
         std::vector<cv::Mat> capture();
 

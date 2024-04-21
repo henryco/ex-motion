@@ -13,6 +13,7 @@ namespace xm {
         for (const auto &c: config.camera.capture) {
             camera.open({
                                 .device_id = c.id,
+                                .name = c.name,
                                 .codec = c.codec,
                                 .width = c.width,
                                 .height = c.height,

@@ -26,6 +26,10 @@ namespace xm {
     }
 
     void StereoCamera::open(const SCamProp &prop) {
+
+        auto cpy = prop; // TODO: RECALL HOW COPY/REFERENCES work in c++
+        name_props[prop.name] = cpy;
+
         if (captures.contains(prop.device_id) && captures.at(prop.device_id).isOpened()) {
             log->warn("capture: {} is already open", prop.device_id);
             return;
@@ -46,11 +50,12 @@ namespace xm {
         captures[prop.device_id] = cv::VideoCapture(idx, api, params);
     }
 
-    std::map<std::string, cv::Mat> StereoCamera::captureWithId() {
+    std::map<std::string, cv::Mat> StereoCamera::captureWithName() {
         std::map<std::string, cv::Mat> frames;
 
         if (captures.empty()) {
             log->warn("StereoCamera is not initialized");
+            return {};
         }
 
         if (!executor) {
@@ -84,12 +89,15 @@ namespace xm {
         std::vector<std::future<std::pair<std::string, cv::Mat>>> results;
         results.reserve(captures.size());
         for (auto &capture: captures) {
-            results.push_back(executor->execute<std::pair<std::string, cv::Mat>>([&capture]() mutable -> std::pair<std::string, cv::Mat> {
-                cv::Mat frame;
-                capture.second.retrieve(frame);
-                return {capture.first, frame};
-            }));
+            results.push_back(executor->execute<std::pair<std::string, cv::Mat>>(
+                    [&capture]() mutable -> std::pair<std::string, cv::Mat> {
+                        cv::Mat frame;
+                        capture.second.retrieve(frame);
+                        return {capture.first, frame};
+                    }));
         }
+
+        // TODO: FLIPPING and CROPPING
 
         for (auto &future: results) {
             auto pair = future.get();
@@ -104,7 +112,7 @@ namespace xm {
     }
 
     std::vector<cv::Mat> StereoCamera::capture() {
-        const auto results = captureWithId();
+        const auto results = captureWithName();
         std::vector<cv::Mat> vec;
         vec.reserve(results.size());
         for (const auto &pair: results)

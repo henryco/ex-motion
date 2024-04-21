@@ -105,6 +105,8 @@ namespace xm::data {
             std::filesystem::path root = path;
             std::filesystem::path file = "config.json";
             project_path = (root / file).string();
+        } else {
+            project_path = path;
         }
 
         if (!std::filesystem::exists(project_path))

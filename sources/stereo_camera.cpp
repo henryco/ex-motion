@@ -35,6 +35,9 @@ namespace xm {
             return;
         }
 
+        if (prop.width <= 0 || prop.height <=0)
+            throw std::runtime_error("Frame width or height cannot be <= 0 for device: " + prop.name);
+
         const auto api = xm::cap::video_capture_api();
         const auto idx = xm::cap::index_from_id(prop.device_id);
 

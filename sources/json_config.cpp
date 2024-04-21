@@ -26,9 +26,9 @@ namespace xm::data {
     void from_json(const nlohmann::json &j, Capture &c) {
         j.at("id").get_to(c.id);
         j.at("name").get_to(c.name);
-        j.at("width").get_to(c.width);
-        j.at("height").get_to(c.height);
         j.at("flip").get_to(c.flip);
+        c.width = j.value("width", 0);
+        c.height = j.value("height", 0);
         c.codec = j.value("codec", "MJPG");
         c.buffer = j.value("buffer", 2);
         c.fps = j.value("fps", 30);

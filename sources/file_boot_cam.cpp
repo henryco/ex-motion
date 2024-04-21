@@ -43,7 +43,7 @@ namespace xm {
             camera.save(os, device_id, c.name);
             os.close();
 
-            log->debug("saved camera settings for: {} | {}", device_id, c.name);
+            log->info("saved camera settings for: {} | {}", device_id, c.name);
             return;
         }
     }
@@ -59,7 +59,7 @@ namespace xm {
         }
 
         std::ifstream is(conf);
-        log->debug("reading configuration for camera device: {} | {}", device_id, name);
+        log->info("reading configuration for camera device: {} | {}", device_id, name);
         camera.read(is, device_id, name);
         is.close();
     }

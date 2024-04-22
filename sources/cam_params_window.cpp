@@ -44,4 +44,8 @@ namespace xm {
     void CamParamsWindow::onSave(std::function<void(const std::string &)> function) {
         on_save = std::move(function);
     }
+
+    void CamParamsWindow::clear() {
+        config_stack.clear();
+    }
 } // xm

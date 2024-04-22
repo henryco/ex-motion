@@ -38,4 +38,9 @@ namespace eox::xgtk {
                 });
     }
 
+    void GtkConfigStack::clear() {
+        for (auto item: stack.get_children())
+            stack.remove(*item);
+    }
+
 } // eox::xgtk

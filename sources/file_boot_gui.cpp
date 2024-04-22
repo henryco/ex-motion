@@ -7,6 +7,26 @@
 
 namespace xm {
 
+    void FileBoot::load_device_params() {
+        for (const auto &cap: config.camera.capture) {
+            const auto props = camera.getControls(cap.id);
+            std::vector<eox::xgtk::GtkCamProp> vec;
+            vec.reserve(props.controls.size());
+            for (const auto &c: props.controls) {
+                vec.push_back({
+                                      .id = c.id,
+                                      .name = c.name,
+                                      .min = c.min,
+                                      .max = c.max,
+                                      .step = c.step,
+                                      .default_value = c.default_value,
+                                      .value = c.value
+                              });
+            }
+            params_window->add_camera(cap.id, cap.name, vec);
+        }
+    }
+
     void FileBoot::prepare_gui() {
         auto button_conf = Gtk::make_managed<xm::SmallButton>("c");
         button_conf->proxy().signal_clicked().connect([this]() {
@@ -50,29 +70,15 @@ namespace xm {
         });
         params_window->onReset([this](const std::string &device_id) {
             on_camera_reset(device_id);
-            // TODO FIXME
+            params_window->clear();
+            load_device_params();
+            params_window->show_all_children(true);
         });
         params_window->onSave([this](const std::string &device_id) {
             on_camera_save(device_id);
         });
 
-        for (const auto &cap: config.camera.capture) {
-            const auto props = camera.getControls(cap.id);
-            std::vector<eox::xgtk::GtkCamProp> vec;
-            vec.reserve(props.controls.size());
-            for (const auto &c: props.controls) {
-                vec.push_back({
-                                      .id = c.id,
-                                      .name = c.name,
-                                      .min = c.min,
-                                      .max = c.max,
-                                      .step = c.step,
-                                      .default_value = c.default_value,
-                                      .value = c.value
-                              });
-            }
-            params_window->add_camera(cap.id, cap.name, vec);
-        }
+        load_device_params();
         params_window->init();
     }
 

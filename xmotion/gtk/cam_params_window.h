@@ -38,6 +38,8 @@ namespace xm {
         void onReset(std::function<void(const std::string &)> function);
 
         void onSave(std::function<void(const std::string &)> function);
+
+        void clear();
     };
 
 } // xm

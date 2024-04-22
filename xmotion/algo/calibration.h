@@ -21,7 +21,7 @@ namespace xm {
     class Calibration : public xm::Logic<xm::calib::Result> {
 
     public:
-        xm::calib::Result proceed(const std::vector<cv::Mat> &frames) override;
+        xm::calib::Result proceed(float delta, const std::vector<cv::Mat> &frames) override;
 
         std::vector<cv::Mat> frames() const override;
 

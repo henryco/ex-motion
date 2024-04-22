@@ -21,7 +21,7 @@ namespace xm {
     class Triangulation : public xm::Logic<xm::nview::Result> {
 
     public:
-        xm::nview::Result proceed(const std::vector<cv::Mat> &frames) override;
+        xm::nview::Result proceed(float delta, const std::vector<cv::Mat> &frames) override;
 
         std::vector<cv::Mat> frames() const override;
 

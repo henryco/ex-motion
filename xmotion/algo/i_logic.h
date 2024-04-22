@@ -19,7 +19,7 @@ namespace xm {
     public:
         virtual ~Logic() = default;
 
-        virtual T proceed(const std::vector<cv::Mat> &frames) = 0;
+        virtual T proceed(float delta, const std::vector<cv::Mat> &frames) = 0;
 
         virtual std::vector<cv::Mat> frames() const = 0;
 

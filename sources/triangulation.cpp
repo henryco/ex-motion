@@ -4,7 +4,7 @@
 
 #include "../xmotion/algo/triangulation.h"
 
-xm::nview::Result xm::Triangulation::proceed(const std::vector<cv::Mat> &frames) {
+xm::nview::Result xm::Triangulation::proceed(float delta, const std::vector<cv::Mat> &frames) {
     // TODO
     return {};
 }

@@ -35,7 +35,7 @@ namespace xm {
 
         void refresh(bool redraw = true);
 
-        void init(int width, int height, const std::vector<std::string>& ids, bool vertical = false);
+        void init(int width, int height, const std::vector<std::string>& names, bool vertical = false);
 
         void add_one(Gtk::Widget &widget, Gtk::PackOptions packOptions = Gtk::PACK_SHRINK);
 

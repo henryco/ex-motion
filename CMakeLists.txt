@@ -111,6 +111,7 @@ set(SOURCE_FILES
         sources/file_boot_cam.cpp
         sources/calibration.cpp
         sources/triangulation.cpp
+        sources/file_boot_logic.cpp
 )
 
 if (UNIX AND NOT APPLE)

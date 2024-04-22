@@ -9,12 +9,6 @@
 
 namespace xm {
 
-    void FileBoot::update(float delta, float _, float fps) {
-        const auto frames = camera.capture();
-        window->setFps((int) fps);
-        window->refresh(frames);
-    }
-
     void FileBoot::open_project(const char *argv) {
         project_path = xm::data::prepare_project_file(argv);
         config = xm::data::config_from_file(project_path);
@@ -27,6 +21,7 @@ namespace xm {
                 argv,
                 "dev.tindersamurai.xmotion"
         );
+        prepare_logic();
         prepare_cam();
         prepare_gui();
         start_loop(300);

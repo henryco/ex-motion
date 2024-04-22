@@ -18,16 +18,24 @@ namespace xm::nview {
 
 namespace xm {
 
-    class Triangulation : public xm::Logic<xm::nview::Result> {
+    class Triangulation : public xm::Logic {
+    private:
+        std::vector<cv::Mat> images{};
+        xm::nview::Result results{};
+        bool active = false;
 
     public:
-        xm::nview::Result proceed(float delta, const std::vector<cv::Mat> &frames) override;
+        Triangulation &proceed(float delta, const std::vector<cv::Mat> &frames) override;
 
-        std::vector<cv::Mat> frames() const override;
+        bool is_active() const override;
 
         void start() override;
 
         void stop() override;
+
+        const std::vector<cv::Mat> &frames() const override;
+
+        const xm::nview::Result &result() const;
     };
 
 } // xm

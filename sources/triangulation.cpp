@@ -4,20 +4,27 @@
 
 #include "../xmotion/algo/triangulation.h"
 
-xm::nview::Result xm::Triangulation::proceed(float delta, const std::vector<cv::Mat> &frames) {
+xm::Triangulation& xm::Triangulation::proceed(float delta, const std::vector<cv::Mat> &frames) {
     // TODO
-    return {};
-}
-
-std::vector<cv::Mat> xm::Triangulation::frames() const {
-    // TODO
-    return {};
+    return *this;
 }
 
 void xm::Triangulation::start() {
-    // TODO
+    active = true;
 }
 
 void xm::Triangulation::stop() {
-    // TODO
+    active = false;
+}
+
+bool xm::Triangulation::is_active() const {
+    return active;
+}
+
+const std::vector<cv::Mat> &xm::Triangulation::frames() const {
+    return images;
+}
+
+const xm::nview::Result &xm::Triangulation::result() const {
+    return results;
 }

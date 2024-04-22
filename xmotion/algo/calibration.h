@@ -18,16 +18,25 @@ namespace xm::calib {
 
 namespace xm {
 
-    class Calibration : public xm::Logic<xm::calib::Result> {
+    class Calibration : public xm::Logic {
+
+    private:
+        std::vector<cv::Mat> images{};
+        xm::calib::Result results{};
+        bool active = false;
 
     public:
-        xm::calib::Result proceed(float delta, const std::vector<cv::Mat> &frames) override;
+        Calibration &proceed(float delta, const std::vector<cv::Mat> &frames) override;
 
-        std::vector<cv::Mat> frames() const override;
+        bool is_active() const override;
 
         void start() override;
 
         void stop() override;
+
+        const std::vector<cv::Mat> &frames() const override;
+
+        const xm::calib::Result &result() const;
     };
 
 } // xm

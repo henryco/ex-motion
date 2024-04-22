@@ -20,6 +20,7 @@ namespace xm {
         Gtk::Box layout_v;
 
         bool fps_changed = false;
+        bool redraw = false;
         int fps = 0;
 
     protected:
@@ -32,7 +33,7 @@ namespace xm {
 
         void refresh(const std::vector<cv::Mat>& _frames);
 
-        void refresh();
+        void refresh(bool redraw = true);
 
         void init(int width, int height, const std::vector<std::string>& ids, bool vertical = false);
 

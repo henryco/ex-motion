@@ -15,20 +15,25 @@ namespace xm {
 
     void SimpleImageWindow::refresh(const std::vector<cv::Mat>& _frames) {
         glImage.setFrames(_frames);
-        dispatcher.emit();
+        refresh(true);
     }
 
-    void SimpleImageWindow::refresh() {
+    void SimpleImageWindow::refresh(bool _redraw) {
+        redraw = _redraw;
         dispatcher.emit();
     }
 
     void SimpleImageWindow::on_dispatcher_signal() {
-        glImage.update();
+        if (redraw)
+            glImage.update();
+
         if (fps_changed && fps < 1000)
             set_title("approx. fps: " + std::to_string((int) fps));
         else if (fps_changed && fps >= 1000)
             set_title("approx. fps: >= 1000");
+
         fps_changed = false;
+        redraw = false;
     }
 
     void SimpleImageWindow::onResize(const Gtk::Allocation &allocation) {

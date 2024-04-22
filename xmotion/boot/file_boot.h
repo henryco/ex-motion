@@ -10,6 +10,7 @@
 #include "../data/json_config.h"
 #include "../camera/stereo_camera.h"
 #include "a_updated_boot.h"
+#include "../algo/i_logic.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -24,10 +25,13 @@ namespace xm {
     protected:
         std::unique_ptr<xm::CamParamsWindow> params_window;
         std::unique_ptr<xm::SimpleImageWindow> window;
+        std::unique_ptr<xm::Logic> logic;
 
         xm::data::JsonConfig config;
         std::string project_path;
         xm::StereoCamera camera;
+
+        bool bypass = false;
 
     public:
         int boostrap(int &argc, char **&argv) override;
@@ -40,6 +44,8 @@ namespace xm {
         void prepare_gui();
 
         void prepare_cam();
+
+        void prepare_logic();
 
         void load_device_params();
 

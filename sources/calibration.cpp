@@ -4,20 +4,36 @@
 
 #include "../xmotion/algo/calibration.h"
 
-xm::calib::Result xm::Calibration::proceed(float delta, const std::vector<cv::Mat> &frames) {
-    // TODO
-    return {};
-}
+xm::Calibration& xm::Calibration::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+    images.clear();
+    images.reserve(_frames.size());
+    for (auto &img: _frames)
+        images.push_back(img);
 
-std::vector<cv::Mat> xm::Calibration::frames() const {
-    // TODO
-    return {};
+    if (!is_active())
+        return *this;
+
+    // TODO LOGIC HERE
+
+    return *this;
 }
 
 void xm::Calibration::start() {
-    // TODO
+    active = true;
 }
 
 void xm::Calibration::stop() {
-    // TODO
+    active = false;
+}
+
+bool xm::Calibration::is_active() const {
+    return active;
+}
+
+const std::vector<cv::Mat> &xm::Calibration::frames() const {
+    return images;
+}
+
+const xm::calib::Result &xm::Calibration::result() const {
+    return results;
 }

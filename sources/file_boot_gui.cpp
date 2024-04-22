@@ -41,9 +41,17 @@ namespace xm {
             }
         });
 
-        auto button_start = Gtk::make_managed<xm::SmallButton>("s");
-        button_start->proxy().signal_clicked().connect([this]() {
-            // TODO: start
+        auto button_start = Gtk::make_managed<xm::SmallButton>("S");
+        button_start->proxy().signal_clicked().connect([this, button_start]() {
+            if (logic->is_active()) logic->stop();
+            else logic->start();
+            button_start->proxy().set_label(logic->is_active() ? "(S)" : "S");
+        });
+
+        auto button_bypass = Gtk::make_managed<xm::SmallButton>("B");
+        button_bypass->proxy().signal_clicked().connect([this, button_bypass]() {
+            bypass = !bypass;
+            button_bypass->proxy().set_label(bypass ? "(B)" : "B");
         });
 
         const auto &cam = config.camera;
@@ -53,9 +61,10 @@ namespace xm {
         window->scale(config.gui.scale);
         window->add_one(*button_conf);
         window->add_one(*button_start);
+        window->add_one(*button_bypass);
         window->set_resizable(false);
         window->show_all_children();
-        window->signal_delete_event().connect([this](GdkEventAny* any_event) {
+        window->signal_delete_event().connect([this](GdkEventAny *any_event) {
             stop_loop();
             return false;
         });

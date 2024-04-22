@@ -13,15 +13,16 @@
 
 namespace xm {
 
-    template<typename T>
     class Logic {
 
     public:
         virtual ~Logic() = default;
 
-        virtual T proceed(float delta, const std::vector<cv::Mat> &frames) = 0;
+        virtual Logic& proceed(float delta, const std::vector<cv::Mat> &frames) = 0;
 
-        virtual std::vector<cv::Mat> frames() const = 0;
+        virtual const std::vector<cv::Mat> &frames() const = 0;
+
+        virtual bool is_active() const = 0;
 
         virtual void start() = 0;
 

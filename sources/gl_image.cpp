@@ -121,12 +121,12 @@ namespace eox::xgtk {
         this->rows = _rows;
         this->cols = _cols;
 
+        size_t index = 0;
         for (size_t i = 0; i < _rows; i++) {
             auto h_box = std::make_unique<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
             h_box->set_halign(Gtk::ALIGN_CENTER);
 
             for (size_t k = 0; k < _cols; k++) {
-                const size_t index = (i * _rows) + k;
 
                 if (index >= _number)
                     break;
@@ -192,6 +192,8 @@ namespace eox::xgtk {
                 glAreas.push_back(std::move(area));
                 textures.push_back(std::make_unique<xogl::Texture1>());
                 initialized.push_back(false);
+
+                index += 1;
             }
 
             pack_start(*h_box, Gtk::PACK_SHRINK);

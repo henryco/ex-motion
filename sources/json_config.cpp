@@ -23,6 +23,13 @@ namespace xm::data {
         r.y = j.value("y", 0);
     }
 
+    void from_json(const nlohmann::json &j, Intrinsics &t) {
+        t.f_x = j.value("fx", -1.f);
+        t.f_y = j.value("fy", -1.f);
+        t.c_x = j.value("cx", -1.f);
+        t.c_y = j.value("cy", -1.f);
+    }
+
     void from_json(const nlohmann::json &j, Capture &c) {
         j.at("id").get_to(c.id);
         j.at("name").get_to(c.name);
@@ -43,6 +50,13 @@ namespace xm::data {
         c.flip = j.value("flip", (Flip) {
             .x = false,
             .y = false
+        });
+
+        c.intrinsics = j.value("intrinsics", (Intrinsics) {
+            .f_x = -1,
+            .f_y = -1,
+            .c_x = -1,
+            .c_y = -1
         });
     }
 
@@ -70,20 +84,11 @@ namespace xm::data {
         j.at("size").get_to(p.size);
     }
 
-    void from_json(const nlohmann::json &j, Intrinsics &t) {
-        j.at("name").get_to(t.name);
-        t.f_x = j.value("fx", -1.f);
-        t.f_y = j.value("fy", -1.f);
-        t.c_x = j.value("cx", -1.f);
-        t.c_y = j.value("cy", -1.f);
-        t.fix = j.value("fix", false);
-    }
-
     void from_json(const nlohmann::json &j, Calibration &c) {
         j.at("pattern").get_to(c.pattern);
-        c.intrinsics = j.value("intrinsics", std::vector<Intrinsics>{});
         c.delay = j.value("delay", 5000);
         c.total = j.value("total", 10);
+        c.fix = j.value("fix", false);
     }
 
     void from_json(const nlohmann::json &j, JsonConfig &c) {

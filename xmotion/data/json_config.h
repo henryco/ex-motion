@@ -61,7 +61,17 @@ namespace xm::data {
     } Pattern;
 
     typedef struct {
+        std::string name;
+        float f_x;
+        float f_y;
+        float c_x;
+        float c_y;
+        bool fix;
+    } Intrinsics;
+
+    typedef struct {
         Pattern pattern;
+        std::vector<Intrinsics> intrinsics;
         int total;
         int delay;
     } Calibration;

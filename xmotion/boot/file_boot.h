@@ -49,6 +49,8 @@ namespace xm {
 
         void load_device_params();
 
+        void process_results();
+
         int on_camera_update(const std::string &device_id, uint id, int value);
 
         void on_camera_reset(const std::string &device_id);

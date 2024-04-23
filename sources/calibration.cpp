@@ -4,6 +4,10 @@
 
 #include "../xmotion/algo/calibration.h"
 
+void xm::Calibration::init(const xm::calib::Initial &params) {
+    // TODO
+}
+
 xm::Calibration& xm::Calibration::proceed(float delta, const std::vector<cv::Mat> &_frames) {
     images.clear();
     images.reserve(_frames.size());

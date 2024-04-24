@@ -29,13 +29,6 @@ namespace xm::data {
     } Flip;
 
     typedef struct {
-        float f_x;
-        float f_y;
-        float c_x;
-        float c_y;
-    } Intrinsics;
-
-    typedef struct {
         std::string id;
         std::string name;
         std::string codec;
@@ -45,7 +38,6 @@ namespace xm::data {
         int fps;
         Flip flip;
         Region region;
-        Intrinsics intrinsics;
     } Capture;
 
     typedef struct {
@@ -69,6 +61,19 @@ namespace xm::data {
     } Pattern;
 
     typedef struct {
+        float x;
+        float y;
+        bool fix;
+    } Intrinsic;
+
+    typedef struct {
+        std::string name;
+        Intrinsic f;
+        Intrinsic c;
+    } Intrinsics;
+
+    typedef struct {
+        std::vector<Intrinsics> intrinsics;
         Pattern pattern;
         int total;
         int delay;
@@ -76,7 +81,12 @@ namespace xm::data {
     } Calibration;
 
     typedef struct {
+        int cpu;
+    } Misc;
+
+    typedef struct {
         ConfigType type;
+        Misc misc;
         Gui gui;
         Camera camera;
         Calibration calibration;

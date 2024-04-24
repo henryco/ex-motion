@@ -13,6 +13,8 @@ namespace xm {
         logic->proceed(delta, camera.capture());
         process_results();
 
+//        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+
         if (!bypass)
             window->refresh(logic->frames());
         else
@@ -40,11 +42,12 @@ namespace xm {
                                 .size = config.calibration.pattern.size,
                                 .width = config.camera.capture[0].width,
                                 .height = config.camera.capture[0].height,
-                                .fx = config.camera.capture[0].intrinsics.f_x,
-                                .fy = config.camera.capture[0].intrinsics.f_y,
-                                .cx = config.camera.capture[0].intrinsics.c_x,
-                                .cy = config.camera.capture[0].intrinsics.c_y,
-                                .fix = config.calibration.fix
+                                .fx = config.calibration.intrinsics[0].f.x,
+                                .fy = config.calibration.intrinsics[0].f.y,
+                                .cx = config.calibration.intrinsics[0].c.x,
+                                .cy = config.calibration.intrinsics[0].c.y,
+                                .fix_f = config.calibration.intrinsics[0].f.fix,
+                                .fix_c = config.calibration.intrinsics[0].c.fix,
                         });
             return;
         }

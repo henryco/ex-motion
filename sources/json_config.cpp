@@ -7,8 +7,8 @@
 
 namespace xm::data {
     NLOHMANN_JSON_SERIALIZE_ENUM(ConfigType, {
-        {INVALID, nullptr},
-        {CALIBRATION, "calibration"},
+        { INVALID, nullptr },
+        { CALIBRATION, "calibration" },
     })
 
     void from_json(const nlohmann::json &j, Flip &f) {
@@ -23,11 +23,24 @@ namespace xm::data {
         r.y = j.value("y", 0);
     }
 
+    void from_json(const nlohmann::json &j, Intrinsic n) {
+        n.fix = j.value("fix", false);
+        n.x = j.value("x", -1.f);
+        n.y = j.value("y", -1.f);
+    }
+
     void from_json(const nlohmann::json &j, Intrinsics &t) {
-        t.f_x = j.value("fx", -1.f);
-        t.f_y = j.value("fy", -1.f);
-        t.c_x = j.value("cx", -1.f);
-        t.c_y = j.value("cy", -1.f);
+        j.at("name").get_to(t.name);
+        t.f = j.value("f", (Intrinsic) {
+                .x = -1.f,
+                .y = -1.f,
+                .fix = false,
+        });
+        t.c = j.value("c", (Intrinsic) {
+                .x = -1.f,
+                .y = -1.f,
+                .fix = false,
+        });
     }
 
     void from_json(const nlohmann::json &j, Capture &c) {
@@ -41,22 +54,15 @@ namespace xm::data {
         c.fps = j.value("fps", 30);
 
         c.region = j.value("region", (Region) {
-            .x = 0,
-            .y = 0,
-            .w = c.width,
-            .h = c.height
+                .x = 0,
+                .y = 0,
+                .w = c.width,
+                .h = c.height
         });
 
         c.flip = j.value("flip", (Flip) {
-            .x = false,
-            .y = false
-        });
-
-        c.intrinsics = j.value("intrinsics", (Intrinsics) {
-            .f_x = -1,
-            .f_y = -1,
-            .c_x = -1,
-            .c_y = -1
+                .x = false,
+                .y = false
         });
     }
 
@@ -86,14 +92,23 @@ namespace xm::data {
 
     void from_json(const nlohmann::json &j, Calibration &c) {
         j.at("pattern").get_to(c.pattern);
+        c.intrinsics = j.value("intrinsics", std::vector<Intrinsics>{});
         c.delay = j.value("delay", 5000);
         c.total = j.value("total", 10);
         c.fix = j.value("fix", false);
     }
 
+    void from_json(const nlohmann::json &j, Misc &m) {
+        m.cpu = j.value("cpu", 8);
+    }
+
     void from_json(const nlohmann::json &j, JsonConfig &c) {
         j.at("type").get_to(c.type);
         j.at("camera").get_to(c.camera);
+
+        c.misc = j.value("misc", (Misc) {
+                .cpu = 8
+        });
 
         c.gui = j.value("gui", (Gui) {
                 .vertical = false,

@@ -12,12 +12,33 @@
 #include "../utils/timer.h"
 
 namespace xm::calib {
-    typedef struct {
+
+    typedef struct Result {
         int remains_cap;
         int remains_ms;
         bool ready;
 
-        // TODO: CALIBRATION MATRIX ETC
+        /**
+         * Calibration matrix 3x3
+         */
+        cv::Mat K;
+
+        /**
+         * Distortion coefficients
+         */
+        cv::Mat D;
+
+        /**
+         * Mean re-projection error
+         * (root mean square)
+         */
+        double mre_1;
+
+        /**
+         * Same as mre_1, calculated explicitly
+         */
+        double mre_2;
+
     } Result;
 
     typedef struct Initial {
@@ -33,7 +54,8 @@ namespace xm::calib {
         float fy = -1;
         float cx = -1;
         float cy = -1;
-        bool fix = false;
+        bool fix_f = false;
+        bool fix_c = false;
     } Initial;
 }
 
@@ -70,6 +92,8 @@ namespace xm {
 
     private:
         bool capture_squares(const cv::Mat &frame);
+
+        void calibrate();
 
         void put_debug_text();
     };

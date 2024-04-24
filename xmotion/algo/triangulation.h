@@ -22,7 +22,9 @@ namespace xm {
     private:
         std::vector<cv::Mat> images{};
         xm::nview::Result results{};
+
         bool active = false;
+        bool DEBUG = false;
 
     public:
         Triangulation &proceed(float delta, const std::vector<cv::Mat> &frames) override;
@@ -34,6 +36,8 @@ namespace xm {
         void stop() override;
 
         const std::vector<cv::Mat> &frames() const override;
+
+        void debug(bool _debug) override;
 
         const xm::nview::Result &result() const;
     };

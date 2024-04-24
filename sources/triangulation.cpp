@@ -28,3 +28,7 @@ const std::vector<cv::Mat> &xm::Triangulation::frames() const {
 const xm::nview::Result &xm::Triangulation::result() const {
     return results;
 }
+
+void xm::Triangulation::debug(bool _debug) {
+    DEBUG = _debug;
+}

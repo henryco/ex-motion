@@ -21,15 +21,15 @@ namespace xm {
 
     void FileBoot::process_results() {
         if (config.type == data::CALIBRATION) {
-            auto calib = dynamic_cast<xm::Calibration *>(logic.get());
-            const auto results = calib->result();
-            log->info("Remain: {} | {}", results.remains_cap, results.remains_ms);
+            const auto results = (dynamic_cast<xm::Calibration *>(logic.get()))->result();
+            // TODO
         }
     }
 
     void FileBoot::prepare_logic() {
         if (config.type == data::CALIBRATION) {
             logic = std::make_unique<xm::Calibration>();
+            logic->debug(true);
 
             auto calib = dynamic_cast<xm::Calibration *>(logic.get());
             calib->init({

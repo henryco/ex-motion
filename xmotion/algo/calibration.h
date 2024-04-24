@@ -49,6 +49,7 @@ namespace xm {
         eox::utils::Timer timer{};
 
         bool active = false;
+        bool DEBUG = false;
 
     public:
         void init(const xm::calib::Initial &params);
@@ -63,10 +64,14 @@ namespace xm {
 
         const std::vector<cv::Mat> &frames() const override;
 
+        void debug(bool _debug) override;
+
         const xm::calib::Result &result() const;
 
     private:
         bool capture_squares(const cv::Mat &frame);
+
+        void put_debug_text();
     };
 
 } // xm

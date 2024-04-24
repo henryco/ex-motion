@@ -27,6 +27,8 @@ namespace xm {
         virtual void start() = 0;
 
         virtual void stop() = 0;
+
+        virtual void debug(bool _debug) = 0;
     };
 
 } // xm

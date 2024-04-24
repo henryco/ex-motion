@@ -2,6 +2,7 @@
 // Created by henryco on 4/22/24.
 //
 
+#include <opencv2/imgproc.hpp>
 #include "../xmotion/algo/calibration.h"
 #include "../xmotion/utils/cv_utils.h"
 
@@ -47,13 +48,29 @@ xm::Calibration &xm::Calibration::proceed(float delta, const std::vector<cv::Mat
         return *this;
     }
 
-    if (!capture_squares(_frames.front()))
+    if (!capture_squares(_frames.front())) {
+        put_debug_text();
         return *this;
+    }
 
     // TODO CALIBRATION LOGIC
 
     stop();
     return *this;
+}
+
+void xm::Calibration::put_debug_text() {
+    if (!DEBUG)
+        return;
+
+    const auto font = cv::FONT_HERSHEY_SIMPLEX;
+    const cv::Scalar color(0, 0, 255);
+
+    const std::string t1 = std::to_string(image_points.size()) + " / " + std::to_string(config.total);
+    const std::string t2 = std::to_string(results.remains_ms) + " ms";
+
+    cv::putText(images.front(), t1, cv::Point(20, 50), font, 1.5, color, 3);
+    cv::putText(images.front(), t2, cv::Point(20, 100), font, 1.5, color, 3);
 }
 
 void xm::Calibration::start() {
@@ -86,4 +103,8 @@ const std::vector<cv::Mat> &xm::Calibration::frames() const {
 
 const xm::calib::Result &xm::Calibration::result() const {
     return results;
+}
+
+void xm::Calibration::debug(bool _debug) {
+    DEBUG = _debug;
 }

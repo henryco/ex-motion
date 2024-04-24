@@ -9,14 +9,19 @@
 #define XMOTION_CALIBRATION_H
 
 #include "i_logic.h"
+#include "../utils/timer.h"
 
 namespace xm::calib {
     typedef struct {
-        // TODO
+        int remains_cap;
+        int remains_ms;
+        bool ready;
+
+        // TODO: CALIBRATION MATRIX ETC
     } Result;
 
     typedef struct Initial {
-        long delay = 1000;
+        int delay = 1000;
         int total = 10;
         int columns = 9;
         int rows = 7;
@@ -37,8 +42,12 @@ namespace xm {
     class Calibration : public xm::Logic {
 
     private:
+        std::vector<std::vector<cv::Point2f>> image_points{};
         std::vector<cv::Mat> images{};
         xm::calib::Result results{};
+        xm::calib::Initial config;
+        eox::utils::Timer timer{};
+
         bool active = false;
 
     public:
@@ -55,6 +64,9 @@ namespace xm {
         const std::vector<cv::Mat> &frames() const override;
 
         const xm::calib::Result &result() const;
+
+    private:
+        bool capture_squares(const cv::Mat &frame);
     };
 
 } // xm

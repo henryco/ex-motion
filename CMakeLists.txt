@@ -112,6 +112,8 @@ set(SOURCE_FILES
         sources/calibration.cpp
         sources/triangulation.cpp
         sources/file_boot_logic.cpp
+        xmotion/utils/cv_utils.h
+        sources/cv_utils.cpp
 )
 
 if (UNIX AND NOT APPLE)

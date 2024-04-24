@@ -20,7 +20,11 @@ namespace xm {
     }
 
     void FileBoot::process_results() {
-
+        if (config.type == data::CALIBRATION) {
+            auto calib = dynamic_cast<xm::Calibration *>(logic.get());
+            const auto results = calib->result();
+            log->info("Remain: {} | {}", results.remains_cap, results.remains_ms);
+        }
     }
 
     void FileBoot::prepare_logic() {

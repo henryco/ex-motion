@@ -31,6 +31,7 @@ namespace eox::utils {
     }
 
     void Timer::start() {
+        reset();
         active = true;
     }
 

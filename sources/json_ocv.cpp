@@ -2,13 +2,17 @@
 // Created by henryco on 4/25/24.
 //
 
+#include <iomanip>
 #include <opencv2/core/persistence.hpp>
+#include <ctime>
+#include <chrono>
 #include "../xmotion/data/json_ocv.h"
 
 void xm::data::ocv::write_calibration(const std::string &file, const xm::data::ocv::Calibration &c) {
     cv::FileStorage fs(file, cv::FileStorage::WRITE);
     {
         fs << "name" << c.name;
+        fs << "timestamp" << utc_iso_date_str_now();
         fs << "K" << c.K;
         fs << "D" << c.D;
         fs << "error" << c.error;
@@ -21,10 +25,20 @@ xm::data::ocv::Calibration xm::data::ocv::read_calibration(const std::string &fi
     cv::FileStorage fs(file, cv::FileStorage::READ);
     {
         fs["name"] >> c.name;
+        fs["timestamp"] >> c.timestamp;
         fs["K"] >> c.K;
         fs["D"] >> c.D;
         fs["error"] >> c.error;
     }
     fs.release();
     return c;
+}
+
+std::string xm::data::ocv::utc_iso_date_str_now() {
+    const auto now = std::chrono::system_clock::now();
+    const auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    const auto tm_now = std::gmtime(&time_t_now);
+    std::ostringstream os;
+    os << std::put_time(tm_now, "%FT%TZ");
+    return os.str();
 }

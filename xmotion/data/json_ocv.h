@@ -12,6 +12,8 @@ namespace xm::data::ocv {
     typedef struct {
         std::string name;
 
+        std::string timestamp;
+
         /**
          * Calibration matrix 3x3
          */
@@ -28,6 +30,8 @@ namespace xm::data::ocv {
     void write_calibration(const std::string &file, const Calibration &c);
 
     Calibration read_calibration(const std::string &file);
+
+    std::string utc_iso_date_str_now();
 }
 
 #endif //XMOTION_JSON_OCV_H

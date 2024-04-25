@@ -131,6 +131,7 @@ void xm::Calibration::calibrate() {
 
     const double mre = sqrt(totalError / (double) totalPoints);
 
+    active = false;
     results.K = camera_matrix;
     results.D = distortion_coefficients;
     results.mre_1 = rms;

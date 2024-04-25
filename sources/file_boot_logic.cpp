@@ -27,14 +27,17 @@ namespace xm {
             const auto results = (dynamic_cast<xm::Calibration *>(logic.get()))->result();
             if (!results.ready)
                 return;
+
+            logic->stop();
+
             const std::filesystem::path root = project_file;
-            const std::filesystem::path name = config.camera.capture[0].name;
+            const std::filesystem::path name = config.camera.capture[0].name + ".json";
             const std::string file = (root.parent_path() / name).string();
 
             log->info("Saving calibration results");
 
             xm::data::ocv::write_calibration(file, {
-                    .name = name.string(),
+                    .name = config.camera.capture[0].name,
                     .K = results.K,
                     .D = results.D,
                     .error = results.mre_1

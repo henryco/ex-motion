@@ -11,8 +11,8 @@
 namespace xm {
 
     void FileBoot::open_project(const char *argv) {
-        project_path = xm::data::prepare_project_file(argv);
-        config = xm::data::config_from_file(project_path);
+        project_file = xm::data::prepare_project_file(argv);
+        config = xm::data::config_from_file(project_file);
 
         eox::globals::THREAD_POOL_CORES_MAX = config.misc.cpu;
     }

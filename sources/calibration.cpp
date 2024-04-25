@@ -156,7 +156,6 @@ xm::Calibration &xm::Calibration::proceed(float delta, const std::vector<cv::Mat
 
     calibrate();
 
-    stop();
     return *this;
 }
 
@@ -187,7 +186,7 @@ void xm::Calibration::start() {
 void xm::Calibration::stop() {
     results.remains_cap = 0;
     results.remains_ms = 0;
-    results.ready = true;
+    results.ready = false;
 
     image_points.clear();
     active = false;

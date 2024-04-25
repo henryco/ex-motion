@@ -8,7 +8,7 @@
 namespace xm {
 
     void FileBoot::prepare_cam() {
-        const auto project_dir = xm::data::prepare_project_dir(project_path);
+        const auto project_dir = xm::data::prepare_project_dir(project_file);
         camera.setFastMode(config.camera.fast);
         for (const auto &c: config.camera.capture) {
             camera.open({
@@ -31,7 +31,7 @@ namespace xm {
     }
 
     void FileBoot::on_camera_save(const std::string &device_id) {
-        const auto project_dir = xm::data::prepare_project_dir(project_path);
+        const auto project_dir = xm::data::prepare_project_dir(project_file);
         for (const auto &c: config.camera.capture) {
             if (c.id != device_id)
                 continue;
@@ -49,7 +49,7 @@ namespace xm {
     }
 
     void FileBoot::on_camera_read(const std::string &device_id, const std::string &name) {
-        const auto project_dir = xm::data::prepare_project_dir(project_path);
+        const auto project_dir = xm::data::prepare_project_dir(project_file);
         std::filesystem::path file = name + ".xcam";
         std::filesystem::path conf = project_dir / file;
 

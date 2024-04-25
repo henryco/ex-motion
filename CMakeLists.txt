@@ -114,6 +114,8 @@ set(SOURCE_FILES
         sources/file_boot_logic.cpp
         xmotion/utils/cv_utils.h
         sources/cv_utils.cpp
+        xmotion/data/json_ocv.h
+        sources/json_ocv.cpp
 )
 
 if (UNIX AND NOT APPLE)

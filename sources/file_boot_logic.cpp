@@ -4,6 +4,7 @@
 
 #include "../xmotion/boot/file_boot.h"
 #include "../xmotion/algo/calibration.h"
+#include "../xmotion/data/json_ocv.h"
 
 namespace xm {
 
@@ -24,8 +25,22 @@ namespace xm {
     void FileBoot::process_results() {
         if (config.type == data::CALIBRATION) {
             const auto results = (dynamic_cast<xm::Calibration *>(logic.get()))->result();
-            // TODO
+            if (!results.ready)
+                return;
+            const std::filesystem::path root = project_file;
+            const std::filesystem::path name = config.camera.capture[0].name;
+            const std::string file = (root.parent_path() / name).string();
+
+            log->info("Saving calibration results");
+
+            xm::data::ocv::write_calibration(file, {
+                    .name = name.string(),
+                    .K = results.K,
+                    .D = results.D,
+                    .error = results.mre_1
+            });
         }
+        // TODO MORE TYPES
     }
 
     void FileBoot::prepare_logic() {

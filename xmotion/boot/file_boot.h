@@ -28,7 +28,7 @@ namespace xm {
         std::unique_ptr<xm::Logic> logic;
 
         xm::data::JsonConfig config;
-        std::string project_path;
+        std::string project_file;
         xm::StereoCamera camera;
 
         bool bypass = false;

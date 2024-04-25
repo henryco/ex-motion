@@ -48,22 +48,26 @@ namespace xm {
             logic = std::make_unique<xm::Calibration>();
             logic->debug(true);
 
-            auto calib = dynamic_cast<xm::Calibration *>(logic.get());
-            calib->init({
-                                .delay = config.calibration.delay,
-                                .total = config.calibration.total,
-                                .columns = config.calibration.pattern.columns,
-                                .rows = config.calibration.pattern.rows,
-                                .size = config.calibration.pattern.size,
-                                .width = config.camera.capture[0].width,
-                                .height = config.camera.capture[0].height,
-                                .fx = config.calibration.intrinsics[0].f.x,
-                                .fy = config.calibration.intrinsics[0].f.y,
-                                .cx = config.calibration.intrinsics[0].c.x,
-                                .cy = config.calibration.intrinsics[0].c.y,
-                                .fix_f = config.calibration.intrinsics[0].f.fix,
-                                .fix_c = config.calibration.intrinsics[0].c.fix,
-                        });
+            xm::calib::Initial params = {
+                    .delay = config.calibration.delay,
+                    .total = config.calibration.total,
+                    .columns = config.calibration.pattern.columns,
+                    .rows = config.calibration.pattern.rows,
+                    .size = config.calibration.pattern.size,
+                    .width = config.camera.capture[0].width,
+                    .height = config.camera.capture[0].height
+            };
+
+            if (!config.calibration.intrinsics.empty()) {
+                params.fx = config.calibration.intrinsics[0].f.x;
+                params.fy = config.calibration.intrinsics[0].f.y;
+                params.cx = config.calibration.intrinsics[0].c.x;
+                params.cy = config.calibration.intrinsics[0].c.y;
+                params.fix_f = config.calibration.intrinsics[0].f.fix;
+                params.fix_c = config.calibration.intrinsics[0].c.fix;
+            }
+
+            (dynamic_cast<xm::Calibration *>(logic.get()))->init(params);
             return;
         }
         // TODO more types

@@ -51,6 +51,7 @@ namespace xm::data {
     } Camera;
 
     typedef struct {
+        std::vector<int> layout;
         bool vertical;
         float scale;
         int fps;

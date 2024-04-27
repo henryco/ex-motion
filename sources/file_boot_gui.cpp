@@ -57,7 +57,12 @@ namespace xm {
         const auto &cam = config.camera;
         const auto &gui = config.gui;
         window = std::make_unique<xm::SimpleImageWindow>();
-        window->init(cam.capture[0].region.w, cam.capture[0].region.h, cam._names, gui.vertical);
+
+        if (gui.layout.size() < 2)
+            window->init(cam.capture[0].region.w, cam.capture[0].region.h, cam._names, gui.vertical);
+        else
+            window->init(cam.capture[0].region.w, cam.capture[0].region.h, cam._names, gui.layout[0], gui.layout[1]);
+
         window->scale(config.gui.scale);
         window->add_one(*button_conf);
         window->add_one(*button_start);

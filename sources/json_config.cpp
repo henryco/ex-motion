@@ -81,6 +81,7 @@ namespace xm::data {
     }
 
     void from_json(const nlohmann::json &j, Gui &g) {
+        g.layout = j.value("layout", std::vector<int>{});
         g.vertical = j.value("vertical", false);
         g.scale = j.value("scale", 1.f);
         g.fps = j.value("fps", 144);

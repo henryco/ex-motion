@@ -26,6 +26,49 @@ namespace xm::data::ocv {
          */
         cv::Mat D;
 
+        /**
+        * aperture width of the sensor
+        */
+        float width;
+
+        /**
+         * aperture height of the sensor
+         */
+        float height;
+
+        /**
+         * Field of view along X axis
+         */
+        float fov_x;
+
+        /**
+         * Field of view along Y axis
+         */
+        float fov_y;
+
+        /**
+         * Focal length of the lense
+         */
+        float f;
+
+        /**
+         * Principal point X
+         */
+        float c_x;
+
+        /**
+         * Principal point Y
+         */
+        float c_y;
+
+        /**
+         * Aspect ratio fy/fx
+         */
+        float r;
+
+        /**
+         * Measurement error
+         */
         double error;
     } Calibration;
 

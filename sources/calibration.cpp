@@ -92,11 +92,13 @@ void xm::Calibration::calibrate() {
         }
     }
 
+    const auto im_size = cv::Size((int) config.width, (int) config.height);
+
     // calibration
     const auto rms = cv::calibrateCamera(
             object_points,
             image_points,
-            cv::Size((int) config.width, (int) config.height),
+            im_size,
             camera_matrix,
             distortion_coefficients,
             r_vecs,
@@ -131,9 +133,31 @@ void xm::Calibration::calibrate() {
 
     const double mre = sqrt(totalError / (double) totalPoints);
 
+    double aw = 0, ah = 0, fov_x = 0, fov_y = 0, f = 0, r = 0;
+    cv::Point2d p;
+
+    cv::calibrationMatrixValues(
+            camera_matrix,
+            im_size,
+            aw,
+            ah,
+            fov_x,
+            fov_y,
+            f,
+            p,
+            r);
+
     active = false;
     results.K = camera_matrix;
     results.D = distortion_coefficients;
+    results.width = (float) aw;
+    results.height = (float) ah;
+    results.fov_x = (float) fov_x;
+    results.fov_y = (float) fov_y;
+    results.f = (float) f;
+    results.r = (float) r;
+    results.c_x = (float) p.x;
+    results.c_y = (float) p.y;
     results.mre_1 = rms;
     results.mre_2 = mre;
     results.ready = true;

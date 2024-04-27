@@ -82,6 +82,9 @@ set(SOURCE_FILES
         xmotion/algo/i_logic.h
         xmotion/algo/calibration.h
         xmotion/algo/triangulation.h
+        xmotion/utils/cv_utils.h
+        xmotion/data/json_ocv.h
+        xmotion/algo/cross.h
 
         sources/velocity_filter.cpp
         sources/low_pass_filter.cpp
@@ -112,10 +115,9 @@ set(SOURCE_FILES
         sources/calibration.cpp
         sources/triangulation.cpp
         sources/file_boot_logic.cpp
-        xmotion/utils/cv_utils.h
         sources/cv_utils.cpp
-        xmotion/data/json_ocv.h
         sources/json_ocv.cpp
+        sources/cross.cpp
 )
 
 if (UNIX AND NOT APPLE)

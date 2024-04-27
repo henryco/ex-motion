@@ -39,6 +39,46 @@ namespace xm::calib {
          */
         double mre_2;
 
+        /**
+         * aperture width of the sensor
+         */
+        float width;
+
+        /**
+         * aperture height of the sensor
+         */
+        float height;
+
+        /**
+         * Field of view along X axis
+         */
+        float fov_x;
+
+        /**
+         * Field of view along Y axis
+         */
+        float fov_y;
+
+        /**
+         * Focal length of the lense
+         */
+        float f;
+
+        /**
+         * Principal point X
+         */
+        float c_x;
+
+        /**
+         * Principal point Y
+         */
+        float c_y;
+
+        /**
+         * Aspect ratio fy/fx
+         */
+        float r;
+
     } Result;
 
     typedef struct Initial {
@@ -90,7 +130,7 @@ namespace xm {
 
         const xm::calib::Result &result() const;
 
-    private:
+    protected:
         bool capture_squares(const cv::Mat &frame);
 
         void calibrate();

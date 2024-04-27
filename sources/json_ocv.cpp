@@ -16,6 +16,14 @@ void xm::data::ocv::write_calibration(const std::string &file, const xm::data::o
         fs << "timestamp" << utc_iso_date_str_now();
         fs << "K" << c.K;
         fs << "D" << c.D;
+        fs << "width" << c.width;
+        fs << "height" << c.height;
+        fs << "fov_x" << c.fov_x;
+        fs << "fov_y" << c.fov_y;
+        fs << "f" << c.f;
+        fs << "center_x" << c.c_x;
+        fs << "center_y" << c.c_y;
+        fs << "aspect_ratio" << c.r;
         fs << "error" << c.error;
     }
     fs.release();
@@ -30,6 +38,14 @@ xm::data::ocv::Calibration xm::data::ocv::read_calibration(const std::string &fi
         fs["timestamp"] >> c.timestamp;
         fs["K"] >> c.K;
         fs["D"] >> c.D;
+        fs["width"] >> c.width;
+        fs["height"] >> c.height;
+        fs["fov_x"] >> c.fov_x;
+        fs["fov_y"] >> c.fov_y;
+        fs["f"] >> c.f;
+        fs["center_x"] >> c.c_x;
+        fs["center_y"] >> c.c_y;
+        fs["aspect_ratio"] >> c.r;
         fs["error"] >> c.error;
     }
     fs.release();

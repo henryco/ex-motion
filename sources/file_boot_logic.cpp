@@ -40,6 +40,14 @@ namespace xm {
                     .name = config.camera.capture[0].name,
                     .K = results.K,
                     .D = results.D,
+                    .width = results.width,
+                    .height = results.height,
+                    .fov_x = results.fov_x,
+                    .fov_y = results.fov_y,
+                    .f = results.f,
+                    .c_x = results.c_x,
+                    .c_y = results.c_y,
+                    .r = results.r,
                     .error = results.mre_1
             });
             return;

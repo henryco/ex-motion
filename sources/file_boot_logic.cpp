@@ -42,7 +42,14 @@ namespace xm {
                     .D = results.D,
                     .error = results.mre_1
             });
+            return;
         }
+
+        if (config.type == data::CROSS_CALIBRATION) {
+
+            return;
+        }
+
         // TODO MORE TYPES
     }
 
@@ -77,6 +84,14 @@ namespace xm {
             (dynamic_cast<xm::Calibration *>(logic.get()))->init(params);
             return;
         }
+
+        if (config.type == data::CROSS_CALIBRATION) {
+            logic = std::make_unique<xm::Calibration>();
+            logic->debug(true);
+
+            return;
+        }
+
         // TODO more types
         throw std::runtime_error("Invalid config type");
     }

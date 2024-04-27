@@ -9,6 +9,7 @@ namespace xm::data {
     NLOHMANN_JSON_SERIALIZE_ENUM(ConfigType, {
         { INVALID, nullptr },
         { CALIBRATION, "calibration" },
+        { CROSS_CALIBRATION, "cross_calibration" },
     })
 
     void from_json(const nlohmann::json &j, Flip &f) {

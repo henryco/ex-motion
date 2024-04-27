@@ -67,10 +67,12 @@ platform::cap::camera_controls platform::cap::read(std::istream &input_stream, c
         throw std::runtime_error("Cannot read camera settings, invalid capture API");
 
     const auto map = eox::v4l2::read_controls(input_stream);
-    if (!map.contains(name))
-        throw std::runtime_error("Cannot locate settings in a file for capture: " + name);
+//    if (!map.contains(name))
+//        throw std::runtime_error("Cannot locate settings in a file for capture: " + name);
 
-    const auto& settings = map.at(name);
+//    const auto& settings = map.at(name);
+    const auto& settings = map.begin()->second;
+
     std::vector<camera_control> controls;
     controls.reserve(settings.size());
     for (const auto &s: settings)

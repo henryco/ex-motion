@@ -33,6 +33,7 @@ namespace xm::data {
         { INVALID, nullptr },
         { CALIBRATION, "calibration" },
         { CROSS_CALIBRATION, "cross_calibration" },
+        { TRIANGULATION, "triangulation" },
     })
 
     void from_json(const nlohmann::json &j, Flip &f) {

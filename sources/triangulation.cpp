@@ -4,8 +4,22 @@
 
 #include "../xmotion/algo/triangulation.h"
 
-xm::Triangulation& xm::Triangulation::proceed(float delta, const std::vector<cv::Mat> &frames) {
+void xm::Triangulation::init(const xm::nview::Initial &params) {
+    config = params;
+    // TODO?
+}
+
+xm::Triangulation& xm::Triangulation::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+    if (!is_active() || _frames.empty()) {
+        images.clear();
+        images.reserve(_frames.size());
+        for (auto &img: _frames)
+            images.push_back(img);
+        return *this;
+    }
+
     // TODO
+
     return *this;
 }
 

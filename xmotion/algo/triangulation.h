@@ -11,9 +11,13 @@
 #include "i_logic.h"
 
 namespace xm::nview {
-    typedef struct {
+    typedef struct Result {
         // TODO
     } Result;
+
+    typedef struct Initial {
+        // TODO
+    } Initial;
 }
 
 namespace xm {
@@ -22,11 +26,14 @@ namespace xm {
     private:
         std::vector<cv::Mat> images{};
         xm::nview::Result results{};
+        xm::nview::Initial config;
 
         bool active = false;
         bool DEBUG = false;
 
     public:
+        void init(const xm::nview::Initial &params);
+
         Triangulation &proceed(float delta, const std::vector<cv::Mat> &frames) override;
 
         bool is_active() const override;

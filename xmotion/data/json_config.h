@@ -14,7 +14,8 @@ namespace xm::data {
     enum ConfigType {
         INVALID = -1,
         CALIBRATION,
-        CROSS_CALIBRATION
+        CROSS_CALIBRATION,
+        TRIANGULATION
     };
 
     typedef struct {

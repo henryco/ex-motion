@@ -8,6 +8,7 @@
 #include "../xmotion/algo/calibration.h"
 #include "../xmotion/data/json_ocv.h"
 #include "../xmotion/algo/cross.h"
+#include "../xmotion/algo/triangulation.h"
 
 namespace xm {
 
@@ -90,7 +91,11 @@ namespace xm {
             return;
         }
 
-        // TODO MORE TYPES
+        if (config.type == data::TRIANGULATION) {
+            // TODO
+
+            return;
+        }
     }
 
     void FileBoot::prepare_logic() {
@@ -157,7 +162,18 @@ namespace xm {
             return;
         }
 
-        // TODO more types
+        if (config.type == data::TRIANGULATION) {
+            logic = std::make_unique<xm::Triangulation>();
+            logic->debug(true);
+
+            xm::nview::Initial params = {
+                    // TODO
+            };
+
+            (static_cast<xm::Triangulation *>(logic.get()))->init(params);
+            return;
+        }
+
         throw std::runtime_error("Invalid config type");
     }
 

@@ -131,6 +131,10 @@ namespace xm {
             else if (property.flip_y && !property.flip_x)
                 cv::flip(dst, dst, 0);
 
+            // Rotate 90* clockwise
+            if (property.rotate)
+                cv::rotate(dst, dst, cv::ROTATE_90_CLOCKWISE);
+
             images[property.name] = dst;
         }
 

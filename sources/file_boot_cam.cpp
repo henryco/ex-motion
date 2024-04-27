@@ -21,6 +21,7 @@ namespace xm {
                                 .buffer = c.buffer,
                                 .flip_x = c.flip.x,
                                 .flip_y = c.flip.y,
+                                .rotate = c.rotate,
                                 .x = c.region.x,
                                 .y = c.region.y,
                                 .w = c.region.w,

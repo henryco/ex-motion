@@ -38,6 +38,7 @@ namespace xm::data {
         int fps;
         Flip flip;
         Region region;
+        bool rotate;
     } Capture;
 
     typedef struct {

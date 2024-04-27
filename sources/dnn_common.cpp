@@ -68,15 +68,21 @@ namespace eox::dnn {
 
             if (keep_aspect_ratio) {
                 // letterbox, preserving aspect ratio
-                const float r = (float) in.cols / (float) in.rows;
-                const int n_w = width * std::min(1.f, r);
-                const int n_h = n_w / std::max(1.f, r);
-                const int s_x = (width - n_w) / 2;
-                const int s_y = (height - n_h) / 2;
+
+//                const float r = (float) in.cols / (float) in.rows;
+//                const int n_w = width * std::min(1.f, r);
+//                const int n_h = n_w / std::max(1.f, r);
+
+                const float scale = std::min((float) width / (float) in.cols, (float) height / (float) in.rows);
+                const float n_w = (float) in.cols * scale;
+                const float n_h = (float) in.rows * scale;
+
+                const float s_x = ((float) width - n_w) / 2.f;
+                const float s_y = ((float) height - n_h) / 2.f;
 
                 blob = cv::Mat::zeros(cv::Size(width, height), CV_8UC3);
-                cv::Mat roi = blob(cv::Rect(s_x, s_y, n_w, n_h));
-                cv::resize(in, roi, cv::Size(n_w, n_h),
+                cv::Mat roi = blob(cv::Rect((int) s_x, (int) s_y, (int) n_w, (int) n_h));
+                cv::resize(in, roi, cv::Size((int) n_w, (int) n_h),
                            0, 0, cv::INTER_CUBIC);
             } else {
                 // resize without preserving aspect ratio
@@ -99,11 +105,18 @@ namespace eox::dnn {
     }
 
     Paddings get_letterbox_paddings(int width, int height, int box_w, int box_h) {
-        const float r = (float) width / (float) height;
-        const int n_w = box_w * std::min(1.f, r);
-        const int n_h = n_w / std::max(1.f, r);
-        const int s_x = (box_w - n_w) / 2.f;
-        const int s_y = (box_h - n_h) / 2.f;
+
+//        const float r = (float) width / (float) height;
+//        const int n_w = box_w * std::min(1.f, r);
+//        const int n_h = n_w / std::max(1.f, r);
+
+        const float scale = std::min((float) box_w / (float) width, (float) box_h / (float) height);
+        const int n_w = (int) ((float) width * scale);
+        const int n_h = (int) ((float) height * scale);
+
+        const int s_x = (int) ((float) (box_w - n_w) / 2.f);
+        const int s_y = (int) ((float) (box_h - n_h) / 2.f);
+
         return {
                 .left = (float) s_x,
                 .right = (float) s_x,

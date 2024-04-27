@@ -5,6 +5,7 @@
 #include <iostream>
 #include <utility>
 #include <gtkmm/eventbox.h>
+#include <opencv2/imgproc.hpp>
 #include "../xmotion/gtk/gl_image.h"
 
 namespace eox::xgtk {
@@ -61,14 +62,14 @@ namespace eox::xgtk {
 
     void GLImage::setFrame(const cv::Mat &_frame) {
         frames.clear();
-        frames.push_back(cv::Mat(_frame));
+        frames.emplace_back(_frame);
     }
 
     void GLImage::setFrames(const std::vector<cv::Mat>& _frames) {
         frames.clear();
-        for (auto item: _frames) {
+        for (const auto& item: _frames) {
             // YES, we NEED TO COPY IT
-            frames.push_back(std::move(item));
+            frames.push_back(std::move(fitSize(item)));
         }
     }
     void GLImage::update(const std::vector<cv::Mat>& _frames) {
@@ -251,6 +252,23 @@ namespace eox::xgtk {
 
     void GLImage::setMouseCallback(std::function<void(int, int, int, bool)> _callback) {
         this->callback = std::move(_callback);
+    }
+
+    cv::Mat GLImage::fitSize(const cv::Mat &in) const {
+        if (in.cols == width && in.rows == height)
+            return in;
+
+        const float scale = std::min((float) width / (float) in.cols, (float) height / (float) in.rows);
+        const float n_w = (float) in.cols * scale;
+        const float n_h = (float) in.rows * scale;
+        const float s_x = ((float) width - n_w) / 2.f;
+        const float s_y = ((float) height - n_h) / 2.f;
+
+        cv::Mat blob = cv::Mat::zeros(cv::Size(width, height), CV_8UC3);
+        cv::Mat roi = blob(cv::Rect((int) s_x, (int) s_y, (int) n_w, (int) n_h));
+        cv::resize(in, roi, cv::Size((int) n_w, (int) n_h),
+                   0, 0, cv::INTER_NEAREST);
+        return blob;
     }
 
 } // xgtk

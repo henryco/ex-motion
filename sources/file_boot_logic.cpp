@@ -51,14 +51,18 @@ namespace xm {
             logic = std::make_unique<xm::Calibration>();
             logic->debug(true);
 
+            const auto w = config.camera.capture[0].width;
+            const auto h = config.camera.capture[0].height;
+            const auto r = config.camera.capture[0].rotate;
+
             xm::calib::Initial params = {
                     .delay = config.calibration.delay,
                     .total = config.calibration.total,
                     .columns = config.calibration.pattern.columns,
                     .rows = config.calibration.pattern.rows,
                     .size = config.calibration.pattern.size,
-                    .width = config.camera.capture[0].width,
-                    .height = config.camera.capture[0].height
+                    .width = r ? h : w,
+                    .height = r ? w : h
             };
 
             if (!config.calibration.intrinsics.empty()) {

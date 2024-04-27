@@ -42,6 +42,7 @@ private:
 protected:
     std::function<bool(const Glib::RefPtr<Gdk::GLContext> &)> renderFunc(size_t num);
     std::function<void()> initFunc(size_t num);
+    cv::Mat fitSize(const cv::Mat &in) const;
 
 public:
     GLImage() = default;

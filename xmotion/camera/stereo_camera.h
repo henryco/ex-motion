@@ -29,6 +29,7 @@ namespace xm {
         int buffer;
         bool flip_x;
         bool flip_y;
+        bool rotate;
         int x;
         int y;
         int w;

@@ -52,6 +52,7 @@ namespace xm::data {
         c.codec = j.value("codec", "MJPG");
         c.buffer = j.value("buffer", 2);
         c.fps = j.value("fps", 30);
+        c.rotate = j.value("rotate", false);
 
         c.region = j.value("region", (Region) {
                 .x = 0,

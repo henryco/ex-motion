@@ -129,7 +129,7 @@ namespace xm {
         }
 
         if (config.type == data::CROSS_CALIBRATION) {
-            logic = std::make_unique<xm::Calibration>();
+            logic = std::make_unique<xm::CrossCalibration>();
             logic->debug(true);
 
             xm::cross::Initial params = {
@@ -140,12 +140,12 @@ namespace xm {
                     .size = config.calibration.pattern.size,
             };
 
-            params.views = (int) config.calibration.cross.calibration.size();
+            params.views = (int) config.calibration.cross.calibrated.size();
             if (params.views <= 0)
                 throw std::runtime_error("Cross calibration requires at least two calibrated cameras");
 
             std::vector<cv::Mat> K, D;
-            for (const auto &item: config.calibration.cross.calibration) {
+            for (const auto &item: config.calibration.cross.calibrated) {
                 const std::filesystem::path root = project_file;
                 const std::filesystem::path name = item + ".json";
                 const std::string file = (root.parent_path() / name).string();

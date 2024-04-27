@@ -2,6 +2,7 @@
 // Created by henryco on 4/25/24.
 //
 
+#include <filesystem>
 #include <iomanip>
 #include <opencv2/core/persistence.hpp>
 #include <ctime>
@@ -45,6 +46,9 @@ void xm::data::ocv::write_cross_calibration(const std::string &file, const xm::d
 }
 
 xm::data::ocv::Calibration xm::data::ocv::read_calibration(const std::string &file) {
+    if (!std::filesystem::exists(file))
+        throw std::runtime_error("File: " + file + " does not exists!");
+
     Calibration c;
     cv::FileStorage fs(file, cv::FileStorage::READ);
     {
@@ -68,6 +72,9 @@ xm::data::ocv::Calibration xm::data::ocv::read_calibration(const std::string &fi
 }
 
 xm::data::ocv::CrossCalibration xm::data::ocv::read_cross_calibration(const std::string &file) {
+    if (!std::filesystem::exists(file))
+        throw std::runtime_error("File: " + file + " does not exists!");
+
     CrossCalibration c;
     cv::FileStorage fs(file, cv::FileStorage::READ);
     {

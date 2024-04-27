@@ -76,7 +76,7 @@ namespace xm::data {
     } Intrinsics;
 
     typedef struct {
-        std::vector<std::string> calibration;
+        std::vector<std::string> calibrated;
     } Cross;
 
     typedef struct {

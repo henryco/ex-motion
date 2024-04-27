@@ -8,22 +8,22 @@
 namespace xm::data::def {
     Intrinsic intrinsic() {
         return {
-            .x = -1,
-            .y = -1,
-            .fix = false
+                .x = -1,
+                .y = -1,
+                .fix = false
         };
     }
 
     Intrinsics intrinsics() {
         return {
-            .f = intrinsic(),
-            .c = intrinsic()
+                .f = intrinsic(),
+                .c = intrinsic()
         };
     }
 
     Cross cross() {
         return {
-            .calibration = std::vector<std::string>{}
+                .calibrated = std::vector<std::string>{}
         };
     }
 }
@@ -55,12 +55,12 @@ namespace xm::data {
     }
 
     void from_json(const nlohmann::json &j, Intrinsics &t) {
-        t.f = j.value("f", xm::data::def::intrinsic());
-        t.c = j.value("c", xm::data::def::intrinsic());
+        t.f = j.value("f", (Intrinsic) xm::data::def::intrinsic());
+        t.c = j.value("c", (Intrinsic) xm::data::def::intrinsic());
     }
 
     void from_json(const nlohmann::json &j, Cross &c) {
-        j.at("calibration").get_to(c.calibration);
+        j.at("calibrated").get_to(c.calibrated);
     }
 
     void from_json(const nlohmann::json &j, Capture &c) {
@@ -103,7 +103,7 @@ namespace xm::data {
         g.layout = j.value("layout", std::vector<int>{});
         g.vertical = j.value("vertical", false);
         g.scale = j.value("scale", 1.f);
-        g.fps = j.value("fps", 144);
+        g.fps = j.value("fps", 300);
     }
 
     void from_json(const nlohmann::json &j, Pattern &p) {
@@ -135,13 +135,18 @@ namespace xm::data {
         });
 
         c.gui = j.value("gui", (Gui) {
+                .layout = std::vector<int>{},
                 .vertical = false,
                 .scale = 1.f,
                 .fps = 300
         });
 
-        if (c.type == ConfigType::CALIBRATION) {
+        if (c.type == ConfigType::CALIBRATION || c.type == ConfigType::CROSS_CALIBRATION) {
             j.at("calibration").get_to(c.calibration);
+        }
+
+        if (c.type == ConfigType::TRIANGULATION) {
+            // TODO
         }
     }
 

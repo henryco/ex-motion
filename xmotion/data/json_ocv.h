@@ -10,6 +10,8 @@
 namespace xm::data::ocv {
 
     typedef struct {
+        std::string type;
+
         std::string name;
 
         std::string timestamp;

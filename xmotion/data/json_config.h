@@ -78,7 +78,6 @@ namespace xm::data {
         Pattern pattern;
         int total;
         int delay;
-        bool fix;
     } Calibration;
 
     typedef struct {

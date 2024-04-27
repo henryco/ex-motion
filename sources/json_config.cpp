@@ -96,7 +96,6 @@ namespace xm::data {
         c.intrinsics = j.value("intrinsics", std::vector<Intrinsics>{});
         c.delay = j.value("delay", 5000);
         c.total = j.value("total", 10);
-        c.fix = j.value("fix", false);
     }
 
     void from_json(const nlohmann::json &j, Misc &m) {

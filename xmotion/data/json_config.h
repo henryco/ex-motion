@@ -70,14 +70,19 @@ namespace xm::data {
     } Intrinsic;
 
     typedef struct {
-        std::string name;
         Intrinsic f;
         Intrinsic c;
     } Intrinsics;
 
     typedef struct {
-        std::vector<Intrinsics> intrinsics;
+        std::vector<std::string> calibration;
+    } Cross;
+
+    typedef struct {
+        std::string name;
+        Intrinsics intrinsics;
         Pattern pattern;
+        Cross cross;
         int total;
         int delay;
     } Calibration;

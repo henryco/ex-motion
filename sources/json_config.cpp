@@ -5,6 +5,29 @@
 #include "../xmotion/data/json_config.h"
 #include <fstream>
 
+namespace xm::data::def {
+    Intrinsic intrinsic() {
+        return {
+            .x = -1,
+            .y = -1,
+            .fix = false
+        };
+    }
+
+    Intrinsics intrinsics() {
+        return {
+            .f = intrinsic(),
+            .c = intrinsic()
+        };
+    }
+
+    Cross cross() {
+        return {
+            .calibration = std::vector<std::string>{}
+        };
+    }
+}
+
 namespace xm::data {
     NLOHMANN_JSON_SERIALIZE_ENUM(ConfigType, {
         { INVALID, nullptr },
@@ -31,17 +54,12 @@ namespace xm::data {
     }
 
     void from_json(const nlohmann::json &j, Intrinsics &t) {
-        j.at("name").get_to(t.name);
-        t.f = j.value("f", (Intrinsic) {
-                .x = -1.f,
-                .y = -1.f,
-                .fix = false,
-        });
-        t.c = j.value("c", (Intrinsic) {
-                .x = -1.f,
-                .y = -1.f,
-                .fix = false,
-        });
+        t.f = j.value("f", xm::data::def::intrinsic());
+        t.c = j.value("c", xm::data::def::intrinsic());
+    }
+
+    void from_json(const nlohmann::json &j, Cross &c) {
+        j.at("calibration").get_to(c.calibration);
     }
 
     void from_json(const nlohmann::json &j, Capture &c) {
@@ -94,8 +112,11 @@ namespace xm::data {
     }
 
     void from_json(const nlohmann::json &j, Calibration &c) {
+        j.at("name").get_to(c.name);
         j.at("pattern").get_to(c.pattern);
-        c.intrinsics = j.value("intrinsics", std::vector<Intrinsics>{});
+
+        c.intrinsics = j.value("intrinsics", xm::data::def::intrinsics());
+        c.cross = j.value("cross", xm::data::def::cross());
         c.delay = j.value("delay", 5000);
         c.total = j.value("total", 10);
     }

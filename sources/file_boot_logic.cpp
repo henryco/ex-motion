@@ -31,7 +31,7 @@ namespace xm {
             logic->stop();
 
             const std::filesystem::path root = project_file;
-            const std::filesystem::path name = config.camera.capture[0].name + ".json";
+            const std::filesystem::path name = config.calibration.name + ".json";
             const std::string file = (root.parent_path() / name).string();
 
             log->info("Saving calibration results");
@@ -72,14 +72,12 @@ namespace xm {
                     .height = r ? w : h
             };
 
-            if (!config.calibration.intrinsics.empty()) {
-                params.fx = config.calibration.intrinsics[0].f.x;
-                params.fy = config.calibration.intrinsics[0].f.y;
-                params.cx = config.calibration.intrinsics[0].c.x;
-                params.cy = config.calibration.intrinsics[0].c.y;
-                params.fix_f = config.calibration.intrinsics[0].f.fix;
-                params.fix_c = config.calibration.intrinsics[0].c.fix;
-            }
+            params.fx = config.calibration.intrinsics.f.x;
+            params.fy = config.calibration.intrinsics.f.y;
+            params.cx = config.calibration.intrinsics.c.x;
+            params.cy = config.calibration.intrinsics.c.y;
+            params.fix_f = config.calibration.intrinsics.f.fix;
+            params.fix_c = config.calibration.intrinsics.c.fix;
 
             (dynamic_cast<xm::Calibration *>(logic.get()))->init(params);
             return;

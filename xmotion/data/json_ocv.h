@@ -72,9 +72,47 @@ namespace xm::data::ocv {
         double error;
     } Calibration;
 
+    typedef struct {
+        std::string type;
+
+        std::string name;
+
+        std::string timestamp;
+
+        /**
+         * Rotation matrix 3x3
+         */
+        cv::Mat R;
+
+        /**
+         * Translation vector
+         */
+        cv::Mat T;
+
+        /**
+         * Essential matrix
+         */
+        cv::Mat E;
+
+        /**
+         * Fundamental matrix
+         */
+        cv::Mat F;
+
+        /**
+         * Mean re-projection error
+         * (root mean square)
+         */
+        double error;
+    } CrossCalibration;
+
     void write_calibration(const std::string &file, const Calibration &c);
 
     Calibration read_calibration(const std::string &file);
+
+    void write_cross_calibration(const std::string &file, const CrossCalibration &c);
+
+    CrossCalibration read_cross_calibration(const std::string &file);
 
     std::string utc_iso_date_str_now();
 }

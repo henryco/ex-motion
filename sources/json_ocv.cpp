@@ -29,6 +29,21 @@ void xm::data::ocv::write_calibration(const std::string &file, const xm::data::o
     fs.release();
 }
 
+void xm::data::ocv::write_cross_calibration(const std::string &file, const xm::data::ocv::CrossCalibration &c) {
+    cv::FileStorage fs(file, cv::FileStorage::WRITE);
+    {
+        fs << "type" << "cross_calibration";
+        fs << "name" << c.name;
+        fs << "timestamp" << utc_iso_date_str_now();
+        fs << "R" << c.R;
+        fs << "T" << c.T;
+        fs << "E" << c.E;
+        fs << "F" << c.F;
+        fs << "error" << c.error;
+    }
+    fs.release();
+}
+
 xm::data::ocv::Calibration xm::data::ocv::read_calibration(const std::string &file) {
     Calibration c;
     cv::FileStorage fs(file, cv::FileStorage::READ);
@@ -49,6 +64,22 @@ xm::data::ocv::Calibration xm::data::ocv::read_calibration(const std::string &fi
         fs["error"] >> c.error;
     }
     fs.release();
+    return c;
+}
+
+xm::data::ocv::CrossCalibration xm::data::ocv::read_cross_calibration(const std::string &file) {
+    CrossCalibration c;
+    cv::FileStorage fs(file, cv::FileStorage::READ);
+    {
+        fs["type"] >> c.type;
+        fs["name"] >> c.name;
+        fs["timestamp"] >> c.timestamp;
+        fs["R"] >> c.R;
+        fs["T"] >> c.T;
+        fs["E"] >> c.E;
+        fs["F"] >> c.F;
+        fs["error"] >> c.error;
+    }
     return c;
 }
 

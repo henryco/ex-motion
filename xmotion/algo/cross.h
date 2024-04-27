@@ -19,34 +19,33 @@ namespace xm::cross {
         /**
          * Rotation matrix 3x3
          */
-        cv::Mat R;
+        std::vector<cv::Mat> R;
 
         /**
          * Translation vector
          */
-        cv::Mat T;
+        std::vector<cv::Mat> T;
 
         /**
          * Essential matrix
          */
-        cv::Mat E;
+        std::vector<cv::Mat> E;
 
         /**
          * Fundamental matrix
          */
-        cv::Mat F;
+        std::vector<cv::Mat> F;
 
         /**
          * Mean re-projection error
          * (root mean square)
          */
-        double mre_1;
+        std::vector<double> mre;
 
         /**
-         * Same as mre_1, calculated explicitly
+         * Number of cross calibrated pairs
          */
-        double mre_2;
-
+        int total;
     } Result;
 
     typedef struct Initial {
@@ -55,6 +54,10 @@ namespace xm::cross {
         int columns = 9;
         int rows = 7;
         float size = 30;
+
+        int views = 2;
+        std::vector<cv::Mat> K;
+        std::vector<cv::Mat> D;
     } Initial;
 }
 
@@ -63,6 +66,8 @@ namespace xm {
     class CrossCalibration : public xm::Logic {
 
     private:
+        std::vector<std::vector<std::vector<cv::Point2f>>> image_points{};
+
         std::vector<cv::Mat> images{};
         xm::cross::Result results{};
         xm::cross::Initial config;

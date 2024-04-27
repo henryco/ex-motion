@@ -59,6 +59,13 @@ std::vector<eox::v4l2::V4L2_QueryCtrl> eox::v4l2::get_camera_props(const std::st
     }
 
     close(file_descriptor);
+
+    // Sorting, important!
+    std::sort(properties.begin(), properties.end(),
+              [](const eox::v4l2::V4L2_QueryCtrl &a, const eox::v4l2::V4L2_QueryCtrl &b) {
+                  return a.type > b.type;
+    });
+
     return properties;
 }
 

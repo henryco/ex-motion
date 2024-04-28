@@ -145,8 +145,10 @@ void xm::CrossCalibration::calibrate() {
 
     // cross calibration, for each pair
     for (int i = 0; i < total_pairs; i++) {
+        const int j = ((i + 1) >= total_pairs && total_pairs > 1) ? 0 : (i + 1);
 
-        const int j = (i == config.views - 1) ? 0 : (i + 1);
+        // FIXME
+//        const int j = (i == config.views - 1) ? 0 : (i + 1);
 
         const auto K1 = config.K[i];
         const auto K2 = config.K[j];
@@ -202,6 +204,7 @@ xm::CrossCalibration &xm::CrossCalibration::proceed(float delta, const std::vect
         images.reserve(_frames.size());
         for (auto &img: _frames)
             images.push_back(img);
+        put_debug_text();
         return *this;
     }
 
@@ -219,13 +222,14 @@ void xm::CrossCalibration::put_debug_text() {
     if (!DEBUG)
         return;
 
+    if (!results.ready && !active)
+        return;
+
     const auto font = cv::FONT_HERSHEY_SIMPLEX;
 
-    if (results.ready && active) {
-        for (auto &image: images)
-            image.setTo(cv::Scalar(0, 0, 0));
+    if (results.ready && !active) {
         const cv::Scalar color(0, 255, 0);
-        cv::putText(images.front(), "Calibrating...", cv::Point(20, 50), font, 1.5, color, 3);
+        cv::putText(images.front(), "Calibrated", cv::Point(20, 50), font, 1.5, color, 3);
         return;
     }
 
@@ -234,8 +238,9 @@ void xm::CrossCalibration::put_debug_text() {
             image.setTo(cv::Scalar(255, 255, 255));
     }
 
+    const auto size = image_points.empty() ? 0 : image_points.back().size();
     const cv::Scalar color(0, 0, 255);
-    const std::string t1 = std::to_string(image_points.size()) + " / " + std::to_string(config.total);
+    const std::string t1 = std::to_string(size) + " / " + std::to_string(config.total);
     const std::string t2 = std::to_string(results.remains_ms) + " ms";
 
     cv::putText(images.front(), t1, cv::Point(20, 50), font, 1.5, color, 3);

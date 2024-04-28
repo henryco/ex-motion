@@ -51,6 +51,7 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
             config.rows
     );
 
+    images[left] = squares_l.result;
     if (!squares_l.found) {
         results.current = current_pair;
         results.remains_ms = config.delay;
@@ -59,14 +60,13 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
         return false;
     }
 
-    images[left] = squares_l.result;
-
     const auto squares_r = xm::ocv::find_squares(
             _frames[right],
             config.columns,
             config.rows
     );
 
+    images[right] = squares_r.result;
     if (!squares_r.found) {
         results.current = current_pair;
         results.remains_ms = config.delay;
@@ -74,8 +74,6 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
         timer.reset();
         return false;
     }
-
-    images[right] = squares_r.result;
 
     const auto remains = timer.tick([this, &squares_l, &squares_r]() {
         if (image_points.empty()) {

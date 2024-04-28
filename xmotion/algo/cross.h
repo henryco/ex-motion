@@ -10,6 +10,9 @@
 #include "i_logic.h"
 #include "../utils/timer.h"
 
+#include <spdlog/logger.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 namespace xm::cross {
     typedef struct Result {
         int remains_cap;
@@ -46,6 +49,11 @@ namespace xm::cross {
          * Number of cross calibrated pairs
          */
         int total;
+
+        /**
+         * Current calibrated pair (0-indexed)
+         */
+        int current;
     } Result;
 
     typedef struct Initial {
@@ -65,8 +73,12 @@ namespace xm {
 
     class CrossCalibration : public xm::Logic {
 
+        static inline const auto log =
+                spdlog::stdout_color_mt("cross_calibration");
+
     private:
-        std::vector<std::vector<std::vector<cv::Point2f>>> image_points{};
+        // [pair_numb][image_number][2: (l,r)][points: Rows x Cols][2: (x,y)]
+        std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> image_points{};
 
         std::vector<cv::Mat> images{};
         xm::cross::Result results{};
@@ -75,6 +87,10 @@ namespace xm {
 
         bool active = false;
         bool DEBUG = false;
+
+        int counter = 0;
+        int total_pairs = 0;
+        int current_pair = 0;
 
     public:
         void init(const xm::cross::Initial &params);

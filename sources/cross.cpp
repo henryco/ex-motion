@@ -10,41 +10,119 @@
 void xm::CrossCalibration::init(const xm::cross::Initial &params) {
     timer.set_delay(params.delay);
     config = params;
+
+    total_pairs = config.views == 2 ? 1 : config.views;
+
+    image_points.clear();
+    image_points.reserve(total_pairs);
 }
 
 bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) {
-    images.clear();
-    std::vector<xm::ocv::Squares> squares;
-    squares.reserve(_frames.size());
-    for (const auto &frame: _frames) {
-        const auto square = xm::ocv::find_squares(frame, config.columns, config.rows);
-        images.push_back(square.result);
-        squares.push_back(square);
+
+    if (current_pair >= total_pairs) {
+        results.current = 0;
+        results.ready = true;
+        return true;
     }
 
-    for (const auto &square: squares) {
-        if (!square.found) {
-            results.remains_ms = config.delay;
-            results.ready = false;
-            timer.reset();
-            return false;
+    const int left = current_pair;
+    const int right = ((left + 1) >= total_pairs && total_pairs > 1) ? 0 : (left + 1);
+
+    images.clear();
+    images.reserve(_frames.size());
+    for (int i = 0; i < _frames.size(); i++) {
+        if (i == left || i == right) {
+            images.push_back(_frames[i]);
+            continue;
+        }
+
+        {
+            // graying-out inactive frames
+            cv::Mat gray;
+            cv::cvtColor(_frames[i], gray, cv::COLOR_BGR2GRAY);
+            cv::cvtColor(gray, gray, cv::COLOR_GRAY2BGR);
+            images.push_back(gray);
         }
     }
 
-    const auto remains = timer.tick([this, &squares]() {
-        std::vector<std::vector<cv::Point2f>> points;
-        points.reserve(squares.size());
-        for (const auto &square: squares)
-            points.push_back(square.corners);
+    const auto squares_l = xm::ocv::find_squares(
+            _frames[left],
+            config.columns,
+            config.rows
+    );
 
-        image_points.push_back(points);
+    if (!squares_l.found) {
+        results.current = current_pair;
+        results.remains_ms = config.delay;
+        results.ready = false;
+        timer.reset();
+        return false;
+    }
+
+    images[left] = squares_l.result;
+
+    const auto squares_r = xm::ocv::find_squares(
+            _frames[right],
+            config.columns,
+            config.rows
+    );
+
+    if (!squares_r.found) {
+        results.current = current_pair;
+        results.remains_ms = config.delay;
+        results.ready = false;
+        timer.reset();
+        return false;
+    }
+
+    images[right] = squares_r.result;
+
+    const auto remains = timer.tick([this, &squares_l, &squares_r]() {
+        if (image_points.empty()) {
+            image_points.emplace_back();
+        }
+
+        // [2: (l,r)][rows x cols][2: (x,y)]
+        std::vector<std::vector<cv::Point2f>> l_r_points;
+        l_r_points.push_back(squares_l.corners);
+        l_r_points.push_back(squares_r.corners);
+
+        image_points.back().push_back(l_r_points);
+        counter += 1;
     });
 
+    results.current = current_pair;
+    results.remains_cap = config.total - counter;
     results.remains_ms = remains;
-    results.remains_cap = config.total - (int) image_points.size();
-    results.ready = results.remains_cap <= 0;
+    results.ready = false;
 
-    return results.ready;
+    if (results.remains_cap <= 0) {
+        // All points for current pair grabbed
+
+        current_pair += 1;
+        if (current_pair >= total_pairs) {
+            // Points for ALL pairs grabbed
+
+            results.current = 0;
+            results.remains_cap = 0;
+            results.remains_ms = 0;
+            results.ready = true;
+            return true;
+        }
+
+        // Not all pairs are ready, create new pair
+        image_points.emplace_back();
+
+        // And repeat process
+        counter = 0;
+        results.current = current_pair;
+        results.remains_cap = config.total;
+        results.remains_ms = 0;
+        results.ready = false;
+        return false;
+    }
+
+    return false;
 }
 
 void xm::CrossCalibration::calibrate() {
@@ -59,8 +137,8 @@ void xm::CrossCalibration::calibrate() {
 
     // Replicate obj_p for each image
     std::vector<std::vector<cv::Point3f>> object_points;
-    object_points.reserve(image_points.size());
-    for (int i = 0; i < image_points.size(); ++i) {
+    object_points.reserve(image_points.back().size());
+    for (int i = 0; i < image_points.back().size(); ++i) {
         object_points.push_back(obj_p);
     }
 
@@ -68,11 +146,7 @@ void xm::CrossCalibration::calibrate() {
     std::vector<double> errors;
 
     // cross calibration, for each pair
-    for (int i = 0; i < config.views; i++) {
-
-        // prevent cross loop calibration
-        if (i == config.views - 1 && i == 1)
-            break;
+    for (int i = 0; i < total_pairs; i++) {
 
         const int j = (i == config.views - 1) ? 0 : (i + 1);
 
@@ -83,12 +157,18 @@ void xm::CrossCalibration::calibrate() {
 
         cv::Mat Ri, Ti, Ei, Fi, RMSi;
 
-        const auto corners1 = image_points[i];
-        const auto corners2 = image_points[j];
+        std::vector<std::vector<cv::Point2f>> corners_l;
+        std::vector<std::vector<cv::Point2f>> corners_r;
+
+        for (const auto &item: image_points[i]) {
+            corners_l.push_back(item[0]);
+            corners_r.push_back(item[1]);
+        }
+
         const auto rms = cv::stereoCalibrate(
                 object_points,
-                corners1,
-                corners2,
+                corners_l,
+                corners_r,
                 K1,
                 D1,
                 K2,
@@ -113,6 +193,7 @@ void xm::CrossCalibration::calibrate() {
     results.total = (int) errors.size();
 
     results.ready = true;
+    results.current = 0;
     results.remains_ms = 0;
     results.remains_cap = 0;
 }
@@ -164,20 +245,26 @@ void xm::CrossCalibration::put_debug_text() {
 }
 
 void xm::CrossCalibration::start() {
+    results.current = 0;
     results.remains_cap = config.total;
     results.remains_ms = config.delay;
     results.ready = false;
 
+    counter = 0;
+    current_pair = 0;
     image_points.clear();
     active = true;
     timer.start();
 }
 
 void xm::CrossCalibration::stop() {
+    results.current = 0;
     results.remains_cap = 0;
     results.remains_ms = 0;
     results.ready = false;
 
+    counter = 0;
+    current_pair = 0;
     image_points.clear();
     active = false;
     timer.stop();

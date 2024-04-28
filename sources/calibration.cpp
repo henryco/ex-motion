@@ -45,7 +45,7 @@ void xm::Calibration::calibrate() {
     std::vector<cv::Point3f> obj_p;
     for (int i = 0; i < config.rows - 1; ++i) {
         for (int j = 0; j < config.columns - 1; ++j) {
-            obj_p.emplace_back((float) j, (float) i, 0.0f);
+            obj_p.emplace_back((float) j * config.size, (float) i * config.size, 0.0f);
         }
     }
 

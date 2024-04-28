@@ -151,6 +151,7 @@ namespace xm {
                 const std::string file = (root.parent_path() / name).string();
 
                 const auto calibration = xm::data::ocv::read_calibration(file);
+                log->info("Read calibration file: {}", calibration.name);
                 K.push_back(calibration.K);
                 D.push_back(calibration.D);
             }

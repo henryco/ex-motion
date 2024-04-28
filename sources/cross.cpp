@@ -129,7 +129,7 @@ void xm::CrossCalibration::calibrate() {
     std::vector<cv::Point3f> obj_p;
     for (int i = 0; i < config.rows - 1; ++i) {
         for (int j = 0; j < config.columns - 1; ++j) {
-            obj_p.emplace_back((float) j, (float) i, 0.0f);
+            obj_p.emplace_back((float) j * config.size, (float) i * config.size, 0.0f);
         }
     }
 
@@ -146,9 +146,6 @@ void xm::CrossCalibration::calibrate() {
     // cross calibration, for each pair
     for (int i = 0; i < total_pairs; i++) {
         const int j = ((i + 1) >= total_pairs && total_pairs > 1) ? 0 : (i + 1);
-
-        // FIXME
-//        const int j = (i == config.views - 1) ? 0 : (i + 1);
 
         const auto K1 = config.K[i];
         const auto K2 = config.K[j];

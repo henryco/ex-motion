@@ -189,8 +189,19 @@ void xm::Calibration::put_debug_text() {
         return;
 
     const auto font = cv::FONT_HERSHEY_SIMPLEX;
-    const cv::Scalar color(0, 0, 255);
 
+    if (results.ready && active) {
+        images.front().setTo(cv::Scalar(0, 0, 0));
+        const cv::Scalar color(0, 255, 0);
+        cv::putText(images.front(), "Calibrating...", cv::Point(20, 50), font, 1.5, color, 3);
+        return;
+    }
+
+    if (results.remains_ms <= 10) {
+        images.front().setTo(cv::Scalar(255, 255, 255));
+    }
+
+    const cv::Scalar color(0, 0, 255);
     const std::string t1 = std::to_string(image_points.size()) + " / " + std::to_string(config.total);
     const std::string t2 = std::to_string(results.remains_ms) + " ms";
 

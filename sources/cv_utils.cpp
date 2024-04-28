@@ -41,6 +41,7 @@ namespace xm::ocv {
                           | cv::CALIB_CB_FILTER_QUADS
                           | cv::CALIB_CB_ADAPTIVE_THRESH
                           | cv::CALIB_CB_ACCURACY
+                          | cv::CALIB_CB_FAST_CHECK
                           | cv::CALIB_CB_EXHAUSTIVE;
 
         std::vector<cv::Point2f> corners;

@@ -48,7 +48,7 @@ std::vector<eox::v4l2::V4L2_QueryCtrl> eox::v4l2::get_camera_props(const std::st
         }
 
         if (errno != EINVAL) {
-            std::cerr << "fails for reasons other than reaching the end of the control list" << std::endl;
+            std::cerr << "fails for reasons other than reaching the end of the control list, error no: [" << errno << "]" << std::endl;
             close(file_descriptor);
             return {};
         }

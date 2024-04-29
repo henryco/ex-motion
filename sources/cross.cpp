@@ -11,7 +11,7 @@ void xm::CrossCalibration::init(const xm::cross::Initial &params) {
     timer.set_delay(params.delay);
     config = params;
 
-    total_pairs = config.views == 2 ? 1 : config.views;
+    total_pairs = config.closed ? config.views : (config.views - 1);
 
     image_points.clear();
     image_points.reserve(total_pairs);
@@ -26,7 +26,7 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
     }
 
     const int left = current_pair;
-    const int right = ((left + 1) >= total_pairs && total_pairs > 1) ? 0 : (left + 1);
+    const int right = ((left + 1) >= total_pairs) ? 0 : (left + 1);
 
     images.clear();
     images.reserve(_frames.size());
@@ -142,14 +142,12 @@ void xm::CrossCalibration::calibrate() {
         object_points.push_back(obj_p);
     }
 
-    std::vector<cv::Mat> R, T, E, F;
-    std::vector<double> errors;
-
-    // TODO FIXME
+    std::vector<xm::cross::Pair> pairs;
+    pairs.reserve(total_pairs);
 
     // cross calibration, for each pair
     for (int i = 0; i < total_pairs; i++) {
-        const int j = ((i + 1) >= total_pairs && total_pairs > 1) ? 0 : (i + 1);
+        const int j = ((i + 1) >= total_pairs) ? 0 : (i + 1);
 
         const auto K1 = config.K[i];
         const auto K2 = config.K[j];
@@ -178,21 +176,44 @@ void xm::CrossCalibration::calibrate() {
                 Ri, Ti, Ei, Fi, RMSi,
                 cv::CALIB_FIX_INTRINSIC);
 
-        R.push_back(Ri);
-        T.push_back(Ti);
-        E.push_back(Ei);
-        F.push_back(Fi);
-        errors.push_back(rms);
+
+        cv::Mat RTi = cv::Mat::eye(4, 4, Ri.type());
+        Ri.copyTo(RTi(cv::Rect(0, 0, 3, 3)));
+        Ti.copyTo(RTi(cv::Rect(3, 0, 1, 3)));
+
+        cv::Mat RT0;
+
+        // first pair
+        if (i == 0) {
+            RT0 = RTi.clone();
+        }
+            // last pair
+        else if (i == total_pairs - 1) {
+            if (cv::invert(RTi, RT0) == 0)
+                // WTF, but also:
+                goto JAIL;
+        }
+            // In the middle of the chain...
+        else {
+            JAIL:
+            // We are going through the, well..., chain ¯\_(ツ)_/¯
+            RT0 = pairs.back().RT0 * RTi;
+        }
+
+        pairs.push_back({
+                                .R = Ri,
+                                .T = Ti,
+                                .E = Ei,
+                                .F = Fi,
+                                .RTp = RTi,
+                                .RT0 = RT0,
+                                .mre = rms
+                        });
+
     }
 
     active = false;
-    results.R = R;
-    results.T = T;
-    results.E = E;
-    results.F = F;
-    results.mre = errors;
-    results.total = (int) errors.size();
-
+    results.total = total_pairs;
     results.ready = true;
     results.current = 0;
     results.remains_ms = 0;

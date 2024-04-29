@@ -14,44 +14,70 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace xm::cross {
+    typedef struct Pair {
+        /**
+         * Rotation matrix 3x3
+         */
+        cv::Mat R;
+
+        /**
+         * Translation vector3 (x,y,z)
+         */
+        cv::Mat T;
+
+        /**
+         * Essential matrix
+         */
+        cv::Mat E;
+
+        /**
+        * Fundamental matrix
+        */
+        cv::Mat F;
+
+        /**
+         * [R|t] basis change 4x4 homogeneous matrix
+         * according to previous camera within the chain.
+         * \code
+         * ┌ R R R tx ┐
+         * │ R R R ty │
+         * │ R R R tz │
+         * └ 0 0 0 1  ┘
+         * \endcode
+         */
+        cv::Mat RTp;
+
+        /**
+         * Same as [R|t] matrix, but
+         * according to first camera within the chain.
+         * \ref Pair::RTp
+         */
+        cv::Mat RT0;
+
+        /**
+        * Mean re-projection error
+        * (root mean square)
+        */
+        double mre;
+    } Pair;
+
     typedef struct Result {
         int remains_cap;
         int remains_ms;
         bool ready;
 
         /**
-         * Rotation matrix 3x3
+         * Results for stereo calibrated pairs
          */
-        std::vector<cv::Mat> R;
+        std::vector<Pair> calibrated;
 
         /**
-         * Translation vector
-         */
-        std::vector<cv::Mat> T;
-
-        /**
-         * Essential matrix
-         */
-        std::vector<cv::Mat> E;
-
-        /**
-         * Fundamental matrix
-         */
-        std::vector<cv::Mat> F;
-
-        /**
-         * Mean re-projection error
-         * (root mean square)
-         */
-        std::vector<double> mre;
-
-        /**
-         * Number of cross calibrated pairs
+         * Number of total cross calibrated pairs
          */
         int total;
 
         /**
-         * Current calibrated pair (0-indexed)
+         * Current calibration pair (0-indexed)
          */
         int current;
     } Result;

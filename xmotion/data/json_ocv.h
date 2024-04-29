@@ -9,7 +9,7 @@
 
 namespace xm::data::ocv {
 
-    typedef struct {
+    typedef struct Calibration {
         std::string type;
 
         std::string name;
@@ -72,7 +72,7 @@ namespace xm::data::ocv {
         double error;
     } Calibration;
 
-    typedef struct {
+    typedef struct CrossCalibration {
         std::string type;
 
         std::string name;
@@ -98,6 +98,25 @@ namespace xm::data::ocv {
          * Fundamental matrix
          */
         cv::Mat F;
+
+        /**
+         * [R|t] basis change 4x4 homogeneous matrix
+         * according to previous camera within the chain.
+         * \code
+         * ┌ R R R tx ┐
+         * │ R R R ty │
+         * │ R R R tz │
+         * └ 0 0 0 1  ┘
+         * \endcode
+         */
+        cv::Mat RTp;
+
+        /**
+         * Same as [R|t] matrix, but
+         * according to first camera within the chain.
+         * \ref CrossCalibration::RTp
+         */
+        cv::Mat RT0;
 
         /**
          * Mean re-projection error

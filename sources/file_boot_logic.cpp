@@ -67,22 +67,25 @@ namespace xm {
 
             logic->stop();
 
-            for (int i = 0; i < results.total; ++i) {
-                const std::string postfix = (results.total == 1) ? "" : ("_" + std::to_string(i));
+            const auto total = results.calibrated.size();
+            for (int i = 0; i < total; ++i) {
+                const std::string postfix = (total == 1) ? "" : ("_" + std::to_string(i));
 
                 const std::filesystem::path root = project_file;
                 const std::filesystem::path name = config.calibration.name + postfix + ".json";
                 const std::string file = (root.parent_path() / name).string();
 
                 log->info("Saving cross calibration results: [{}]", i);
-
+                const auto pair = results.calibrated.at(i);
                 xm::data::ocv::write_cross_calibration(file, {
                     .name = config.calibration.name + postfix,
-                    .R = results.R[i],
-                    .T = results.T[i],
-                    .E = results.E[i],
-                    .F = results.F[i],
-                    .error = results.mre[i]
+                    .R = pair.R,
+                    .T = pair.T,
+                    .E = pair.E,
+                    .F = pair.F,
+                    .RTp = pair.RTp,
+                    .RT0 = pair.RT0,
+                    .error = pair.mre
                 });
 
                 log->info("saved: [{}]", i);

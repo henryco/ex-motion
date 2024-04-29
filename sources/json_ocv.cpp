@@ -40,6 +40,8 @@ void xm::data::ocv::write_cross_calibration(const std::string &file, const xm::d
         fs << "T" << c.T;
         fs << "E" << c.E;
         fs << "F" << c.F;
+        fs << "RTp" << c.RTp;
+        fs << "RT0" << c.RT0;
         fs << "error" << c.error;
     }
     fs.release();
@@ -85,6 +87,8 @@ xm::data::ocv::CrossCalibration xm::data::ocv::read_cross_calibration(const std:
         fs["T"] >> c.T;
         fs["E"] >> c.E;
         fs["F"] >> c.F;
+        fs["RTp"] >> c.RTp;
+        fs["RT0"] >> c.RT0;
         fs["error"] >> c.error;
     }
     return c;

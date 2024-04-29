@@ -16,7 +16,8 @@ bool xm::Calibration::capture_squares(const cv::Mat &frame) {
     const auto squares = xm::ocv::find_squares(
             frame,
             config.columns,
-            config.rows
+            config.rows,
+            config.sb
     );
 
     images.clear();

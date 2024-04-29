@@ -88,6 +88,7 @@ namespace xm::ocv {
      * @param image The source image as a cv::Mat object, in which squares are to be detected.
      * @param columns The number of inner corners per a chessboard row.
      * @param rows The number of inner corners per a chessboard column.
+     * @param sb Sector-based approach
      * @param flag Additional flags to control the corner detection algorithm. These flags are combined with
      *        predefined flags such as cv::CALIB_CB_FAST_CHECK, cv::CALIB_CB_NORMALIZE_IMAGE,
      *        cv::CALIB_CB_FILTER_QUADS, and cv::CALIB_CB_ADAPTIVE_THRESH.
@@ -100,6 +101,7 @@ namespace xm::ocv {
             const cv::Mat &image,
             uint columns,
             uint rows,
+            bool sb = false,
             int flag = 0);
 }
 

@@ -113,6 +113,7 @@ namespace xm {
                     .columns = config.calibration.pattern.columns,
                     .rows = config.calibration.pattern.rows,
                     .size = config.calibration.pattern.size,
+                    .sb = config.calibration.pattern.type == xm::data::board::Type::RADON,
                     .width = r ? h : w,
                     .height = r ? w : h
             };
@@ -138,8 +139,10 @@ namespace xm {
                     .columns = config.calibration.pattern.columns,
                     .rows = config.calibration.pattern.rows,
                     .size = config.calibration.pattern.size,
+                    .sb = config.calibration.pattern.type == xm::data::board::Type::RADON
             };
 
+            params.closed = config.calibration.cross.closed;
             params.views = (int) config.calibration.cross.calibrated.size();
             if (params.views <= 0)
                 throw std::runtime_error("Cross calibration requires at least two calibrated cameras");

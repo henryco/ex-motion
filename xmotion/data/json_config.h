@@ -18,6 +18,14 @@ namespace xm::data {
         TRIANGULATION
     };
 
+    namespace board {
+        enum Type {
+            PLAIN = -1,
+            CHESSBOARD,
+            RADON
+        };
+    }
+
     typedef struct {
         int x;
         int y;
@@ -59,6 +67,7 @@ namespace xm::data {
     } Gui;
 
     typedef struct {
+        board::Type type;
         int columns;
         int rows;
         float size;
@@ -77,6 +86,7 @@ namespace xm::data {
 
     typedef struct {
         std::vector<std::string> calibrated;
+        bool closed;
     } Cross;
 
     typedef struct {

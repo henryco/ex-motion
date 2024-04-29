@@ -31,23 +31,36 @@ namespace xm::ocv {
         return std::move(output);
     }
 
-    Squares find_squares(const cv::Mat &image, uint columns, uint rows, int flag) {
+    Squares find_squares(const cv::Mat &image, uint columns, uint rows, bool sb, int flag) {
         cv::Mat gray = img_copy(image, cv::COLOR_BGR2GRAY);
         cv::Mat copy = img_copy(image);
 
         const auto size = cv::Size((int) columns - 1, (int) rows - 1);
-        const int flags = flag
-                          | cv::CALIB_CB_NORMALIZE_IMAGE
-                          | cv::CALIB_CB_FILTER_QUADS
-                          | cv::CALIB_CB_ADAPTIVE_THRESH
-                          | cv::CALIB_CB_ACCURACY
-                          | cv::CALIB_CB_FAST_CHECK
-                          | cv::CALIB_CB_EXHAUSTIVE;
 
+        bool found;
         std::vector<cv::Point2f> corners;
-        const bool found = cv::findChessboardCorners(gray, size, corners, flags);
 
-        if (found) {
+        if (!sb) {
+            const int flags = flag
+                              | cv::CALIB_CB_NORMALIZE_IMAGE
+                              | cv::CALIB_CB_FILTER_QUADS
+                              | cv::CALIB_CB_ADAPTIVE_THRESH
+                              | cv::CALIB_CB_ACCURACY
+                              | cv::CALIB_CB_FAST_CHECK
+                              | cv::CALIB_CB_EXHAUSTIVE;
+            found = cv::findChessboardCorners(gray, size, corners, flags);
+        }
+
+        else {
+            const int flags = flag
+                              | cv::CALIB_CB_NORMALIZE_IMAGE
+                              | cv::CALIB_CB_ACCURACY
+                              | cv::CALIB_CB_MARKER
+                              | cv::CALIB_CB_EXHAUSTIVE;
+            found = cv::findChessboardCornersSB(gray, size, corners, flags);
+        }
+
+        if (found && !sb) {
             const auto term = cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 60, 0.001);
             const auto window = cv::Size(11, 11);
             const auto zone = cv::Size(-1, -1);

@@ -23,7 +23,8 @@ namespace xm::data::def {
 
     Cross cross() {
         return {
-                .calibrated = std::vector<std::string>{}
+                .calibrated = std::vector<std::string>{},
+                .closed = false
         };
     }
 }
@@ -35,6 +36,14 @@ namespace xm::data {
         { CROSS_CALIBRATION, "cross_calibration" },
         { TRIANGULATION, "triangulation" },
     })
+
+    namespace board {
+        NLOHMANN_JSON_SERIALIZE_ENUM(Type, {
+            { PLAIN, nullptr },
+            { CHESSBOARD, "chessboard" },
+            { RADON, "radon" }
+        })
+    }
 
     void from_json(const nlohmann::json &j, Flip &f) {
         f.x = j.value("x", false);
@@ -60,6 +69,7 @@ namespace xm::data {
     }
 
     void from_json(const nlohmann::json &j, Cross &c) {
+        c.closed = j.value("closed", false);
         j.at("calibrated").get_to(c.calibrated);
     }
 
@@ -107,6 +117,7 @@ namespace xm::data {
     }
 
     void from_json(const nlohmann::json &j, Pattern &p) {
+        p.type = j.value("type", board::Type::CHESSBOARD);
         j.at("columns").get_to(p.columns);
         j.at("rows").get_to(p.rows);
         j.at("size").get_to(p.size);

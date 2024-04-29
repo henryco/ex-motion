@@ -87,6 +87,7 @@ namespace xm::calib {
         int columns = 9;
         int rows = 7;
         float size = 30;
+        bool sb = false;
         int width = 0;
         int height = 0;
 

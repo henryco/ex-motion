@@ -48,7 +48,8 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
     const auto squares_l = xm::ocv::find_squares(
             _frames[left],
             config.columns,
-            config.rows
+            config.rows,
+            config.sb
     );
 
     images[left] = squares_l.result;
@@ -63,7 +64,8 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
     const auto squares_r = xm::ocv::find_squares(
             _frames[right],
             config.columns,
-            config.rows
+            config.rows,
+            config.sb
     );
 
     images[right] = squares_r.result;
@@ -142,6 +144,8 @@ void xm::CrossCalibration::calibrate() {
 
     std::vector<cv::Mat> R, T, E, F;
     std::vector<double> errors;
+
+    // TODO FIXME
 
     // cross calibration, for each pair
     for (int i = 0; i < total_pairs; i++) {

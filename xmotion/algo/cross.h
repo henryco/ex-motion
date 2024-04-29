@@ -62,7 +62,9 @@ namespace xm::cross {
         int columns = 9;
         int rows = 7;
         float size = 30;
+        bool sb = false;
 
+        bool closed = false;
         int views = 2;
         std::vector<cv::Mat> K;
         std::vector<cv::Mat> D;

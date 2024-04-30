@@ -188,7 +188,7 @@ void xm::CrossCalibration::calibrate() {
             RT0 = RTi.clone();
         }
             // last pair
-        else if (i == total_pairs - 1) {
+        else if (config.closed && i == total_pairs - 1) {
             if (cv::invert(RTi, RT0) == 0)
                 // WTF, but also:
                 goto JAIL;

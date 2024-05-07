@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <array>
-#include "../dnn_common.h"
+#include "dnn_common.h"
 
 namespace eox::dnn::ssd {
 

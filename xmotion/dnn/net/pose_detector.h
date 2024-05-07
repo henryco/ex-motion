@@ -11,8 +11,8 @@
 #include "tensorflow/lite/kernels/register.h"
 #include <opencv2/core/mat.hpp>
 
-#include "ssd/ssd_anchors.h"
-#include "roi/pose_roi.h"
+#include "ssd_anchors.h"
+#include "pose_roi.h"
 #include "dnn_common.h"
 #include "dnn_runner.h"
 

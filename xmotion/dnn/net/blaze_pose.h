@@ -24,7 +24,6 @@ namespace eox::dnn {
                 spdlog::stdout_color_mt("blaze_pose");
 
     private:
-        static inline const std::string file = "./../models/blazepose/blazepose_heavy_float32.tflite";
         static inline const size_t in_resolution = 256;
 
     protected:

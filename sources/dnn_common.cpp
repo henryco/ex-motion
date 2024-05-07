@@ -2,7 +2,7 @@
 // Created by henryco on 1/5/24.
 //
 
-#import "../xmotion/marks/dnn/dnn_common.h"
+#import "../xmotion/dnn/net/dnn_common.h"
 
 #import <cmath>
 #include <opencv2/imgproc.hpp>

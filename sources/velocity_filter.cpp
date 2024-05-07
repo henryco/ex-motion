@@ -2,7 +2,7 @@
 // Created by henryco on 1/6/24.
 //
 
-#include "../xmotion/marks/sig/velocity_filter.h"
+#include "../xmotion/utils/velocity_filter.h"
 
 #include <cmath>
 

@@ -51,15 +51,16 @@ set(SOURCE_FILES
 
         platforms/agnostic_cap.h
 
-        xmotion/marks/sig/velocity_filter.h
-        xmotion/marks/sig/low_pass_filter.h
-        xmotion/marks/dnn/pose_detector.h
-        xmotion/marks/dnn/blaze_pose.h
-        xmotion/marks/dnn/dnn_common.h
-        xmotion/marks/dnn/dnn_runner.h
-        xmotion/marks/dnn/ssd/ssd_anchors.h
-        xmotion/marks/dnn/roi/pose_roi.h
-        xmotion/marks/dnn/roi/roi_predictor.h
+        xmotion/utils/velocity_filter.h
+        xmotion/utils/low_pass_filter.h
+        xmotion/dnn/net/pose_detector.h
+        xmotion/dnn/net/dnn_runner.h
+        xmotion/dnn/net/blaze_pose.h
+        xmotion/dnn/net/dnn_common.h
+        xmotion/dnn/net/ssd_anchors.h
+        xmotion/dnn/net/pose_roi.h
+        xmotion/dnn/net/roi_predictor.h
+        xmotion/dnn/pose_pipeline.h
         xmotion/utils/thread_pool.h
         xmotion/utils/timer.h
         xmotion/utils/delta_loop.h
@@ -118,6 +119,7 @@ set(SOURCE_FILES
         sources/cv_utils.cpp
         sources/json_ocv.cpp
         sources/cross.cpp
+        sources/pose_pipeline.cpp
 )
 
 if (UNIX AND NOT APPLE)

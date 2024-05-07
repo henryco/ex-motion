@@ -5,7 +5,7 @@
 #ifndef STEREOX_ROI_PREDICTOR_H
 #define STEREOX_ROI_PREDICTOR_H
 
-#include "../dnn_common.h"
+#include "dnn_common.h"
 
 namespace eox::dnn {
     class RoiPredictor {

@@ -2,7 +2,7 @@
 // Created by henryco on 1/12/24.
 //
 
-#include "../xmotion/marks/dnn/ssd/ssd_anchors.h"
+#include "../xmotion/dnn/net/ssd_anchors.h"
 
 #include <cmath>
 

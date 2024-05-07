@@ -2,7 +2,7 @@
 // Created by henryco on 1/6/24.
 //
 
-#include "../xmotion/marks/sig/low_pass_filter.h"
+#include "../xmotion/utils/low_pass_filter.h"
 
 namespace eox::sig {
 

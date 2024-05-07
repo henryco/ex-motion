@@ -2,7 +2,7 @@
 // Created by henryco on 1/12/24.
 //
 
-#include "../xmotion/marks/dnn/pose_detector.h"
+#include "../xmotion/dnn/net/pose_detector.h"
 
 #include <filesystem>
 #include <opencv2/imgproc.hpp>

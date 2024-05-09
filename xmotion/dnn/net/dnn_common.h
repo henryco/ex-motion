@@ -97,9 +97,9 @@ namespace eox::dnn {
         eox::dnn::Coord3d landmarks_3d[39];
 
         /**
-         * 1D 128x128 float32 array
+         * 1D 256x256 float32 array
          */
-        float segmentation[128 * 128];
+        float segmentation[256 * 256];
 
         /**
          * Probability [0,1]

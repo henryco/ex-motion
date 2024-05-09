@@ -17,6 +17,8 @@ namespace xm::nview {
 
     typedef struct Initial {
         // TODO
+        int threads;
+        int views;
     } Initial;
 }
 

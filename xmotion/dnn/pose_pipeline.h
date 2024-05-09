@@ -31,7 +31,7 @@ namespace eox {
         /**
          * segmentation array
          */
-        float segmentation[128 * 128];
+        float segmentation[256 * 256];
 
         /**
          * presence flag
@@ -77,6 +77,10 @@ namespace eox {
 
         PosePipelineOutput pass(const cv::Mat &frame, cv::Mat &segmented, cv::Mat &debug);
 
+        void setBodyModel(eox::dnn::pose::Model model);
+
+        void enableSegmentation(bool enable);
+
         void setPresenceThreshold(float threshold);
 
         void setPoseThreshold(float threshold);
@@ -100,6 +104,10 @@ namespace eox {
         [[nodiscard]] float getDetectorThreshold() const;
 
         [[nodiscard]] float getPresenceThreshold() const;
+
+        [[nodiscard]] bool segmentation() const;
+
+        [[nodiscard]] eox::dnn::pose::Model bodyModel() const;
 
     protected:
         [[nodiscard]] PosePipelineOutput inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug);

@@ -34,7 +34,7 @@ namespace xm::data {
         { INVALID, nullptr },
         { CALIBRATION, "calibration" },
         { CROSS_CALIBRATION, "cross_calibration" },
-        { TRIANGULATION, "triangulation" },
+        { POSE, "pose" },
     })
 
     namespace board {
@@ -156,7 +156,7 @@ namespace xm::data {
             j.at("calibration").get_to(c.calibration);
         }
 
-        if (c.type == ConfigType::TRIANGULATION) {
+        if (c.type == ConfigType::POSE) {
             // TODO
         }
     }

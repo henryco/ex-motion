@@ -120,6 +120,8 @@ set(SOURCE_FILES
         sources/json_ocv.cpp
         sources/cross.cpp
         sources/pose_pipeline.cpp
+        sources/pose_pipeline_debug.cpp
+        sources/pose_pipeline_aux.cpp
 )
 
 if (UNIX AND NOT APPLE)

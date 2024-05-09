@@ -94,7 +94,7 @@ namespace xm {
             return;
         }
 
-        if (config.type == data::TRIANGULATION) {
+        if (config.type == data::POSE) {
             // TODO
 
             return;
@@ -169,7 +169,7 @@ namespace xm {
             return;
         }
 
-        if (config.type == data::TRIANGULATION) {
+        if (config.type == data::POSE) {
             logic = std::make_unique<xm::Triangulation>();
             logic->debug(true);
 

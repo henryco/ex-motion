@@ -15,7 +15,7 @@ namespace xm::data {
         INVALID = -1,
         CALIBRATION,
         CROSS_CALIBRATION,
-        TRIANGULATION
+        POSE
     };
 
     namespace board {

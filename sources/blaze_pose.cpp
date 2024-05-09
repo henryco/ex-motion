@@ -7,24 +7,24 @@
 
 namespace eox::dnn {
 
-    const float *lm_3d_1x195(const tflite::Interpreter &interpreter) {
-        return interpreter.output_tensor(0)->data.f;
+    const float *lm_3d_1x195(const tflite::Interpreter &interpreter, pose::Model model) {
+        return interpreter.output_tensor(pose::mappings[model].lm_3d)->data.f;
     }
 
-    const float *lm_world_1x117(const tflite::Interpreter &interpreter) {
-        return interpreter.output_tensor(1)->data.f;
+    const float *lm_world_1x117(const tflite::Interpreter &interpreter, pose::Model model) {
+        return interpreter.output_tensor(pose::mappings[model].world)->data.f;
     }
 
-    const float *heatmap_1x64x64x39(const tflite::Interpreter &interpreter) {
-        return interpreter.output_tensor(2)->data.f;
+    const float *heatmap_1x64x64x39(const tflite::Interpreter &interpreter, pose::Model model) {
+        return interpreter.output_tensor(pose::mappings[model].hm)->data.f;
     }
 
-    const float *segmentation_1x128x128x1(const tflite::Interpreter &interpreter) {
-        return interpreter.output_tensor(3)->data.f;
+    const float *segmentation_1x128x128x1(const tflite::Interpreter &interpreter, pose::Model model) {
+        return interpreter.output_tensor(pose::mappings[model].seg)->data.f;
     }
 
-    const float *pose_flag_1x1(const tflite::Interpreter &interpreter) {
-        return interpreter.output_tensor(4)->data.f;
+    const float *pose_flag_1x1(const tflite::Interpreter &interpreter, pose::Model model) {
+        return interpreter.output_tensor(pose::mappings[model].flag)->data.f;
     }
 
 //    const std::vector<std::string> BlazePose::outputs = {
@@ -37,32 +37,32 @@ namespace eox::dnn {
 
     PoseOutput BlazePose::inference(cv::InputArray &frame) {
         // [1, 3, 256, 256]
-        cv::Mat blob = eox::dnn::convert_to_squared_blob(frame.getMat(), in_resolution);
+        cv::Mat blob = eox::dnn::convert_to_squared_blob(frame.getMat(), get_in_w(), get_in_h(), true);
         return inference(blob.ptr<float>(0));
     }
 
     PoseOutput BlazePose::inference(const float *frame) {
         init();
 
-        input(0, frame, in_resolution * in_resolution * 3 * 4);
+        input(0, frame, get_in_w() * get_in_h() * 3 * 4);
         invoke();
 
         PoseOutput output;
 
-        const auto presence = *pose_flag_1x1(*interpreter);
+        const auto presence = *pose_flag_1x1(*interpreter, model_type);
         output.score = presence;
 
-        const float *land_marks_3d = lm_3d_1x195(*interpreter);
-        const float *land_marks_wd = lm_world_1x117(*interpreter);
+        const float *land_marks_3d = lm_3d_1x195(*interpreter, model_type);
+        const float *land_marks_wd = lm_world_1x117(*interpreter, model_type);
 
         for (int i = 0; i < 39; i++) {
             const int j = i * 3;
             const int k = i * 5;
             // normalized landmarks_3d
             output.landmarks_norm[i] = {
-                    .x = land_marks_3d[k + 0] / (float) in_resolution,
-                    .y = land_marks_3d[k + 1] / (float) in_resolution,
-                    .z = land_marks_3d[k + 2] / (float) in_resolution,
+                    .x = land_marks_3d[k + 0] / (float) get_in_w(),
+                    .y = land_marks_3d[k + 1] / (float) get_in_h(),
+                    .z = land_marks_3d[k + 2] / (float) 1.f, // ?
                     .v = land_marks_3d[k + 3],
                     .p = land_marks_3d[k + 4],
             };
@@ -75,15 +75,64 @@ namespace eox::dnn {
             };
         }
 
-        const float *s = segmentation_1x128x128x1(*interpreter);
-        for (int i = 0; i < 128 * 128; i++) {
-            output.segmentation[i] = eox::dnn::sigmoid(s[i]);
+        if (SEGMENTATION) {
+            const float *s = segmentation_1x128x128x1(*interpreter, model_type);
+
+            // 256x256 or 128x128
+            const auto size = get_in_w() * get_in_h();
+
+            if (size == 256 * 256) {
+
+                for (int i = 0; i < size; i++)
+                    output.segmentation[i] = (float) eox::dnn::sigmoid(s[i]);
+
+            } else {
+
+                auto *buffer = new float[size];
+                for (int i = 0; i < size; i++)
+                    buffer[i] = (float) eox::dnn::sigmoid(s[i]);
+
+                cv::Mat temp = cv::Mat(get_in_h(), get_in_w(), CV_32F, buffer);
+                cv::Mat dst;
+                cv::resize(temp, dst, cv::Size(256, 256), 0, 0, cv::INTER_NEAREST);
+
+                if (dst.isContinuous()) {
+                    memcpy(output.segmentation, dst.data, 256 * 256 * sizeof(float));
+                }
+
+                delete[] buffer;
+            }
         }
+
         return output;
     }
 
     std::string BlazePose::get_model_file() {
-        return "./../models/blazepose/blazepose_heavy_float32.tflite";
+        return "./../models/blazepose/body/whole/" + pose::models[model_type];
+    }
+
+    bool BlazePose::segmentation() const {
+        return SEGMENTATION;
+    }
+
+    void BlazePose::set_segmentation(bool segmentation) {
+        SEGMENTATION = segmentation;
+    }
+
+    pose::Model BlazePose::get_model_type() const {
+        return model_type;
+    }
+
+    void BlazePose::set_model_type(pose::Model type) {
+        model_type = type;
+    }
+
+    int BlazePose::get_in_w() const {
+        return pose::mappings[model_type].i_w;
+    }
+
+    int BlazePose::get_in_h() const {
+        return pose::mappings[model_type].i_h;
     }
 
 } // eox

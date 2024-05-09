@@ -76,7 +76,8 @@ namespace eox::dnn {
                 throw std::runtime_error("File: " + get_model_file() + " does not exists!");
             }
 
-            model = std::move(tflite::FlatBufferModel::BuildFromFile(get_model_file().c_str()));
+
+            model = std::move(tflite::FlatBufferModel::BuildFromFile(std::filesystem::path(get_model_file()).string().c_str()));
             if (!model) {
 //                log->error("Failed to load tflite model");
                 throw std::runtime_error("Failed to load tflite model");

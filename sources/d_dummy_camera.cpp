@@ -17,17 +17,27 @@ void xm::DummyCamera::open(const xm::SCamProp &prop) {
 
     auto image = cv::imread(std::filesystem::path("../media/pose2.png").string());
     cv::resize(image, image, cv::Size(prop.width, prop.height));
-    images.push_back(image);
+    src = image;
 }
 
 std::map<std::string, cv::Mat> xm::DummyCamera::captureWithName() {
     std::map<std::string, cv::Mat> map;
-    for (int i = 0; i < properties.size(); i++)
-        map[properties.at(i).name] = images.at(i);
+    for (auto & prop : properties) {
+        cv::Mat cpy;
+        src.copyTo(cpy);
+        map[prop.name] = cpy;
+    }
     return map;
 }
 
 std::vector<cv::Mat> xm::DummyCamera::capture() {
+    std::vector<cv::Mat> images;
+    images.reserve(properties.size());
+    for (int i = 0; i < properties.size(); i++) {
+        cv::Mat cpy;
+        src.copyTo(cpy);
+        images.push_back(cpy);
+    }
     return images;
 }
 

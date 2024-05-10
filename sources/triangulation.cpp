@@ -14,7 +14,7 @@ xm::Triangulation& xm::Triangulation::proceed(float delta, const std::vector<cv:
         images.clear();
         images.reserve(_frames.size());
         for (auto &img: _frames)
-            images.push_back(img.clone());
+            images.push_back(img);
         return *this;
     }
 

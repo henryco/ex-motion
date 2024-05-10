@@ -16,7 +16,9 @@ namespace xm {
     }
 
     StereoCamera::~StereoCamera() {
-        release();
+        for (auto &capture: captures)
+            capture.second.release();
+        captures.clear();
     }
 
     void StereoCamera::release() {

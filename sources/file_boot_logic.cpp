@@ -15,7 +15,7 @@ namespace xm {
     void FileBoot::update(float delta, float _, float fps) {
         window->setFps((int) fps);
 
-        logic->proceed(delta, camera.capture());
+        logic->proceed(delta, camera->capture());
         process_results();
 
 //        std::this_thread::sleep_for(std::chrono::milliseconds(25));

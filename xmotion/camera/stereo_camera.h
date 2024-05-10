@@ -60,41 +60,41 @@ namespace xm {
     public:
         StereoCamera() = default;
 
-        ~StereoCamera();
+        virtual ~StereoCamera();
 
         /**
         * This function releases any resources held by the current instance.
         */
 
-        void release();
+        virtual void release();
 
-        void open(const SCamProp &prop);
+        virtual void open(const SCamProp &prop);
 
-        std::map<std::string, cv::Mat> captureWithName();
+        virtual std::map<std::string, cv::Mat> captureWithName();
 
-        std::vector<cv::Mat> capture();
+        virtual std::vector<cv::Mat> capture();
 
-        void setControl(const std::string &device_id, uint prop_id, int value);
+        virtual void setControl(const std::string &device_id, uint prop_id, int value);
 
-        void resetControls(const std::string &device_id);
+        virtual void resetControls(const std::string &device_id);
 
-        void resetControls();
+        virtual void resetControls();
 
-        void setFastMode(bool fast = true);
+        virtual void setFastMode(bool fast);
 
-        void setThreadPool(std::shared_ptr<eox::util::ThreadPool> executor);
+        virtual void setThreadPool(std::shared_ptr<eox::util::ThreadPool> executor);
 
-        [[nodiscard]] bool getFastMode() const;
+        [[nodiscard]] virtual bool getFastMode() const;
 
-        [[nodiscard]] std::vector<platform::cap::camera_controls> getControls() const;
+        [[nodiscard]] virtual std::vector<platform::cap::camera_controls> getControls() const;
 
-        [[nodiscard]] platform::cap::camera_controls getControls(const std::string &device_id) const;
+        [[nodiscard]] virtual platform::cap::camera_controls getControls(const std::string &device_id) const;
 
         [[nodiscard]] uint getDeviceIndex(const std::string &device_id) const;
 
-        void save(std::ostream &output_stream, const std::string &device_id, const std::string &name) const;
+        virtual void save(std::ostream &output_stream, const std::string &device_id, const std::string &name) const;
 
-        void read(std::istream &input_stream, const std::string &device_id, const std::string &name);
+        virtual void read(std::istream &input_stream, const std::string &device_id, const std::string &name);
     };
 
 } // xm

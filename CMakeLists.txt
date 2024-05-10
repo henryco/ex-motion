@@ -76,6 +76,7 @@ set(SOURCE_FILES
         xmotion/gtk/small_button.h
         xmotion/data/json_config.h
         xmotion/camera/stereo_camera.h
+        xmotion/camera/d_dummy_camera.h
         xmotion/gtk/gtk_utils.h
         xmotion/gtk/gtk_cam_params.h
         xmotion/gtk/cam_params_window.h
@@ -122,6 +123,7 @@ set(SOURCE_FILES
         sources/pose_pipeline.cpp
         sources/pose_pipeline_debug.cpp
         sources/pose_pipeline_aux.cpp
+        sources/d_dummy_camera.cpp
 )
 
 if (UNIX AND NOT APPLE)

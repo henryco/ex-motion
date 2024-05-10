@@ -54,6 +54,7 @@ namespace xm::data {
     typedef struct {
         std::vector<Capture> capture;
         bool fast;
+        bool dummy;
 
         std::vector<std::string> _names;
         std::vector<std::string> _ids;

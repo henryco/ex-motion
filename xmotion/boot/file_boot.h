@@ -25,11 +25,11 @@ namespace xm {
     protected:
         std::unique_ptr<xm::CamParamsWindow> params_window;
         std::unique_ptr<xm::SimpleImageWindow> window;
+        std::unique_ptr<xm::StereoCamera> camera;
         std::unique_ptr<xm::Logic> logic;
 
         xm::data::JsonConfig config;
         std::string project_file;
-        xm::StereoCamera camera;
 
         bool bypass = false;
 

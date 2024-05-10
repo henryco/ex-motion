@@ -39,7 +39,8 @@ namespace xm {
 
         print_ocv_ocl_stats();
 
-        deltaLoop.setFps(300);
+//        deltaLoop.setFps(300);
+        deltaLoop.setFps(0);
         deltaLoop.setFunc([this](float d, float l, float f) {
             update(d, l, f);
         });

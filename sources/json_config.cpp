@@ -100,6 +100,7 @@ namespace xm::data {
     void from_json(const nlohmann::json &j, Camera &c) {
         j.at("capture").get_to(c.capture);
         c.fast = j.value("fast", false);
+        c.dummy = j.value("dummy", false);
 
         c._names = {};
         c._ids = {};

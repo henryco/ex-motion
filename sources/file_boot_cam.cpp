@@ -4,14 +4,23 @@
 
 #include <fstream>
 #include "../xmotion/boot/file_boot.h"
+#include "../xmotion/camera/d_dummy_camera.h"
 
 namespace xm {
 
     void FileBoot::prepare_cam() {
         const auto project_dir = xm::data::prepare_project_dir(project_file);
-        camera.setFastMode(config.camera.fast);
+
+        // TODO INSTANCE
+
+        if (config.camera.dummy)
+            camera = std::make_unique<xm::DummyCamera>();
+        else
+            camera = std::make_unique<xm::StereoCamera>();
+
+        camera->setFastMode(config.camera.fast);
         for (const auto &c: config.camera.capture) {
-            camera.open({
+            camera->open({
                                 .device_id = c.id,
                                 .name = c.name,
                                 .codec = c.codec,
@@ -41,7 +50,7 @@ namespace xm {
             std::filesystem::path conf = project_dir / file;
 
             std::ofstream os(conf);
-            camera.save(os, device_id, c.name);
+            camera->save(os, device_id, c.name);
             os.close();
 
             log->info("saved camera settings for: {} | {}", device_id, c.name);
@@ -61,18 +70,18 @@ namespace xm {
 
         std::ifstream is(conf);
         log->info("reading configuration for camera device: {} | {}", device_id, name);
-        camera.read(is, device_id, name);
+        camera->read(is, device_id, name);
         is.close();
     }
 
     int FileBoot::on_camera_update(const std::string &device_id, uint id, int value) {
-        camera.setControl(device_id, id, value);
+        camera->setControl(device_id, id, value);
         log->debug("updated camera settings for: {} | {}:{}", device_id, id, value);
         return value;
     }
 
     void FileBoot::on_camera_reset(const std::string &device_id) {
-        camera.resetControls(device_id);
+        camera->resetControls(device_id);
         log->debug("reset camera settings for: {} | {}", device_id);
     }
 

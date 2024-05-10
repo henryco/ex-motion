@@ -9,7 +9,7 @@ namespace xm {
 
     void FileBoot::load_device_params() {
         for (const auto &cap: config.camera.capture) {
-            const auto props = camera.getControls(cap.id);
+            const auto props = camera->getControls(cap.id);
             std::vector<eox::xgtk::GtkCamProp> vec;
             vec.reserve(props.controls.size());
             for (const auto &c: props.controls) {

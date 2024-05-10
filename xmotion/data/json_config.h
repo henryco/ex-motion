@@ -100,6 +100,11 @@ namespace xm::data {
     } Calibration;
 
     typedef struct {
+        bool segmentation;
+        int threads;
+    } Pose;
+
+    typedef struct {
         int cpu;
     } Misc;
 
@@ -107,6 +112,7 @@ namespace xm::data {
         ConfigType type;
         Misc misc;
         Gui gui;
+        Pose pose;
         Camera camera;
         Calibration calibration;
     } JsonConfig;

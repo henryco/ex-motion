@@ -172,7 +172,10 @@ namespace xm {
             logic->debug(true);
 
             xm::nview::Initial params = {
-                    // TODO
+                    .threads = config.pose.threads <= 0
+                            ? config.misc.cpu
+                            : std::min(config.pose.threads, config.misc.cpu),
+                    .views = (int) config.camera.capture.size()
             };
 
             (static_cast<xm::Triangulation *>(logic.get()))->init(params);

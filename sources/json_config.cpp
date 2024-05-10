@@ -27,6 +27,28 @@ namespace xm::data::def {
                 .closed = false
         };
     }
+
+    Gui gui() {
+        return {
+                .layout = std::vector<int>{},
+                .vertical = false,
+                .scale = 1.f,
+                .fps = 300
+        };
+    }
+
+    Misc misc() {
+        return {
+            .cpu = 8
+        };
+    }
+
+    Pose pose() {
+        return {
+                .segmentation = false,
+                .threads = 0
+        };
+    }
 }
 
 namespace xm::data {
@@ -134,6 +156,11 @@ namespace xm::data {
         c.total = j.value("total", 10);
     }
 
+    void from_json(const nlohmann::json &j, Pose &p) {
+        p.segmentation = j.value("segmentation", false);
+        p.threads = j.value("threads", 0);
+    }
+
     void from_json(const nlohmann::json &j, Misc &m) {
         m.cpu = j.value("cpu", 8);
     }
@@ -141,24 +168,15 @@ namespace xm::data {
     void from_json(const nlohmann::json &j, JsonConfig &c) {
         j.at("type").get_to(c.type);
         j.at("camera").get_to(c.camera);
-
-        c.misc = j.value("misc", (Misc) {
-                .cpu = 8
-        });
-
-        c.gui = j.value("gui", (Gui) {
-                .layout = std::vector<int>{},
-                .vertical = false,
-                .scale = 1.f,
-                .fps = 300
-        });
+        c.misc = j.value("misc", xm::data::def::misc());
+        c.gui = j.value("gui", xm::data::def::gui());
 
         if (c.type == ConfigType::CALIBRATION || c.type == ConfigType::CROSS_CALIBRATION) {
             j.at("calibration").get_to(c.calibration);
         }
 
         if (c.type == ConfigType::POSE) {
-            // TODO
+            c.pose = j.value("pose", xm::data::def::pose());
         }
     }
 

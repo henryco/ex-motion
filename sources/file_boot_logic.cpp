@@ -18,8 +18,6 @@ namespace xm {
         logic->proceed(delta, camera->capture());
         process_results();
 
-//        std::this_thread::sleep_for(std::chrono::milliseconds(25));
-
         if (!bypass)
             window->refresh(logic->frames());
         else

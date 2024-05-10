@@ -63,7 +63,6 @@ namespace eox::util {
             }
 
             auto loop_end = std::chrono::high_resolution_clock::now();
-            auto delta = std::chrono::duration_cast<std::chrono::nanoseconds>(loop_end - loop_post);
             auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(loop_end - loop_pre);
             auto late = duration - frame;
             fps += 1000000000.f / ((float) duration.count());
@@ -71,12 +70,10 @@ namespace eox::util {
             loop_pre = std::chrono::high_resolution_clock::now();
 
             runnable(
-                    ((float) delta.count()) / 1000000.f, // delta
+                    ((float) duration.count()) / 1000000.f, // delta
                     ((float) late.count()) / 1000000.f,  // latency
                     fps / (float) iteration              // averaged fps
                     );
-
-            loop_post = std::chrono::high_resolution_clock::now();
 
             if (late.count() > 0)
                 continue;

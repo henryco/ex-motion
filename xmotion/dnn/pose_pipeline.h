@@ -79,6 +79,8 @@ namespace eox {
 
         void setBodyModel(eox::dnn::pose::Model model);
 
+        void setDetectorModel(eox::dnn::box::Model model);
+
         void enableSegmentation(bool enable);
 
         void setPresenceThreshold(float threshold);
@@ -108,6 +110,8 @@ namespace eox {
         [[nodiscard]] bool segmentation() const;
 
         [[nodiscard]] eox::dnn::pose::Model bodyModel() const;
+
+        [[nodiscard]] eox::dnn::box::Model getDetectorModel() const;
 
     protected:
         [[nodiscard]] PosePipelineOutput inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug);

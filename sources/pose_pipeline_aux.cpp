@@ -11,6 +11,14 @@ namespace eox {
                 std::chrono::high_resolution_clock::now().time_since_epoch());
     }
 
+    eox::dnn::box::Model PosePipeline::getDetectorModel() const {
+        return detector.get_model_type();
+    }
+
+    void PosePipeline::setDetectorModel(eox::dnn::box::Model model) {
+        detector.set_model_type(model);
+    }
+
     void PosePipeline::setBodyModel(eox::dnn::pose::Model model) {
         pose.set_model_type(model);
     }

@@ -6,22 +6,6 @@
 
 void xm::Triangulation::init(const xm::nview::Initial &params) {
     config = params;
-
-    for (int i = 0; i < config.views; ++i) {
-        auto p = std::make_unique<eox::dnn::PosePipeline>();
-        p->enableSegmentation(config.segmentation);
-        p->setBodyModel(eox::dnn::pose::FULL_F32);
-        p->setDetectorModel(eox::dnn::box::F_16);
-        poses.push_back(std::move(p));
-    }
-
-    for (int i = 0; i < config.threads; ++i) {
-        auto p = std::make_unique<eox::util::ThreadPool>();
-        p->start(1);
-        workers.push_back(std::move(p));
-    }
-
-    // TODO
 }
 
 xm::Triangulation &xm::Triangulation::proceed(float delta, const std::vector<cv::Mat> &_frames) {
@@ -69,6 +53,26 @@ xm::Triangulation &xm::Triangulation::proceed(float delta, const std::vector<cv:
 }
 
 void xm::Triangulation::start() {
+    for (auto &worker: workers)
+        worker->shutdown();
+
+    workers.clear();
+    poses.clear();
+
+    for (int i = 0; i < config.views; ++i) {
+        auto p = std::make_unique<eox::dnn::PosePipeline>();
+        p->enableSegmentation(config.segmentation);
+        p->setBodyModel(eox::dnn::pose::FULL_F32);
+        p->setDetectorModel(eox::dnn::box::F_16);
+        poses.push_back(std::move(p));
+    }
+
+    for (int i = 0; i < config.threads; ++i) {
+        auto p = std::make_unique<eox::util::ThreadPool>();
+        p->start(1);
+        workers.push_back(std::move(p));
+    }
+
     active = true;
 }
 

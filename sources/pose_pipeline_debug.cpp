@@ -29,29 +29,29 @@ namespace eox::dnn {
                 cv::Scalar color(255 * (1.f - visibility), 255 * visibility, 0);
                 cv::circle(output, circle, 2, color, 3);
 
-                if (i <= 32) {
-                    cv::putText(output, std::to_string(visibility), cv::Point(circle.x - 10, circle.y - 10),
-                                cv::FONT_HERSHEY_SIMPLEX, 0.7,
-                                cv::Scalar(0, 0, 255), 2);
-                }
-
-                if (i == 25) {
-                    cv::putText(output,
-                                std::to_string(point.x / output.cols) + ", " +
-                                std::to_string(point.y / output.rows) + ", " +
-                                std::to_string(point.z),
-                                cv::Point(40, 40),
-                                cv::FONT_HERSHEY_SIMPLEX, 0.7,
-                                cv::Scalar(0, 0, 255), 2);
-
-                    cv::putText(output,
-                                std::to_string(ws3d[i].x) + ", " +
-                                std::to_string(ws3d[i].y) + ", " +
-                                std::to_string(ws3d[i].z),
-                                cv::Point(40, 80),
-                                cv::FONT_HERSHEY_SIMPLEX, 0.7,
-                                cv::Scalar(0, 0, 255), 2);
-                }
+//                if (i <= 32) {
+//                    cv::putText(output, std::to_string(visibility), cv::Point(circle.x - 10, circle.y - 10),
+//                                cv::FONT_HERSHEY_SIMPLEX, 0.7,
+//                                cv::Scalar(0, 0, 255), 2);
+//                }
+//
+//                if (i == 25) {
+//                    cv::putText(output,
+//                                std::to_string(point.x / output.cols) + ", " +
+//                                std::to_string(point.y / output.rows) + ", " +
+//                                std::to_string(point.z),
+//                                cv::Point(40, 40),
+//                                cv::FONT_HERSHEY_SIMPLEX, 0.7,
+//                                cv::Scalar(0, 0, 255), 2);
+//
+//                    cv::putText(output,
+//                                std::to_string(ws3d[i].x) + ", " +
+//                                std::to_string(ws3d[i].y) + ", " +
+//                                std::to_string(ws3d[i].z),
+//                                cv::Point(40, 80),
+//                                cv::FONT_HERSHEY_SIMPLEX, 0.7,
+//                                cv::Scalar(0, 0, 255), 2);
+//                }
             }
         }
     }

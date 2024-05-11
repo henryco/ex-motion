@@ -5,9 +5,6 @@
 #include "../xmotion/algo/pose.h"
 #include "../xmotion/utils/eox_globals.h"
 
-xm::Pose::~Pose() {
-    release();
-}
 
 void xm::Pose::init(const xm::nview::Initial &params) {
     results.error = false;
@@ -108,6 +105,13 @@ void xm::Pose::stop() {
     release();
 }
 
+void xm::Pose::release() {
+    for (auto &worker: workers)
+        worker->shutdown();
+    workers.clear();
+    poses.clear();
+}
+
 bool xm::Pose::is_active() const {
     return active;
 }
@@ -124,9 +128,6 @@ void xm::Pose::debug(bool _debug) {
     DEBUG = _debug;
 }
 
-void xm::Pose::release() {
-    for (auto &worker: workers)
-        worker->shutdown();
-    workers.clear();
-    poses.clear();
+xm::Pose::~Pose() {
+    release();
 }

@@ -105,6 +105,7 @@ namespace xm::data {
     } Pose;
 
     typedef struct {
+        bool debug;
         int cpu;
     } Misc;
 

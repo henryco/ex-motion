@@ -16,7 +16,7 @@ namespace xm::nview {
     } Result;
 
     typedef struct Initial {
-        // TODO
+        bool segmentation;
         int threads;
         int views;
     } Initial;

@@ -39,6 +39,7 @@ namespace xm::data::def {
 
     Misc misc() {
         return {
+            .debug = false,
             .cpu = 8
         };
     }
@@ -163,6 +164,7 @@ namespace xm::data {
 
     void from_json(const nlohmann::json &j, Misc &m) {
         m.cpu = j.value("cpu", 8);
+        m.debug = j.value("debug", false);
     }
 
     void from_json(const nlohmann::json &j, JsonConfig &c) {

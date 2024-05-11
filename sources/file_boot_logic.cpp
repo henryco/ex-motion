@@ -102,7 +102,7 @@ namespace xm {
     void FileBoot::prepare_logic() {
         if (config.type == data::CALIBRATION) {
             logic = std::make_unique<xm::Calibration>();
-            logic->debug(true);
+            logic->debug(config.misc.debug);
 
             const auto w = config.camera.capture[0].width;
             const auto h = config.camera.capture[0].height;
@@ -132,7 +132,7 @@ namespace xm {
 
         if (config.type == data::CROSS_CALIBRATION) {
             logic = std::make_unique<xm::CrossCalibration>();
-            logic->debug(true);
+            logic->debug(config.misc.debug);
 
             xm::cross::Initial params = {
                     .delay = config.calibration.delay,
@@ -169,9 +169,10 @@ namespace xm {
 
         if (config.type == data::POSE) {
             logic = std::make_unique<xm::Triangulation>();
-            logic->debug(true);
+            logic->debug(config.misc.debug);
 
             xm::nview::Initial params = {
+                    .segmentation = config.pose.segmentation,
                     .threads = config.pose.threads <= 0
                             ? config.misc.cpu
                             : std::min(config.pose.threads, config.misc.cpu),

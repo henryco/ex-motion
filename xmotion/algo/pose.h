@@ -26,7 +26,7 @@ namespace xm::nview {
 
 namespace xm {
 
-    class Triangulation : public xm::Logic {
+    class Pose : public xm::Logic {
     private:
         std::vector<cv::Mat> images{};
         xm::nview::Result results{};
@@ -39,17 +39,17 @@ namespace xm {
         bool DEBUG = false;
 
     public:
-        Triangulation() = default;
+        Pose() = default;
 
-        Triangulation(Triangulation &&ref) = default;
+        Pose(Pose &&ref) = default;
 
-        Triangulation(Triangulation &src) = delete;
+        Pose(Pose &src) = delete;
 
-        ~Triangulation() override;
+        ~Pose() override;
 
         void init(const xm::nview::Initial &params);
 
-        Triangulation &proceed(float delta, const std::vector<cv::Mat> &frames) override;
+        Pose &proceed(float delta, const std::vector<cv::Mat> &frames) override;
 
         bool is_active() const override;
 

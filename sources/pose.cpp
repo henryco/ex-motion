@@ -2,19 +2,19 @@
 // Created by henryco on 4/22/24.
 //
 
-#include "../xmotion/algo/triangulation.h"
+#include "../xmotion/algo/pose.h"
 #include "../xmotion/utils/eox_globals.h"
 
-xm::Triangulation::~Triangulation() {
+xm::Pose::~Pose() {
     release();
 }
 
-void xm::Triangulation::init(const xm::nview::Initial &params) {
+void xm::Pose::init(const xm::nview::Initial &params) {
     results.error = false;
     config = params;
 }
 
-xm::Triangulation &xm::Triangulation::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
@@ -82,7 +82,7 @@ xm::Triangulation &xm::Triangulation::proceed(float delta, const std::vector<cv:
     return *this;
 }
 
-void xm::Triangulation::start() {
+void xm::Pose::start() {
     stop();
 
     for (int i = 0; i < config.views; ++i) {
@@ -103,28 +103,28 @@ void xm::Triangulation::start() {
     active = true;
 }
 
-void xm::Triangulation::stop() {
+void xm::Pose::stop() {
     active = false;
     release();
 }
 
-bool xm::Triangulation::is_active() const {
+bool xm::Pose::is_active() const {
     return active;
 }
 
-const std::vector<cv::Mat> &xm::Triangulation::frames() const {
+const std::vector<cv::Mat> &xm::Pose::frames() const {
     return images;
 }
 
-const xm::nview::Result &xm::Triangulation::result() const {
+const xm::nview::Result &xm::Pose::result() const {
     return results;
 }
 
-void xm::Triangulation::debug(bool _debug) {
+void xm::Pose::debug(bool _debug) {
     DEBUG = _debug;
 }
 
-void xm::Triangulation::release() {
+void xm::Pose::release() {
     for (auto &worker: workers)
         worker->shutdown();
     workers.clear();

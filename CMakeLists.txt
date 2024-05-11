@@ -83,7 +83,7 @@ set(SOURCE_FILES
         xmotion/gtk/gtk_config_stack.h
         xmotion/algo/i_logic.h
         xmotion/algo/calibration.h
-        xmotion/algo/triangulation.h
+        xmotion/algo/pose.h
         xmotion/utils/cv_utils.h
         xmotion/data/json_ocv.h
         xmotion/algo/cross.h
@@ -115,7 +115,7 @@ set(SOURCE_FILES
         sources/file_boot_gui.cpp
         sources/file_boot_cam.cpp
         sources/calibration.cpp
-        sources/triangulation.cpp
+        sources/pose.cpp
         sources/file_boot_logic.cpp
         sources/cv_utils.cpp
         sources/json_ocv.cpp

@@ -8,7 +8,7 @@
 #include "../xmotion/algo/calibration.h"
 #include "../xmotion/data/json_ocv.h"
 #include "../xmotion/algo/cross.h"
-#include "../xmotion/algo/triangulation.h"
+#include "../xmotion/algo/pose.h"
 
 namespace xm {
 
@@ -168,7 +168,7 @@ namespace xm {
         }
 
         if (config.type == data::POSE) {
-            logic = std::make_unique<xm::Triangulation>();
+            logic = std::make_unique<xm::Pose>();
             logic->debug(config.misc.debug);
 
             xm::nview::Initial params = {
@@ -179,7 +179,7 @@ namespace xm {
                     .views = (int) config.camera.capture.size()
             };
 
-            (static_cast<xm::Triangulation *>(logic.get()))->init(params);
+            (static_cast<xm::Pose *>(logic.get()))->init(params);
             return;
         }
 

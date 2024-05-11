@@ -14,7 +14,7 @@
 #include "net/blaze_pose.h"
 #include "net/pose_roi.h"
 
-namespace eox {
+namespace eox::dnn {
 
     using PosePipelineOutput = struct {
 

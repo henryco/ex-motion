@@ -17,9 +17,28 @@
 namespace eox::util {
 
     class ThreadPool {
+    private:
+        static inline const auto log =
+                spdlog::stdout_color_mt("thread_pool");
+
+        std::queue<std::function<void()>> tasks;
+        std::queue<std::thread> threads;
+        std::condition_variable flag;
+        std::mutex mutex;
+
+        std::atomic<bool> stop = true;
+
+        void worker();
+
+        void trigger();
+
     public:
 
         explicit ThreadPool(size_t size);
+
+        ThreadPool(ThreadPool &&ref) = delete;
+
+        ThreadPool(ThreadPool &src) = delete;
 
         ThreadPool() = default;
 
@@ -53,21 +72,6 @@ namespace eox::util {
         std::future<void> execute(std::function<void()> func);
 
         void start(size_t size);
-
-    private:
-        static inline const auto log =
-                spdlog::stdout_color_mt("thread_pool");
-
-        std::queue<std::function<void()>> tasks;
-        std::queue<std::thread> threads;
-        std::condition_variable flag;
-        std::mutex mutex;
-
-        std::atomic<bool> stop = true;
-
-        void worker();
-
-        void trigger();
     };
 
 }

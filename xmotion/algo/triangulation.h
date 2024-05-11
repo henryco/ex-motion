@@ -9,6 +9,8 @@
 #define XMOTION_TRIANGULATION_H
 
 #include "i_logic.h"
+#include "../utils/thread_pool.h"
+#include "../dnn/pose_pipeline.h"
 
 namespace xm::nview {
     typedef struct Result {
@@ -28,12 +30,17 @@ namespace xm {
     private:
         std::vector<cv::Mat> images{};
         xm::nview::Result results{};
-        xm::nview::Initial config;
+        xm::nview::Initial config{};
+
+        std::vector<std::unique_ptr<eox::util::ThreadPool>> workers;
+        std::vector<std::unique_ptr<eox::dnn::PosePipeline>> poses;
 
         bool active = false;
         bool DEBUG = false;
 
     public:
+        Triangulation() = default;
+
         void init(const xm::nview::Initial &params);
 
         Triangulation &proceed(float delta, const std::vector<cv::Mat> &frames) override;

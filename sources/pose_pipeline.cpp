@@ -4,7 +4,7 @@
 
 #include "../xmotion/dnn/pose_pipeline.h"
 
-namespace eox {
+namespace eox::dnn {
 
     void PosePipeline::init() {
         filters.clear();

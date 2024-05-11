@@ -8,8 +8,6 @@
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/kernels/register.h"
 #include <filesystem>
-//#include <spdlog/logger.h>
-//#include <spdlog/sinks/stdout_color_sinks.h>
 #include <opencv2/core/mat.hpp>
 #include "tensorflow/lite/delegates/gpu/delegate_options.h"
 #include "tensorflow/lite/delegates/gpu/delegate.h"
@@ -18,8 +16,6 @@ namespace eox::dnn {
 
     template <typename T>
     class DnnRunner {
-//        static inline const auto log =
-//                spdlog::stdout_color_mt("dnn_runner");
 
     protected:
         std::unique_ptr<tflite::FlatBufferModel> model;
@@ -35,10 +31,8 @@ namespace eox::dnn {
         }
 
         void invoke() {
-            if (interpreter->Invoke() != kTfLiteOk) {
-//                log->error("Failed to invoke interpreter");
+            if (interpreter->Invoke() != kTfLiteOk)
                 throw std::runtime_error("Failed to invoke interpreter");
-            }
         }
 
         virtual void initialize() {
@@ -46,6 +40,21 @@ namespace eox::dnn {
         }
 
     public:
+
+        DnnRunner() = default;
+
+        DnnRunner(DnnRunner<T> &cpy) = delete;
+
+        DnnRunner(DnnRunner<T> &&ref) noexcept {
+            interpreter = std::move(ref.interpreter);
+            model = std::move(ref.model);
+
+            initialized = ref.initialized;
+            gpu_delegate = ref.gpu_delegate;
+
+            ref.gpu_delegate = nullptr;
+            ref.initialized = false;
+        }
 
         /**
          * @param frame pointer to row-oriented 1D array representation of RGB image
@@ -72,21 +81,18 @@ namespace eox::dnn {
             initialize();
 
             if (!std::filesystem::exists(get_model_file())) {
-//                log->error("File: " + get_model_file() + " does not exists!");
                 throw std::runtime_error("File: " + get_model_file() + " does not exists!");
             }
 
 
             model = std::move(tflite::FlatBufferModel::BuildFromFile(std::filesystem::path(get_model_file()).string().c_str()));
             if (!model) {
-//                log->error("Failed to load tflite model");
                 throw std::runtime_error("Failed to load tflite model");
             }
 
             tflite::ops::builtin::BuiltinOpResolver resolver;
             tflite::InterpreterBuilder(*model, resolver)(&interpreter);
             if (!interpreter) {
-//                log->error("Failed to create tflite interpreter");
                 throw std::runtime_error("Failed to create tflite interpreter");
             }
 
@@ -94,12 +100,10 @@ namespace eox::dnn {
             gpu_delegate = TfLiteGpuDelegateV2Create(&options);
 
             if (interpreter->ModifyGraphWithDelegate(gpu_delegate) != kTfLiteOk) {
-//                log->error("Failed to modify graph with GPU delegate");
                 throw std::runtime_error("Failed to modify graph with GPU delegate");
             }
 
             if (interpreter->AllocateTensors() != kTfLiteOk) {
-//                log->error("Failed to allocate tensors for tflite interpreter");
                 throw std::runtime_error("Failed to allocate tensors for tflite interpreter");
             }
 

@@ -4,7 +4,7 @@
 
 #include "../xmotion/dnn/pose_pipeline.h"
 
-namespace eox {
+namespace eox::dnn {
 
     std::chrono::nanoseconds PosePipeline::timestamp() const {
         return std::chrono::duration_cast<std::chrono::nanoseconds>(

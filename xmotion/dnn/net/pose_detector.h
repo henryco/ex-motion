@@ -30,8 +30,8 @@ namespace eox::dnn {
             int i_w;
             int i_h;
             int bboxes;
-            int box_loc;
             int scores;
+            int box_loc;
             int score_loc;
         };
 

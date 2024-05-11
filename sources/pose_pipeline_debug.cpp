@@ -4,7 +4,7 @@
 
 #include "../xmotion/dnn/pose_pipeline.h"
 
-namespace eox {
+namespace eox::dnn {
 
     void PosePipeline::drawJoints(const eox::dnn::Landmark landmarks[39], cv::Mat &output) const {
         for (auto bone: eox::dnn::body_joints) {

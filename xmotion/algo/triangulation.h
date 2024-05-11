@@ -14,7 +14,7 @@
 
 namespace xm::nview {
     typedef struct Result {
-        // TODO
+        bool error;
     } Result;
 
     typedef struct Initial {
@@ -41,6 +41,12 @@ namespace xm {
     public:
         Triangulation() = default;
 
+        Triangulation(Triangulation &&ref) = default;
+
+        Triangulation(Triangulation &src) = delete;
+
+        ~Triangulation() override;
+
         void init(const xm::nview::Initial &params);
 
         Triangulation &proceed(float delta, const std::vector<cv::Mat> &frames) override;
@@ -56,6 +62,9 @@ namespace xm {
         void debug(bool _debug) override;
 
         const xm::nview::Result &result() const;
+
+    protected:
+        void release();
     };
 
 } // xm

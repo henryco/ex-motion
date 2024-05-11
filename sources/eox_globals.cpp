@@ -8,4 +8,5 @@ namespace eox::globals {
 
     std::size_t THREAD_POOL_CORES_MAX = 8;
 
+    std::size_t TIMEOUT_MS = 10000;
 }

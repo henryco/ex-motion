@@ -10,6 +10,7 @@
 namespace eox::globals {
 
     extern std::size_t THREAD_POOL_CORES_MAX;
+    extern std::size_t TIMEOUT_MS;
 
 }
 

@@ -3,8 +3,14 @@
 //
 
 #include "../xmotion/algo/triangulation.h"
+#include "../xmotion/utils/eox_globals.h"
+
+xm::Triangulation::~Triangulation() {
+    release();
+}
 
 void xm::Triangulation::init(const xm::nview::Initial &params) {
+    results.error = false;
     config = params;
 }
 
@@ -27,20 +33,43 @@ xm::Triangulation &xm::Triangulation::proceed(float delta, const std::vector<cv:
         if (j >= workers.size())
             j = 0;
 
-        const auto& frame = _frames.at(i);
+        const auto &frame = _frames.at(i);
+        const auto &pose = poses.at(i);
         frames.emplace_back();
         features.push_back(
-                workers.at(j)->execute<eox::dnn::PosePipelineOutput>([this, i, frame, &frames]() -> eox::dnn::PosePipelineOutput {
-                    cv::Mat segmented;
-                    return poses.at(i)->pass(frame, segmented, frames.at(i));
-                }));
+                workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
+                        [i, frame, &pose, &frames]() -> eox::dnn::PosePipelineOutput {
+                            cv::Mat segmented;
+                            return pose->pass(frame, segmented, frames.at(i));
+                        }));
 
         i++;
         j++;
     }
 
     for (auto &feature: features) {
-        const auto result = feature.get();
+        eox::dnn::PosePipelineOutput result;
+
+        if (!feature.valid()) {
+            results.error = true;
+            stop();
+            return *this;
+        }
+
+        if (feature.wait_for(std::chrono::milliseconds(eox::globals::TIMEOUT_MS)) == std::future_status::timeout) {
+            results.error = true;
+            stop();
+            return *this;
+        }
+
+        try {
+            result = feature.get();
+        } catch (const std::exception &e) {
+            results.error = true;
+            stop();
+            return *this;
+        }
+
         // TODO: PROCESS RESULTS
     }
 
@@ -49,6 +78,7 @@ xm::Triangulation &xm::Triangulation::proceed(float delta, const std::vector<cv:
         images.push_back(frame);
     }
 
+    results.error = false;
     return *this;
 }
 
@@ -69,17 +99,13 @@ void xm::Triangulation::start() {
         workers.push_back(std::move(p));
     }
 
+    results.error = false;
     active = true;
 }
 
 void xm::Triangulation::stop() {
     active = false;
-
-    for (auto &worker: workers)
-        worker->shutdown();
-
-    workers.clear();
-    poses.clear();
+    release();
 }
 
 bool xm::Triangulation::is_active() const {
@@ -96,4 +122,11 @@ const xm::nview::Result &xm::Triangulation::result() const {
 
 void xm::Triangulation::debug(bool _debug) {
     DEBUG = _debug;
+}
+
+void xm::Triangulation::release() {
+    for (auto &worker: workers)
+        worker->shutdown();
+    workers.clear();
+    poses.clear();
 }

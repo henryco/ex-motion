@@ -53,11 +53,7 @@ xm::Triangulation &xm::Triangulation::proceed(float delta, const std::vector<cv:
 }
 
 void xm::Triangulation::start() {
-    for (auto &worker: workers)
-        worker->shutdown();
-
-    workers.clear();
-    poses.clear();
+    stop();
 
     for (int i = 0; i < config.views; ++i) {
         auto p = std::make_unique<eox::dnn::PosePipeline>();
@@ -78,6 +74,12 @@ void xm::Triangulation::start() {
 
 void xm::Triangulation::stop() {
     active = false;
+
+    for (auto &worker: workers)
+        worker->shutdown();
+
+    workers.clear();
+    poses.clear();
 }
 
 bool xm::Triangulation::is_active() const {

@@ -65,6 +65,14 @@ namespace xm {
 
     protected:
         void release();
+
+        void enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &io_features,
+                               const std::vector<cv::Mat> & in_frames,
+                               std::vector<cv::Mat> & out_frames
+        );
+
+        static bool resolve_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &in_features,
+                                      std::vector<eox::dnn::PosePipelineOutput> &out_results);
     };
 
 } // xm

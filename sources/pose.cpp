@@ -20,63 +20,79 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
         return *this;
     }
 
+    std::vector<cv::Mat> output_frames;
     std::vector<std::future<eox::dnn::PosePipelineOutput>> features;
-    std::vector<cv::Mat> frames;
-    features.reserve(config.views);
-    frames.reserve(config.views);
+    enqueue_inference(features, _frames, output_frames);
+
+    std::vector<eox::dnn::PosePipelineOutput> outputs;
+    if (!resolve_inference(features, outputs)) {
+        stop();
+        results.error = true;
+        return *this;
+    }
+
+    // TODO: PROCESS RESULTS
+
+    images.clear();
+    for (const auto &frame: output_frames) {
+        images.push_back(frame);
+    }
+
+    results.error = false;
+    return *this;
+}
+
+void xm::Pose::enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &io_features,
+                                 const std::vector<cv::Mat> &in_frames,
+                                 std::vector<cv::Mat> &out_frames) {
+    io_features.reserve(config.views);
+    out_frames.reserve(config.views);
 
     int i = 0, j = 0;
     while (i < config.views) {
         if (j >= workers.size())
             j = 0;
 
-        const auto &frame = _frames.at(i);
+        const auto &frame = in_frames.at(i);
         const auto &pose = poses.at(i);
-        frames.emplace_back();
-        features.push_back(
-                workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
-                        [i, frame, &pose, &frames]() -> eox::dnn::PosePipelineOutput {
-                            cv::Mat segmented;
-                            return pose->pass(frame, segmented, frames.at(i));
-                        }));
+
+        if (DEBUG) {
+            out_frames.emplace_back();
+            io_features.push_back(
+                    workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
+                            [i, frame, &pose, &out_frames]() -> eox::dnn::PosePipelineOutput {
+                                cv::Mat segmented;
+                                return pose->pass(frame, segmented, out_frames.at(i));
+                            }));
+        } else {
+            out_frames.push_back(frame);
+            io_features.push_back(
+                    workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
+                            [i, frame, &pose]() -> eox::dnn::PosePipelineOutput {
+                                cv::Mat segmented;
+                                return pose->pass(frame, segmented);
+                            }));
+        }
 
         i++;
         j++;
     }
+}
 
-    for (auto &feature: features) {
-        eox::dnn::PosePipelineOutput result;
-
-        if (!feature.valid()) {
-            results.error = true;
-            stop();
-            return *this;
-        }
-
-        if (feature.wait_for(std::chrono::milliseconds(eox::globals::TIMEOUT_MS)) == std::future_status::timeout) {
-            results.error = true;
-            stop();
-            return *this;
-        }
-
+bool xm::Pose::resolve_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &in_futures,
+                                 std::vector<eox::dnn::PosePipelineOutput> &out_results) {
+    for (auto &feature: in_futures) {
+        if (!feature.valid())
+            return false;
+        if (feature.wait_for(std::chrono::milliseconds(eox::globals::TIMEOUT_MS)) == std::future_status::timeout)
+            return false;
         try {
-            result = feature.get();
+            out_results.push_back(feature.get());
         } catch (const std::exception &e) {
-            results.error = true;
-            stop();
-            return *this;
+            return false;
         }
-
-        // TODO: PROCESS RESULTS
     }
-
-    images.clear();
-    for (const auto &frame: frames) {
-        images.push_back(frame);
-    }
-
-    results.error = false;
-    return *this;
+    return true;
 }
 
 void xm::Pose::start() {

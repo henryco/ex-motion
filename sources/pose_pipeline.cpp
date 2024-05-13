@@ -146,7 +146,7 @@ namespace eox::dnn {
                     .setFixY(FIX_Y)
                     .forward(eox::dnn::roiFromPoseLandmarks39(landmarks));
             prediction = true;
-            prediction = false;
+//            prediction = false;
 
             // output
             {

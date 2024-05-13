@@ -42,12 +42,21 @@ namespace eox::dnn {
 
         // [1, 3, 256, 256] or [1, 3, 128, 128]
         cv::Mat blob = eox::dnn::convert_to_squared_blob(ref, get_in_w(), get_in_h(), true);
-        return inference(blob.ptr<float>(0));
+
+        with_box = true;
+        const auto result = inference(blob.ptr<float>(0));
+        with_box = false;
+
+        return result;
     }
 
     PoseOutput BlazePose::inference(const float *frame) {
-        init();
+        if (!with_box) {
+            view_w = get_in_w();
+            view_h = get_in_h();
+        }
 
+        init();
         input(0, frame, get_in_w() * get_in_h() * 3 * 4);
         invoke();
 

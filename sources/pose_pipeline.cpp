@@ -144,9 +144,10 @@ namespace eox::dnn {
                     .setMargin(MARGIN)
                     .setFixX(FIX_X)
                     .setFixY(FIX_Y)
+                    .setScale(1.2f)
                     .forward(eox::dnn::roiFromPoseLandmarks39(landmarks));
             prediction = true;
-//            prediction = false;
+            //prediction = false;
 
             // output
             {

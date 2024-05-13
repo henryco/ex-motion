@@ -82,6 +82,7 @@ namespace eox::dnn {
 
     private:
         eox::dnn::pose::Model model_type = pose::HEAVY_ORIGIN;
+        bool with_box = false;
         int view_w = 0;
         int view_h = 0;
 

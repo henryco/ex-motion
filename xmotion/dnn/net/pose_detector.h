@@ -88,6 +88,7 @@ namespace eox::dnn {
         eox::dnn::PoseRoi roiPredictor;
         std::vector<std::array<float, 4>> anchors_vec;
         float threshold = 0.5;
+        bool with_box = false;
         int view_w = 0;
         int view_h = 0;
 

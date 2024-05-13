@@ -20,14 +20,22 @@ namespace eox::dnn {
     }
 
     void PosePipeline::drawLandmarks(const eox::dnn::Landmark landmarks[39], const eox::dnn::Coord3d ws3d[39], cv::Mat &output) const {
-        for (int i = 0; i < 39; i++) {
+        for (int i = 38; i >= 0; i--) {
             const auto point = landmarks[i];
             const auto visibility = eox::dnn::sigmoid(point.v);
             const auto presence = eox::dnn::sigmoid(point.p);
             if (presence > threshold_presence || i > 32) {
                 cv::Point circle(point.x, point.y);
-                cv::Scalar color(255 * (1.f - visibility), 255 * visibility, 0);
-                cv::circle(output, circle, 2, color, 3);
+
+                if (i > 32) {
+                    const auto color = cv::Scalar(0, 0, 255);
+                    cv::circle(output, circle, 8, color, 2);
+                }
+                else {
+                    const auto color = cv::Scalar(255 * (1.f - visibility), 255 * visibility, 0);
+                    cv::circle(output, circle, 2, color, 4);
+                }
+
 
 //                if (i <= 32) {
 //                    cv::putText(output, std::to_string(visibility), cv::Point(circle.x - 10, circle.y - 10),
@@ -68,8 +76,8 @@ namespace eox::dnn {
         cv::Point mid(roi.c.x, roi.c.y);
         cv::Point end(roi.e.x, roi.e.y);
         cv::Scalar pc(0, 255, 255);
-        cv::circle(output, mid, 3, pc, 3);
-        cv::circle(output, end, 3, pc, 3);
+        cv::circle(output, mid, 3, pc, 5);
+        cv::circle(output, end, 3, pc, 5);
 
         cv::putText(output,
                     std::to_string(mid.x) + ", " +std::to_string(mid.y),

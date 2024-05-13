@@ -13,6 +13,7 @@ namespace eox::dnn {
             filters.emplace_back(f_win_size, f_v_scale, f_fps);
         }
         initialized = true;
+        prediction = false;
     }
 
     PosePipelineOutput PosePipeline::pass(const cv::Mat &frame) {
@@ -145,6 +146,7 @@ namespace eox::dnn {
                     .setFixY(FIX_Y)
                     .forward(eox::dnn::roiFromPoseLandmarks39(landmarks));
             prediction = true;
+            prediction = false;
 
             // output
             {

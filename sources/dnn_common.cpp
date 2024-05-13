@@ -69,10 +69,6 @@ namespace eox::dnn {
             if (keep_aspect_ratio) {
                 // letterbox, preserving aspect ratio
 
-//                const float r = (float) in.cols / (float) in.rows;
-//                const int n_w = width * std::min(1.f, r);
-//                const int n_h = n_w / std::max(1.f, r);
-
                 const float scale = std::min((float) width / (float) in.cols, (float) height / (float) in.rows);
                 const float n_w = (float) in.cols * scale;
                 const float n_h = (float) in.rows * scale;
@@ -105,11 +101,6 @@ namespace eox::dnn {
     }
 
     Paddings get_letterbox_paddings(int width, int height, int box_w, int box_h) {
-
-//        const float r = (float) width / (float) height;
-//        const int n_w = box_w * std::min(1.f, r);
-//        const int n_h = n_w / std::max(1.f, r);
-
         const float scale = std::min((float) box_w / (float) width, (float) box_h / (float) height);
         const int n_w = (int) ((float) width * scale);
         const int n_h = (int) ((float) height * scale);
@@ -140,64 +131,19 @@ namespace eox::dnn {
     RoI clamp_roi(const RoI &in, int width, int height) {
         auto roi = RoI(in.x, in.y, in.w, in.h, in.c, in.e);
 
-//        // clamping roi, not square
-//        const int s_x = std::max(0, (int) roi.x);
-//        const int s_y = std::max(0, (int) roi.y);
-//        const int e_x = std::min(width, (int) roi.w);
-//        const int e_y = std::min(height, (int) roi.h);
-//
-//        // sides of the roi
-//        const int a = e_x - s_x;
-//        const int b = e_y - s_y;
-//
-//        // halves of those sizes
-//        const int r_x = a / 2;
-//        const int r_y = b / 2;
-//
-//        // current clamped center
-//        const int c_x = s_x + r_x;
-//        const int c_y = s_y + r_y;
-//
-//        // size of new square size
-//        const int s = std::min(width, height);
-//        const int c = std::min(std::max(a, b), s);
-//
-//        // shift of current center from desired one
-//        const int k_x = r_x - (c / 2);
-//        const int k_y = r_y - (c / 2);
-//
-//        // center of new square roi
-//        const int nc_x = c_x + k_x;
-//        const int nc_y = c_y + k_y;
-//
-//        // new clamped and squared roi
-//        roi.x = (int) (nc_x - c / 2);
-//        roi.y = (int) (nc_y - c / 2);
-//        roi.w = (int) c;
-//        roi.h = (int) c;
+        roi.x = std::clamp(in.x, 0.f, (float) width - 1);
+        roi.y = std::clamp(in.y, 0.f, (float) height - 1);
+        roi.w = std::clamp(in.w, 0.f, (float) width - roi.x - 1);
+        roi.h = std::clamp(in.h, 0.f, (float) height - roi.y - 1);
+        roi.c = {
+                .x = std::clamp(in.c.x, 0.f, (float) width - 1),
+                .y = std::clamp(in.c.y, 0.f, (float) height - 1),
+        };
+        roi.e = {
+                .x = std::clamp(in.e.x, 0.f, (float) width - 1),
+                .y = std::clamp(in.e.y, 0.f, (float) height - 1),
+        };
 
-        const int end_x = roi.x + roi.w;
-        const int end_y = roi.y + roi.h;
-
-        if (end_x > width) {
-            roi.x -= (end_x - width);
-        }
-        if (end_y > height) {
-            roi.y -= (end_y - height);
-        }
-
-        roi.x = (int) std::max(0.f, roi.x);
-        roi.y = (int) std::max(0.f, roi.y);
-        roi.w = (int) std::min(width - roi.x, roi.w);
-        roi.h = (int) std::min(height - roi.y, roi.h);
-
-        const auto c_x = roi.x + 0.5 * roi.w;
-        const auto c_y = roi.y + 0.5 * roi.h;
-        const auto c = std::min(roi.w, roi.h);
-        roi.x = c_x - 0.5 * c;
-        roi.y = c_y - 0.5 * c;
-        roi.w = c;
-        roi.h = c;
         return roi;
     }
 

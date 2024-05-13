@@ -29,12 +29,12 @@ namespace eox::dnn {
         float x, y, w, h;
 
         /**
-         * center
+         * usually center, but sometimes just another point...
          */
         Point c;
 
         /**
-         * end
+         * usually end for radius, but sometimes just another point...
          */
         Point e;
     };

@@ -82,6 +82,8 @@ namespace eox::dnn {
 
     private:
         eox::dnn::pose::Model model_type = pose::HEAVY_ORIGIN;
+        int view_w = 0;
+        int view_h = 0;
 
     protected:
         std::string get_model_file() override;

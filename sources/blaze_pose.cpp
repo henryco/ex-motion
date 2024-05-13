@@ -36,8 +36,12 @@ namespace eox::dnn {
 //    };
 
     PoseOutput BlazePose::inference(cv::InputArray &frame) {
-        // [1, 3, 256, 256]
-        cv::Mat blob = eox::dnn::convert_to_squared_blob(frame.getMat(), get_in_w(), get_in_h(), true);
+        auto ref = frame.getMat();
+        view_w = ref.cols;
+        view_h = ref.rows;
+
+        // [1, 3, 256, 256] or [1, 3, 128, 128]
+        cv::Mat blob = eox::dnn::convert_to_squared_blob(ref, get_in_w(), get_in_h(), true);
         return inference(blob.ptr<float>(0));
     }
 
@@ -55,14 +59,19 @@ namespace eox::dnn {
         const float *land_marks_3d = lm_3d_1x195(*interpreter, model_type);
         const float *land_marks_wd = lm_world_1x117(*interpreter, model_type);
 
+        // correcting letterbox paddings
+        const auto p = eox::dnn::get_letterbox_paddings(view_w, view_h, get_in_w(), get_in_h());
+        const auto n_w = (float) get_in_w() - (p.left + p.right);
+        const auto n_h = (float) get_in_h() - (p.top + p.bottom);
+
         for (int i = 0; i < 39; i++) {
             const int j = i * 3;
             const int k = i * 5;
             // normalized landmarks_3d
             output.landmarks_norm[i] = {
-                    .x = land_marks_3d[k + 0] / (float) get_in_w(),
-                    .y = land_marks_3d[k + 1] / (float) get_in_h(),
-                    .z = land_marks_3d[k + 2] / (float) 1.f, // ?
+                    .x = (land_marks_3d[k + 0] - p.left) / n_w,
+                    .y = (land_marks_3d[k + 1] - p.top) / n_h,
+                    .z = land_marks_3d[k + 2] / (float) std::max(get_in_w(), get_in_h()),
                     .v = land_marks_3d[k + 3],
                     .p = land_marks_3d[k + 4],
             };

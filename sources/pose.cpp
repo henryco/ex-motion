@@ -101,7 +101,7 @@ void xm::Pose::start() {
     for (int i = 0; i < config.views; ++i) {
         auto p = std::make_unique<eox::dnn::PosePipeline>();
         p->enableSegmentation(config.segmentation);
-        p->setBodyModel(eox::dnn::pose::LITE_F32);
+        p->setBodyModel(eox::dnn::pose::FULL_F32);
         p->setDetectorModel(eox::dnn::box::F_16);
         poses.push_back(std::move(p));
     }

@@ -39,7 +39,6 @@ namespace eox::dnn {
 
         if (prediction) {
             // crop using roi
-//            roi = eox::dnn::clamp_roi(roi, frame.cols, frame.rows);
             source = frame(cv::Rect(roi.x, roi.y, roi.w, roi.h));
         }
 
@@ -57,6 +56,8 @@ namespace eox::dnn {
 
                 return output;
             }
+
+            _detector_score = detections[0].score;
 
             auto &detected = detections[0];
 

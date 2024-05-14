@@ -82,32 +82,44 @@ namespace eox::dnn {
         cv::circle(output, end, 3, pc, 5);
 
         cv::putText(output,
-                    "ROI c: " + std::to_string(mid.x) + ", " +std::to_string(mid.y),
+                    "ROI C: " + std::to_string(mid.x) + ", " +std::to_string(mid.y),
                     cv::Point(40, 120),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "ROI e: " + std::to_string(end.x) + ", " +std::to_string(end.y),
+                    "ROI E: " + std::to_string(end.x) + ", " +std::to_string(end.y),
                     cv::Point(40, 160),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "SCORE: " + std::to_string(results.score),
+                    "SCORE POS: " + std::to_string(results.score),
                     cv::Point(40, 200),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "PREDICTED ROI: " + (std::string) (prediction ? "T" : "F"),
+                    "SCORE DET: " + std::to_string(_detector_score),
                     cv::Point(40, 240),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "DISCARDED ROI: " + (std::string) (_discarded_roi ?  "T" : "F"),
+                    "DETECTED  ROI: " + (std::string) (!prediction ? "T" : "F"),
                     cv::Point(40, 280),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "PREDICTED ROI: " + (std::string) (prediction ? "T" : "F"),
+                    cv::Point(40, 320),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "DISCARDED ROI: " + (std::string) (_discarded_roi ?  "T" : "F"),
+                    cv::Point(40, 360),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
     }

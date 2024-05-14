@@ -76,7 +76,9 @@ namespace eox::dnn {
         int f_win_size = 30;
         int f_fps = 30;
 
+        // DEBUG VARIABLES
         bool _discarded_roi = false;
+        float _detector_score = 0;
     public:
         void init();
 

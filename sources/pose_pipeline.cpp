@@ -10,6 +10,7 @@ namespace eox::dnn {
         filters.clear();
         filters.reserve(117); // 39 * (x,y,z) == 39 * 3 == 117
         for (int i = 0; i < 117; i++) {
+            log->info("INIT: {}, {}, {}", f_win_size, f_v_scale, f_fps);
             filters.emplace_back(f_win_size, f_v_scale, f_fps);
         }
         initialized = true;
@@ -91,9 +92,17 @@ namespace eox::dnn {
             roi = eox::dnn::clamp_roi(body, frame.cols, frame.rows);
             source = frame(cv::Rect(roi.x, roi.y, roi.w, roi.h));
 
+            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             for (auto &filter: filters) {
                 filter.reset();
             }
+            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
 
         auto result = pose.inference(source);

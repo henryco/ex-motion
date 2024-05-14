@@ -30,10 +30,6 @@ namespace eox::dnn {
     }
 
     PosePipelineOutput PosePipeline::inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug) {
-//        constexpr float MARGIN = 30;
-//        constexpr float FIX_X = 0;
-//        constexpr float FIX_Y = 10;
-
         if (!initialized) {
             init();
         }
@@ -146,6 +142,7 @@ namespace eox::dnn {
                 drawJoints(landmarks, *debug);
                 drawLandmarks(landmarks, result.landmarks_3d, *debug);
                 drawRoi(*debug);
+                printMetadata(result, *debug);
             }
 
             // saving old roi just in case
@@ -158,6 +155,7 @@ namespace eox::dnn {
                     .setFixY(roi_padding_y)
                     .setScale(roi_scale)
                     .forward(eox::dnn::roiFromPoseLandmarks39(landmarks));
+            _discarded_roi = false;
 
             // checking if we really need to use new roi
             if (prediction && roi_center_window > 0) {
@@ -172,6 +170,8 @@ namespace eox::dnn {
                 roi = (ratio >= roi_center_window)
                       ? roi
                       : roi_old;
+
+                _discarded_roi = ratio < roi_center_window;
             }
 
             // clamping roi to prevent index out of range error
@@ -187,6 +187,7 @@ namespace eox::dnn {
             } else {
                 // it's not, gotta use detector
                 prediction = false;
+                _discarded_roi = true;
             }
 
             // preparing output

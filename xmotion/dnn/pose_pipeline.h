@@ -76,6 +76,7 @@ namespace eox::dnn {
         int f_win_size = 30;
         int f_fps = 30;
 
+        bool _discarded_roi = false;
     public:
         void init();
 
@@ -155,6 +156,8 @@ namespace eox::dnn {
         void drawLandmarks(const eox::dnn::Landmark landmarks[39], const eox::dnn::Coord3d ws3d[39], cv::Mat &output) const;
 
         void drawRoi(cv::Mat &output) const;
+
+        void printMetadata(const eox::dnn::PoseOutput &results, cv::Mat &output) const;
 
         [[nodiscard]] std::chrono::nanoseconds timestamp() const;
     };

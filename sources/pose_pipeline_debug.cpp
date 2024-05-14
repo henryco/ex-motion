@@ -72,7 +72,9 @@ namespace eox::dnn {
         cv::line(output, p1, cv::Point(roi.x, roi.y + roi.h), color, 2);
         cv::line(output, p2, cv::Point(roi.x, roi.y + roi.h), color, 2);
         cv::line(output, p2, cv::Point(roi.x + roi.w, roi.y), color, 2);
+    }
 
+    void PosePipeline::printMetadata(const eox::dnn::PoseOutput &results, cv::Mat &output) const {
         cv::Point mid(roi.c.x, roi.c.y);
         cv::Point end(roi.e.x, roi.e.y);
         cv::Scalar pc(0, 255, 255);
@@ -80,14 +82,32 @@ namespace eox::dnn {
         cv::circle(output, end, 3, pc, 5);
 
         cv::putText(output,
-                    std::to_string(mid.x) + ", " +std::to_string(mid.y),
+                    "ROI c: " + std::to_string(mid.x) + ", " +std::to_string(mid.y),
                     cv::Point(40, 120),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    std::to_string(end.x) + ", " +std::to_string(end.y),
+                    "ROI e: " + std::to_string(end.x) + ", " +std::to_string(end.y),
                     cv::Point(40, 160),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "SCORE: " + std::to_string(results.score),
+                    cv::Point(40, 200),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "PREDICTED ROI: " + (std::string) (prediction ? "T" : "F"),
+                    cv::Point(40, 240),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "DISCARDED ROI: " + (std::string) (_discarded_roi ?  "T" : "F"),
+                    cv::Point(40, 280),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
     }

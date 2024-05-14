@@ -171,7 +171,21 @@ namespace xm {
             logic = std::make_unique<xm::Pose>();
             logic->debug(config.misc.debug);
 
-            xm::nview::Initial params = {
+            const xm::nview::Initial params = {
+                    .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(config.pose.detector)),
+                    .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(config.pose.body)),
+                    .roi_center_window = config.pose.roi.center_window,
+                    .roi_clamp_window = config.pose.roi.clamp_window,
+                    .roi_margin = config.pose.roi.margin,
+                    .roi_scale = config.pose.roi.scale,
+                    .roi_padding_x = config.pose.roi.padding_x,
+                    .roi_padding_y = config.pose.roi.padding_y,
+                    .threshold_detector = config.pose.threshold.detector,
+                    .threshold_presence = config.pose.threshold.presence,
+                    .threshold_pose = config.pose.threshold.presence,
+                    .filter_velocity_factor = config.pose.filter.velocity,
+                    .filter_windows_size = config.pose.filter.window,
+                    .filter_target_fps = config.pose.filter.fps,
                     .segmentation = config.pose.segmentation,
                     .threads = config.pose.threads <= 0
                             ? config.misc.cpu

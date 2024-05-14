@@ -30,9 +30,9 @@ namespace eox::dnn {
     }
 
     PosePipelineOutput PosePipeline::inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug) {
-        constexpr float MARGIN = 30;
-        constexpr float FIX_X = 0;
-        constexpr float FIX_Y = 10;
+//        constexpr float MARGIN = 30;
+//        constexpr float FIX_X = 0;
+//        constexpr float FIX_Y = 10;
 
         if (!initialized) {
             init();
@@ -43,11 +43,12 @@ namespace eox::dnn {
 
         if (prediction) {
             // crop using roi
-            roi = eox::dnn::clamp_roi(roi, frame.cols, frame.rows);
+//            roi = eox::dnn::clamp_roi(roi, frame.cols, frame.rows);
             source = frame(cv::Rect(roi.x, roi.y, roi.w, roi.h));
         }
 
-        if (!prediction) {
+            // No prediction or to close to the border
+        else {
             // using pose detector
             auto detections = detector.inference(frame);
 
@@ -69,20 +70,20 @@ namespace eox::dnn {
             body.w *= (float) frame.cols;
             body.h *= (float) frame.rows;
 
-            body.x += FIX_X - (MARGIN / 2.f);
-            body.y += FIX_Y - (MARGIN / 2.f);
-            body.w += (MARGIN / 2.f);
-            body.h += (MARGIN / 2.f);
+            body.x += roi_padding_x - (roi_margin / 2.f);
+            body.y += roi_padding_y - (roi_margin / 2.f);
+            body.w += (roi_margin / 2.f);
+            body.h += (roi_margin / 2.f);
 
             body.c.x *= (float) frame.cols;
             body.c.y *= (float) frame.rows;
             body.e.x *= (float) frame.cols;
             body.e.y *= (float) frame.rows;
 
-            body.c.x += FIX_X - (MARGIN / 2.f);
-            body.c.y += FIX_Y - (MARGIN / 2.f);
-            body.e.x += FIX_X - (MARGIN / 2.f);
-            body.e.y += FIX_Y - (MARGIN / 2.f);
+            body.c.x += roi_padding_x - (roi_margin / 2.f);
+            body.c.y += roi_padding_y - (roi_margin / 2.f);
+            body.e.x += roi_padding_x - (roi_margin / 2.f);
+            body.e.y += roi_padding_y - (roi_margin / 2.f);
 
             auto &face = detected.face;
             face.x *= (float) frame.cols;
@@ -130,26 +131,65 @@ namespace eox::dnn {
                 landmarks[i].z = fz;
             }
 
-            performSegmentation(result.segmentation, frame, segmented);
+            // perform segmentation
+            if (segmentation()) {
+                // if needed
+                performSegmentation(result.segmentation, frame, segmented);
+            } else {
+                // or just use the very same frame
+                segmented = frame;
+            }
 
+            // debug is a pointer actually, nullptr => false
             if (debug) {
                 segmented.copyTo(*debug);
                 drawJoints(landmarks, *debug);
-                drawLandmarks(landmarks, result.landmarks_3d,*debug);
+                drawLandmarks(landmarks, result.landmarks_3d, *debug);
                 drawRoi(*debug);
             }
 
+            // saving old roi just in case
+            const auto roi_old = roi;
+
             // predict new roi
             roi = roiPredictor
-                    .setMargin(MARGIN)
-                    .setFixX(FIX_X)
-                    .setFixY(FIX_Y)
-                    .setScale(1.2f)
+                    .setMargin(roi_margin)
+                    .setFixX(roi_padding_x)
+                    .setFixY(roi_padding_y)
+                    .setScale(roi_scale)
                     .forward(eox::dnn::roiFromPoseLandmarks39(landmarks));
-            prediction = true;
-            //prediction = false;
 
-            // output
+            // checking if we really need to use new roi
+            if (prediction && roi_center_window > 0) {
+                const float c_dist = std::sqrt(
+                        std::pow(roi.c.x - roi_old.c.x, 2.f)
+                        + std::pow(roi.c.y - roi_old.c.y, 2.f));
+                const float radius = std::sqrt(
+                        std::pow(roi_old.c.x - roi_old.e.x, 2.f)
+                        + std::pow(roi_old.c.y - roi_old.e.y, 2.f));
+                const float ratio = c_dist / radius;
+
+                roi = (ratio >= roi_center_window)
+                      ? roi
+                      : roi_old;
+            }
+
+            // clamping roi to prevent index out of range error
+            const auto clamped_roi = eox::dnn::clamp_roi(roi, frame.cols, frame.rows);
+            const auto ratio_roi_w = clamped_roi.w / roi.w;
+            const auto ratio_roi_h = clamped_roi.h / roi.h;
+
+            // checking if clamped roi big enough
+            if (ratio_roi_w > roi_clamp_window && ratio_roi_h > roi_clamp_window) {
+                // it is, we can use it
+                roi = clamped_roi;
+                prediction = true;
+            } else {
+                // it's not, gotta use detector
+                prediction = false;
+            }
+
+            // preparing output
             {
                 memcpy(output.segmentation, result.segmentation, 256 * 256 * sizeof(float));
                 memcpy(output.ws_landmarks, result.landmarks_3d, 39 * sizeof(eox::dnn::Coord3d));

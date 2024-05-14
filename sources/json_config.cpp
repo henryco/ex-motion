@@ -44,8 +44,40 @@ namespace xm::data::def {
         };
     }
 
+    PoseRoi poseRoi() {
+        return {
+            .center_window = 0.f,
+            .clamp_window = 0.f,
+            .scale = 1.2f,
+            .margin = 0.f,
+            .padding_x = 0.f,
+            .padding_y = 0.f
+        };
+    }
+
+    PoseThresholds poseThresholds() {
+        return {
+            .detector = 0.5f,
+            .presence = 0.5f,
+            .pose = 0.5f
+        };
+    }
+
+    PoseFilter poseFilter() {
+        return {
+            .velocity = 0.5f,
+            .window = 30,
+            .fps = 30
+        };
+    }
+
     Pose pose() {
         return {
+                .detector = pose::F_16,
+                .body = pose::FULL_F32,
+                .threshold = xm::data::def::poseThresholds(),
+                .filter = xm::data::def::poseFilter(),
+                .roi = xm::data::def::poseRoi(),
                 .segmentation = false,
                 .threads = 0
         };
@@ -65,6 +97,31 @@ namespace xm::data {
             { PLAIN, nullptr },
             { CHESSBOARD, "chessboard" },
             { RADON, "radon" }
+        })
+    }
+
+    namespace pose {
+        NLOHMANN_JSON_SERIALIZE_ENUM(ModelBody, {
+            { FULL_F32, nullptr },
+
+            { HEAVY_ORIGIN, "heavy" },
+            { FULL_ORIGIN, "full" },
+            { LITE_ORIGIN, "lite" },
+
+            { HEAVY_F32, "heavy_f32" },
+            { FULL_F32, "full_32" },
+            { LITE_F32, "lite_f32" },
+
+            { HEAVY_F16, "heavy_f16" },
+            { FULL_F16, "full_f16" },
+            { LITE_F16, "lite_f16" },
+        })
+
+        NLOHMANN_JSON_SERIALIZE_ENUM(ModeDetector, {
+            { F_16, nullptr },
+            { ORIGIN, "origin" },
+            { F_32, "f_32" },
+            { F_16, "f_16" },
         })
     }
 
@@ -157,9 +214,39 @@ namespace xm::data {
         c.total = j.value("total", 10);
     }
 
+    void from_json(const nlohmann::json &j, PoseRoi &r) {
+        const auto def = xm::data::def::poseRoi();
+        r.padding_y = j.value("padding_y", def.padding_y);
+        r.padding_x = j.value("padding_x", def.padding_x);
+        r.margin = j.value("margin", def.margin);
+        r.scale = j.value("scale", def.scale);
+        r.center_window = j.value("center_window", def.center_window);
+        r.clamp_window = j.value("clamp_window", def.clamp_window);
+    }
+
+    void from_json(const nlohmann::json &j, PoseFilter &f) {
+        const auto def = xm::data::def::poseFilter();
+        f.velocity = j.value("velocity", def.velocity);
+        f.window = j.value("window", def.window);
+        f.fps = j.value("fps", def.fps);
+    }
+
+    void from_json(const nlohmann::json &j, PoseThresholds &t) {
+        const auto def = xm::data::def::poseThresholds();
+        t.detector = j.value("detector", def.detector);
+        t.presence = j.value("presence", def.presence);
+        t.pose = j.value("pose", def.pose);
+    }
+
     void from_json(const nlohmann::json &j, Pose &p) {
-        p.segmentation = j.value("segmentation", false);
-        p.threads = j.value("threads", 0);
+        const auto def = xm::data::def::pose();
+        p.detector = j.value("detector", def.detector);
+        p.body = j.value("detector", def.body);
+        p.threshold = j.value("threshold", def.threshold);
+        p.filter = j.value("filter", def.filter);
+        p.roi = j.value("roi", def.roi);
+        p.segmentation = j.value("segmentation", def.segmentation);
+        p.threads = j.value("threads", def.threads);
     }
 
     void from_json(const nlohmann::json &j, Misc &m) {
@@ -172,13 +259,10 @@ namespace xm::data {
         j.at("camera").get_to(c.camera);
         c.misc = j.value("misc", xm::data::def::misc());
         c.gui = j.value("gui", xm::data::def::gui());
+        c.pose = j.value("pose", xm::data::def::pose());
 
         if (c.type == ConfigType::CALIBRATION || c.type == ConfigType::CROSS_CALIBRATION) {
             j.at("calibration").get_to(c.calibration);
-        }
-
-        if (c.type == ConfigType::POSE) {
-            c.pose = j.value("pose", xm::data::def::pose());
         }
     }
 

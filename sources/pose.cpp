@@ -101,8 +101,20 @@ void xm::Pose::start() {
     for (int i = 0; i < config.views; ++i) {
         auto p = std::make_unique<eox::dnn::PosePipeline>();
         p->enableSegmentation(config.segmentation);
-        p->setBodyModel(eox::dnn::pose::FULL_F32);
-        p->setDetectorModel(eox::dnn::box::F_16);
+        p->setBodyModel(config.body_model);
+        p->setDetectorModel(config.detector_model);
+        p->setDetectorThreshold(config.threshold_detector);
+        p->setPresenceThreshold(config.threshold_presence);
+        p->setPoseThreshold(config.threshold_pose);
+        p->setFilterVelocityScale(config.filter_velocity_factor);
+        p->setFilterWindowSize(config.filter_windows_size);
+        p->setFilterTargetFps(config.filter_target_fps);
+        p->setRoiPredictionWindow(config.roi_center_window);
+        p->setRoiClampWindow(config.roi_clamp_window);
+        p->setRoiScale(config.roi_scale);
+        p->setRoiMargin(config.roi_margin);
+        p->setRoiPaddingX(config.roi_padding_x);
+        p->setRoiPaddingY(config.roi_padding_y);
         poses.push_back(std::move(p));
     }
 

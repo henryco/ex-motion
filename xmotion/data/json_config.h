@@ -26,6 +26,28 @@ namespace xm::data {
         };
     }
 
+    namespace pose {
+        enum ModelBody {
+            HEAVY_ORIGIN = 0,
+            FULL_ORIGIN = 1,
+            LITE_ORIGIN = 2,
+
+            HEAVY_F32 = 3,
+            FULL_F32 = 4,
+            LITE_F32 = 5,
+
+            HEAVY_F16 = 6,
+            FULL_F16 = 7,
+            LITE_F16 = 8
+        };
+
+        enum ModeDetector {
+            ORIGIN = 0,
+            F_32 = 1,
+            F_16 = 2
+        };
+    }
+
     typedef struct {
         int x;
         int y;
@@ -100,6 +122,32 @@ namespace xm::data {
     } Calibration;
 
     typedef struct {
+        float center_window;
+        float clamp_window;
+        float scale;
+        float margin;
+        float padding_x;
+        float padding_y;
+    } PoseRoi;
+
+    typedef struct {
+        float detector;
+        float presence;
+        float pose;
+    } PoseThresholds;
+
+    typedef struct {
+        float velocity;
+        int window;
+        int fps;
+    } PoseFilter;
+
+    typedef struct {
+        pose::ModeDetector detector;
+        pose::ModelBody body;
+        PoseThresholds threshold;
+        PoseFilter filter;
+        PoseRoi roi;
         bool segmentation;
         int threads;
     } Pose;

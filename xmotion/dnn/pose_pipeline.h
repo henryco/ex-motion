@@ -60,6 +60,14 @@ namespace eox::dnn {
 
         bool initialized = false;
 
+        float roi_margin = 0.f; //30 before
+        float roi_padding_x = 0.f;
+        float roi_padding_y = 0.f;
+        float roi_scale = 1.2f;
+
+        float roi_center_window = 0.f;
+        float roi_clamp_window = 0.f;
+
         float threshold_presence = 0.5;
         float threshold_detector = 0.5;
         float threshold_pose = 0.5;
@@ -94,6 +102,30 @@ namespace eox::dnn {
         void setFilterVelocityScale(float scale);
 
         void setFilterTargetFps(int fps);
+
+        void setRoiPredictionWindow(float window);
+
+        void setRoiClampWindow(float window);
+
+        void setRoiMargin(float margin);
+
+        void setRoiPaddingX(float padding);
+
+        void setRoiPaddingY(float padding);
+
+        void setRoiScale(float scale);
+
+        [[nodiscard]] float getRoiScale() const;
+
+        [[nodiscard]] float getRoiMargin() const;
+
+        [[nodiscard]] float getRoiPaddingX() const;
+
+        [[nodiscard]] float getRoiPaddingY() const;
+
+        [[nodiscard]] float getRoiClampWindow() const;
+
+        [[nodiscard]] float getRoiPredictionWindow() const;
 
         [[nodiscard]] float getFilterVelocityScale() const;
 

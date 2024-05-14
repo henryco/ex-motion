@@ -13,15 +13,35 @@
 #include "../dnn/pose_pipeline.h"
 
 namespace xm::nview {
-    typedef struct Result {
-        bool error;
-    } Result;
+
+    using DetectorModel = eox::dnn::box::Model;
+    using BodyModel = eox::dnn::pose::Model;
 
     typedef struct Initial {
+        DetectorModel detector_model = eox::dnn::box::F_16;
+        BodyModel body_model = eox::dnn::pose::FULL_F32;
+
+        float roi_center_window = 0.f;
+        float roi_clamp_window = 0.f;
+        float roi_margin = 0.f;
+        float roi_scale = 1.2f;
+        float roi_padding_x = 0.f;
+        float roi_padding_y = 0.f;
+        float threshold_detector = 0.5f;
+        float threshold_presence = 0.5f;
+        float threshold_pose = 0.5f;
+        float filter_velocity_factor = 0.5;
+        int filter_windows_size = 30;
+        int filter_target_fps = 30;
+
         bool segmentation;
         int threads;
         int views;
     } Initial;
+
+    typedef struct Result {
+        bool error;
+    } Result;
 }
 
 namespace xm {

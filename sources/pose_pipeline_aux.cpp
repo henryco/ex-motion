@@ -64,6 +64,54 @@ namespace eox::dnn {
         }
     }
 
+    void PosePipeline::setRoiScale(float scale) {
+        roi_scale = scale;
+    }
+
+    void PosePipeline::setRoiPaddingX(float padding) {
+        roi_padding_x = padding;
+    }
+
+    void PosePipeline::setRoiPaddingY(float padding) {
+        roi_padding_y = padding;
+    }
+
+    void PosePipeline::setRoiClampWindow(float window) {
+        roi_clamp_window = window;
+    }
+
+    void PosePipeline::setRoiPredictionWindow(float window) {
+        roi_center_window = window;
+    }
+
+    void PosePipeline::setRoiMargin(float margin) {
+        roi_margin = margin;
+    }
+
+    float PosePipeline::getRoiScale() const {
+        return roi_scale;
+    }
+
+    float PosePipeline::getRoiMargin() const {
+        return roi_margin;
+    }
+
+    float PosePipeline::getRoiPaddingX() const {
+        return roi_padding_x;
+    }
+
+    float PosePipeline::getRoiPaddingY() const {
+        return roi_padding_y;
+    }
+
+    float PosePipeline::getRoiClampWindow() const {
+        return roi_clamp_window;
+    }
+
+    float PosePipeline::getRoiPredictionWindow() const {
+        return roi_center_window;
+    }
+
     float PosePipeline::getFilterVelocityScale() const {
         return f_v_scale;
     }

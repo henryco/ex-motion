@@ -36,11 +36,15 @@ namespace eox::dnn {
                     cv::circle(output, circle, 2, color, 4);
                 }
 
-
-//                if (i <= 32) {
-//                    cv::putText(output, std::to_string(visibility), cv::Point(circle.x - 10, circle.y - 10),
+//                if (i > 10 && i < 33) {
+//                    cv::putText(output, "[" + std::to_string(i) + "]: " + std::to_string(presence),
+//                                cv::Point(circle.x - 10, circle.y - 10),
 //                                cv::FONT_HERSHEY_SIMPLEX, 0.7,
-//                                cv::Scalar(0, 0, 255), 2);
+//                                cv::Scalar(255, 255, 255), 2);
+//                    cv::putText(output, "[" + std::to_string(i) + "]: " + std::to_string(point.z),
+//                                cv::Point(circle.x - 10, circle.y - 10),
+//                                cv::FONT_HERSHEY_SIMPLEX, 0.7,
+//                                cv::Scalar(255, 255, 255), 2);
 //                }
 //
 //                if (i == 25) {

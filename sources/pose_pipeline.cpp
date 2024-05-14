@@ -96,8 +96,11 @@ namespace eox::dnn {
             // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            for (auto &filter: filters) {
-                filter.reset();
+            if (!discarded_roi) {
+                log->info("RESET");
+                for (auto &filter: filters) {
+                    filter.reset();
+                }
             }
             // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -165,7 +168,8 @@ namespace eox::dnn {
                     .setFixY(roi_padding_y)
                     .setScale(roi_scale)
                     .forward(eox::dnn::roiFromPoseLandmarks39(landmarks));
-            _discarded_roi = false;
+            discarded_roi = false;
+            preserved_roi = false;
 
             // checking if we really need to use new roi
             if (prediction && roi_center_window > 0) {
@@ -181,7 +185,7 @@ namespace eox::dnn {
                       ? roi
                       : roi_old;
 
-                _discarded_roi = ratio < roi_center_window;
+                preserved_roi = ratio < roi_center_window;
             }
 
             // clamping roi to prevent index out of range error
@@ -196,8 +200,8 @@ namespace eox::dnn {
                 prediction = true;
             } else {
                 // it's not, gotta use detector
+                discarded_roi = true;
                 prediction = false;
-                _discarded_roi = true;
             }
 
             // preparing output
@@ -214,6 +218,8 @@ namespace eox::dnn {
 
             // retry but without prediction
             if (prediction) {
+                preserved_roi = false;
+                discarded_roi = false;
                 prediction = false;
                 return inference(frame, segmented, debug);
             }

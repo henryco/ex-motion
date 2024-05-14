@@ -55,10 +55,12 @@ namespace eox::dnn {
         eox::dnn::PoseDetector detector;
         eox::dnn::BlazePose pose;
 
+        bool preserved_roi = false;
+        bool discarded_roi = false;
         bool prediction = false;
-        eox::dnn::RoI roi;
-
         bool initialized = false;
+
+        eox::dnn::RoI roi;
 
         float roi_margin = 0.f; //30 before
         float roi_padding_x = 0.f;
@@ -77,7 +79,6 @@ namespace eox::dnn {
         int f_fps = 30;
 
         // DEBUG VARIABLES
-        bool _discarded_roi = false;
         float _detector_score = 0;
     public:
         void init();

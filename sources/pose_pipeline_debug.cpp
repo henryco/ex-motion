@@ -118,8 +118,14 @@ namespace eox::dnn {
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "DISCARDED ROI: " + (std::string) (_discarded_roi ?  "T" : "F"),
+                    "DISCARDED ROI: " + (std::string) (discarded_roi ? "T" : "F"),
                     cv::Point(40, 360),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "PRESERVED ROI: " + (std::string) (preserved_roi ? "T" : "F"),
+                    cv::Point(40, 400),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
     }

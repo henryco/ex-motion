@@ -182,7 +182,7 @@ namespace xm {
                     .roi_padding_y = config.pose.roi.padding_y,
                     .threshold_detector = config.pose.threshold.detector,
                     .threshold_presence = config.pose.threshold.presence,
-                    .threshold_pose = config.pose.threshold.presence,
+                    .threshold_pose = config.pose.threshold.pose,
                     .filter_velocity_factor = config.pose.filter.velocity,
                     .filter_windows_size = config.pose.filter.window,
                     .filter_target_fps = config.pose.filter.fps,

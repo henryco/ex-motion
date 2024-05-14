@@ -87,7 +87,12 @@ namespace eox::dnn {
         eox::dnn::box::Model model_type = box::ORIGIN;
         eox::dnn::PoseRoi roiPredictor;
         std::vector<std::array<float, 4>> anchors_vec;
-        float threshold = 0.5;
+        float threshold = 0.5f;
+        float roi_scale = 1.2f;
+        float roi_margin = 0.f;
+        float roi_padding_x = 0.f;
+        float roi_padding_y = 0.f;
+
         bool with_box = false;
         int view_w = 0;
         int view_h = 0;
@@ -102,9 +107,19 @@ namespace eox::dnn {
 
         std::vector<DetectedPose> inference(cv::InputArray &frame);
 
+        void setRoiScale(float scale);
+
         void setThreshold(float threshold);
 
         void set_model_type(box::Model type);
+
+        void setRoiPaddingY(float roiPaddingY);
+
+        void setRoiPaddingX(float roiPaddingX);
+
+        void setRoiMargin(float roiMargin);
+
+        [[nodiscard]] float getRoiScale() const;
 
         [[nodiscard]] float getThreshold() const;
 
@@ -117,6 +132,13 @@ namespace eox::dnn {
         [[nodiscard]] int get_n_bboxes() const;
 
         [[nodiscard]] int get_n_scores() const;
+
+        [[nodiscard]] float getRoiPaddingY() const;
+
+        [[nodiscard]] float getRoiPaddingX() const;
+
+        [[nodiscard]] float getRoiMargin() const;
+
     };
 
 } // eox

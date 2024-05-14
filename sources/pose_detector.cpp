@@ -122,7 +122,10 @@ namespace eox::dnn {
                 const float end[2] = {box.key_points[1].x, box.key_points[1].y};
 
                 auto body = roiPredictor
-                        .setScale(1.25f)
+                        .setScale(roi_scale)
+                        .setFixX(roi_padding_x)
+                        .setFixY(roi_padding_y)
+                        .setMargin(roi_margin)
                         .forward(eox::dnn::roiFromPoints(mid, end));
 
                 body.x = ((body.x * (float) get_in_w()) - p.left) / n_w;
@@ -190,6 +193,38 @@ namespace eox::dnn {
 
     int PoseDetector::get_n_scores() const {
         return box::mappings[model_type].scores;
+    }
+
+    void PoseDetector::setRoiScale(float scale) {
+        roi_scale = scale;
+    }
+
+    float PoseDetector::getRoiScale() const {
+        return roi_scale;
+    }
+
+    float PoseDetector::getRoiPaddingY() const {
+        return roi_padding_y;
+    }
+
+    void PoseDetector::setRoiPaddingY(float roiPaddingY) {
+        roi_padding_y = roiPaddingY;
+    }
+
+    float PoseDetector::getRoiPaddingX() const {
+        return roi_padding_x;
+    }
+
+    void PoseDetector::setRoiPaddingX(float roiPaddingX) {
+        roi_padding_x = roiPaddingX;
+    }
+
+    float PoseDetector::getRoiMargin() const {
+        return roi_margin;
+    }
+
+    void PoseDetector::setRoiMargin(float roiMargin) {
+        roi_margin = roiMargin;
     }
 
 } // eox

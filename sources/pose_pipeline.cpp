@@ -37,7 +37,7 @@ namespace eox::dnn {
 
         PosePipelineOutput output;
         cv::Mat source;
-
+//prediction = false;
         if (prediction) {
             // crop using roi
             source = frame(cv::Rect(roi.x, roi.y, roi.w, roi.h));
@@ -45,6 +45,14 @@ namespace eox::dnn {
 
             // No prediction or to close to the border
         else {
+
+            // prepare detector roi
+            detector.setRoiMargin(roi_margin);
+            detector.setRoiPaddingX(roi_padding_x);
+            detector.setRoiPaddingY(roi_padding_y);
+            detector.setRoiScale(roi_scale);
+            detector.setThreshold(threshold_detector);
+
             // using pose detector
             auto detections = detector.inference(frame);
 
@@ -92,22 +100,15 @@ namespace eox::dnn {
             roi = eox::dnn::clamp_roi(body, frame.cols, frame.rows);
             source = frame(cv::Rect(roi.x, roi.y, roi.w, roi.h));
 
-            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if (!discarded_roi) {
-                log->info("RESET");
+                // Reset filters ONLY IF this is clear detector run (no points found previously)
                 for (auto &filter: filters) {
                     filter.reset();
                 }
             }
-            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            // TODO: FIXME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         }
 
+        // Looking for body landmarks
         auto result = pose.inference(source);
         const auto now = timestamp();
 
@@ -216,7 +217,7 @@ namespace eox::dnn {
 
         } else {
 
-            // retry but without prediction
+            // retry but without prediction (clear detector run)
             if (prediction) {
                 preserved_roi = false;
                 discarded_roi = false;

@@ -61,23 +61,91 @@ namespace eox::dnn {
         bool prediction = false;
         bool initialized = false;
 
+        /**
+         * Region of Interest
+         */
         eox::dnn::RoI roi;
 
-        float roi_margin = 0.f; //30 before
+        /**
+         * Margins added to ROI
+         */
+        float roi_margin = 0.f;
+
+        /**
+         * Horizontal paddings added to ROI
+         */
         float roi_padding_x = 0.f;
+
+        /**
+         * Vertical paddings added to ROI
+         */
         float roi_padding_y = 0.f;
+
+        /**
+         * Scaling factor for ROI (multiplication)
+         */
         float roi_scale = 1.2f;
 
+        /**
+         * Distance between detectors and actual ROI mid point
+         * for which detected ROI should be rolled back to previous one
+         *
+         * [0.0 ... 1.0]
+         */
         float roi_rollback_window = 0.f;
+
+        /**
+         * Distance between actual and predicted ROI mid point
+         * for which should stay unchanged (helps reducing jittering)
+         *
+         * [0.0 ... 1.0]
+         */
         float roi_center_window = 0.f;
+
+        /**
+         * Acceptable ratio of clamped to original ROI size.
+         * Zero (0) means every size is acceptable, One (1)
+         * means only original (non-clamped) ROI is acceptable.
+         *
+         * [0.0 ... 1.0]
+         */
         float roi_clamp_window = 0.f;
 
+        /**
+         * Threshold score for landmarks presence
+         *
+         * [0.0 ... 1.0]
+         */
         float threshold_presence = 0.5;
+
+        /**
+         * Threshold score for detector ROI presence
+         *
+         * [0.0 ... 1.0]
+         */
         float threshold_detector = 0.5;
+
+        /**
+         * Threshold score for body presence
+         *
+         * [0.0 ... 1.0]
+         */
         float threshold_pose = 0.5;
 
+        /**
+         * Low-pass filter velocity scale: lower -> smoother, but adds lag.
+         */
         float f_v_scale = 0.5;
+
+        /**
+         * Low-pass filter window size: higher -> smoother, but adds lag.
+         */
         int f_win_size = 30;
+
+        /**
+         * Low-pass filter target fps.
+         * Important to properly calculate points movement speed.
+         */
         int f_fps = 30;
 
         // DEBUG VARIABLES

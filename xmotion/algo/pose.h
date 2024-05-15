@@ -18,25 +18,112 @@ namespace xm::nview {
     using BodyModel = eox::dnn::pose::Model;
 
     typedef struct Initial {
+
+        /**
+         * BlazePose detector model
+         */
         DetectorModel detector_model = eox::dnn::box::F_16;
+
+        /**
+         * BlazePose body model
+         */
         BodyModel body_model = eox::dnn::pose::FULL_F32;
 
+        /**
+         * Distance between detectors and actual ROI mid point
+         * for which detected ROI should be rolled back to previous one
+         *
+         * [0.0 ... 1.0]
+         */
         float roi_rollback_window = 0.f;
+
+        /**
+         * Distance between actual and predicted ROI mid point
+         * for which should stay unchanged (helps reducing jittering)
+         *
+         * [0.0 ... 1.0]
+         */
         float roi_center_window = 0.f;
+
+        /**
+         * Acceptable ratio of clamped to original ROI size.
+         * Zero (0) means every size is acceptable, One (1)
+         * means only original (non-clamped) ROI is acceptable.
+         *
+         * [0.0 ... 1.0]
+         */
         float roi_clamp_window = 0.f;
+
+        /**
+         * Margins added to ROI
+         */
         float roi_margin = 0.f;
+
+        /**
+         * Scaling factor for ROI (multiplication)
+         */
         float roi_scale = 1.2f;
+
+        /**
+         * Horizontal paddings added to ROI
+         */
         float roi_padding_x = 0.f;
+
+        /**
+        * Vertical paddings added to ROI
+        */
         float roi_padding_y = 0.f;
+
+        /**
+         * Threshold score for detector ROI presence
+         *
+         * [0.0 ... 1.0]
+         */
         float threshold_detector = 0.5f;
+
+        /**
+         * Threshold score for landmarks presence
+         *
+         * [0.0 ... 1.0]
+         */
         float threshold_presence = 0.5f;
+
+        /**
+         * Threshold score for pose presence
+         *
+         * [0.0 ... 1.0]
+         */
         float threshold_pose = 0.5f;
+
+        /**
+         * Low-pass filter velocity scale: lower -> smoother, but adds lag.
+         */
         float filter_velocity_factor = 0.5;
+
+        /**
+         * Low-pass filter window size: higher -> smoother, but adds lag.
+         */
         int filter_windows_size = 30;
+
+        /**
+         * Low-pass filter target fps.
+         * Important to properly calculate points movement speed.
+         */
         int filter_target_fps = 30;
 
+        /**
+         * Enable pose segmentation
+         */
         bool segmentation;
+
+        /**
+         * Number of worker threads
+         */
         int threads;
+
+        /**
+         * Number of distinct views (images)
+         */
         int views;
     } Initial;
 

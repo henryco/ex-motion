@@ -2,9 +2,9 @@
 #include <spdlog/spdlog.h>
 #include <filesystem>
 
-#include "xmotion/boot/i_boot.h"
-#include "xmotion/boot/gtk_boot.h"
-#include "xmotion/boot/file_boot.h"
+#include "xmotion/core/boot/i_boot.h"
+#include "xmotion/imgui/imgui_boot.h"
+#include "xmotion/fbgtk/file_boot.h"
 
 namespace xm::error {
 
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     std::unique_ptr<xm::Boot> director;
 
     if (program.get<bool>("--graphic")) {
-        director = std::make_unique<xm::GtkBoot>();
+        director = std::make_unique<xm::IMGuiBoot>();
     } else {
         director = std::make_unique<xm::FileBoot>();
     }

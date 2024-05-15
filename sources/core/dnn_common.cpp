@@ -9,50 +9,6 @@
 
 namespace eox::dnn {
 
-    /**
-     * see media/pose_landmark_topology.svg
-     */
-    const int body_joints[31][2] = {
-            {0,  2},
-            {0,  5},
-            {2,  7},
-            {5,  8},
-
-            {10, 9},
-
-            {12, 11},
-
-            {12, 14},
-            {14, 16},
-            {16, 22},
-            {16, 18},
-            {16, 20},
-            {18, 20},
-
-            {11, 13},
-            {13, 15},
-            {15, 21},
-            {15, 17},
-            {15, 19},
-            {17, 19},
-
-            {12, 24},
-            {24, 23},
-            {11, 23},
-
-            {24, 26},
-            {26, 28},
-            {28, 32},
-            {28, 30},
-            {32, 30},
-
-            {23, 25},
-            {25, 27},
-            {27, 29},
-            {27, 31},
-            {29, 31},
-    };
-
     double sigmoid(double x) {
         return 1.0 / (1.0 + std::exp(-x));
     }
@@ -121,10 +77,10 @@ namespace eox::dnn {
                 width, height, in.cols, in.rows
         );
         return in(cv::Rect(
-                paddings.left,
-                paddings.top,
-                width - (paddings.left + paddings.right),
-                height - (paddings.top + paddings.bottom)
+                (int) paddings.left,
+                (int) paddings.top,
+                (int) ((float) width - (paddings.left + paddings.right)),
+                (int) ((float) height - (paddings.top + paddings.bottom))
         ));
     }
 

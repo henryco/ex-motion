@@ -133,8 +133,9 @@ namespace xm::data {
 
     typedef struct {
         float detector;
-        float presence;
+        float marks;
         float pose;
+        float roi;
     } PoseThresholds;
 
     typedef struct {

@@ -92,6 +92,14 @@ namespace eox::dnn {
         roi_margin = margin;
     }
 
+    void PosePipeline::setRoiThreshold(float threshold) {
+        threshold_roi = threshold;
+    }
+
+    float PosePipeline::getRoiThreshold() const {
+        return threshold_roi;
+    }
+
     float PosePipeline::getRoiRollbackWindow() const {
         return roi_rollback_window;
     }
@@ -132,12 +140,12 @@ namespace eox::dnn {
         return f_win_size;
     }
 
-    void PosePipeline::setPresenceThreshold(float threshold) {
-        threshold_presence = threshold;
+    void PosePipeline::setMarksThreshold(float threshold) {
+        threshold_marks = threshold;
     }
 
-    float PosePipeline::getPresenceThreshold() const {
-        return threshold_presence;
+    float PosePipeline::getMarksThreshold() const {
+        return threshold_marks;
     }
 
     void PosePipeline::enableSegmentation(bool enable) {

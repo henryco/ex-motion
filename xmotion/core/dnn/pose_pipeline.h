@@ -103,9 +103,9 @@ namespace eox::dnn {
         float roi_center_window = 0.f;
 
         /**
-         * Acceptable ratio of clamped to original ROI size.
-         * Zero (0) means every size is acceptable, One (1)
-         * means only original (non-clamped) ROI is acceptable.
+         * Acceptable ratio of clamped to original ROI size. \n
+         * Zero (0) means every size is acceptable \n
+         * One (1) means only original (non-clamped) ROI is acceptable \n
          *
          * [0.0 ... 1.0]
          */
@@ -116,7 +116,7 @@ namespace eox::dnn {
          *
          * [0.0 ... 1.0]
          */
-        float threshold_presence = 0.5;
+        float threshold_marks = 0.5;
 
         /**
          * Threshold score for detector ROI presence
@@ -131,6 +131,15 @@ namespace eox::dnn {
          * [0.0 ... 1.0]
          */
         float threshold_pose = 0.5;
+
+        /**
+         * Threshold score for detector ROI distance to body marks. \n
+         * In other works: How far marks should be from detectors ROI borders. \n
+         * Currently implemented only for horizontal axis.
+         *
+         * [0.0 ... 1.0]
+         */
+        float threshold_roi = 0.f;
 
         /**
          * Low-pass filter velocity scale: lower -> smoother, but adds lag.
@@ -150,6 +159,9 @@ namespace eox::dnn {
 
         // DEBUG VARIABLES
         float _detector_score = 0;
+        float _pose_score = 0;
+        float _roi_score = 0;
+
     public:
         void init();
 
@@ -165,7 +177,7 @@ namespace eox::dnn {
 
         void enableSegmentation(bool enable);
 
-        void setPresenceThreshold(float threshold);
+        void setMarksThreshold(float threshold);
 
         void setPoseThreshold(float threshold);
 
@@ -191,6 +203,10 @@ namespace eox::dnn {
 
         void setRoiScale(float scale);
 
+        void setRoiThreshold(float threshold);
+
+        [[nodiscard]] float getRoiThreshold() const;
+
         [[nodiscard]] float getRoiRollbackWindow() const;
 
         [[nodiscard]] float getRoiScale() const;
@@ -215,7 +231,7 @@ namespace eox::dnn {
 
         [[nodiscard]] float getDetectorThreshold() const;
 
-        [[nodiscard]] float getPresenceThreshold() const;
+        [[nodiscard]] float getMarksThreshold() const;
 
         [[nodiscard]] bool segmentation() const;
 
@@ -234,7 +250,7 @@ namespace eox::dnn {
 
         void drawRoi(cv::Mat &output) const;
 
-        void printMetadata(const eox::dnn::PoseOutput &results, cv::Mat &output) const;
+        void printMetadata(cv::Mat &output) const;
 
         [[nodiscard]] std::chrono::nanoseconds timestamp() const;
     };

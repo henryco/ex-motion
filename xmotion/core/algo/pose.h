@@ -86,7 +86,7 @@ namespace xm::nview {
          *
          * [0.0 ... 1.0]
          */
-        float threshold_presence = 0.5f;
+        float threshold_marks = 0.5f;
 
         /**
          * Threshold score for pose presence
@@ -94,6 +94,15 @@ namespace xm::nview {
          * [0.0 ... 1.0]
          */
         float threshold_pose = 0.5f;
+
+        /**
+         * Threshold score for detector ROI distance to body marks. \n
+         * In other works: How far marks should be from detectors ROI borders. \n
+         * Currently implemented only for horizontal axis.
+         *
+         * [0.0 ... 1.0]
+         */
+        float threshold_roi = 0.f;
 
         /**
          * Low-pass filter velocity scale: lower -> smoother, but adds lag.

@@ -9,11 +9,11 @@
 namespace eox::dnn {
 
     eox::dnn::Landmark mid(const eox::dnn::PoseRoiInput &input) {
-        return input.landmarks[33];
+        return input.landmarks[eox::dnn::LM::R_MID];
     }
 
     eox::dnn::Landmark end(const eox::dnn::PoseRoiInput &input) {
-        return input.landmarks[34];
+        return input.landmarks[eox::dnn::LM::R_END];
     }
 
     PoseRoiInput roiFromPoseLandmarks39(const Landmark landmarks[39]) {
@@ -25,8 +25,8 @@ namespace eox::dnn {
 
     PoseRoiInput roiFromPoints(const float mid[2], const float end[2]) {
         PoseRoiInput output;
-        output.landmarks[33] = {.x = mid[0], .y = mid[1], .z = 0, .v = 1, .p = 1};
-        output.landmarks[34] = {.x = end[0], .y = end[1], .z = 0, .v = 1, .p = 1};
+        output.landmarks[eox::dnn::LM::R_MID] = {.x = mid[0], .y = mid[1], .z = 0, .v = 1, .p = 1};
+        output.landmarks[eox::dnn::LM::R_END] = {.x = end[0], .y = end[1], .z = 0, .v = 1, .p = 1};
         return output;
     }
 
@@ -35,15 +35,15 @@ namespace eox::dnn {
     }
 
     RoI PoseRoi::forward(const eox::dnn::PoseRoiInput &data) const {
-        const auto &center = data.landmarks[33];
-        const auto &end = data.landmarks[34];
+        const auto &center = data.landmarks[eox::dnn::LM::R_MID];
+        const auto &end = data.landmarks[eox::dnn::LM::R_END];
 
         const float x1 = center.x;
         const float y1 = center.y;
         const float x2 = end.x;
         const float y2 = end.y;
 
-        const float dist = std::sqrt(std::pow(x2 - x1, 2) + std::pow(y2 - y1, 2));
+        const float dist = std::sqrt(std::pow(x2 - x1, 2.f) + std::pow(y2 - y1, 2.f));
         const float radius = dist + margin;
 
         const float w = radius * 2.f * scale_x;
@@ -65,11 +65,11 @@ namespace eox::dnn {
         };
     }
 
-    int PoseRoi::getFixY() const {
+    float PoseRoi::getFixY() const {
         return fix_y;
     }
 
-    int PoseRoi::getMargin() const {
+    float PoseRoi::getMargin() const {
         return margin;
     }
 
@@ -104,15 +104,15 @@ namespace eox::dnn {
         return *this;
     }
 
-    int PoseRoi::getFixX() const {
+    float PoseRoi::getFixX() const {
         return fix_x;
     }
 
-    int PoseRoi::getScaleX() const {
+    float PoseRoi::getScaleX() const {
         return scale_x;
     }
 
-    int PoseRoi::getScaleY() const {
+    float PoseRoi::getScaleY() const {
         return scale_y;
     }
 

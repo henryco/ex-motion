@@ -10,7 +10,7 @@ namespace eox::dnn {
         for (auto bone: eox::dnn::body_joints) {
             const auto &start = landmarks[bone[0]];
             const auto &end = landmarks[bone[1]];
-            if (eox::dnn::sigmoid(start.p) > threshold_presence && eox::dnn::sigmoid(end.p) > threshold_presence) {
+            if (eox::dnn::sigmoid(start.p) > threshold_marks && eox::dnn::sigmoid(end.p) > threshold_marks) {
                 cv::Point sp(start.x, start.y);
                 cv::Point ep(end.x, end.y);
                 cv::Scalar color(230, 0, 230);
@@ -24,7 +24,7 @@ namespace eox::dnn {
             const auto point = landmarks[i];
             const auto visibility = eox::dnn::sigmoid(point.v);
             const auto presence = eox::dnn::sigmoid(point.p);
-            if (presence > threshold_presence || i > 32) {
+            if (presence > threshold_marks || i > 32) {
                 cv::Point circle(point.x, point.y);
 
                 if (i > 32) {
@@ -78,7 +78,7 @@ namespace eox::dnn {
         cv::line(output, p2, cv::Point(roi.x + roi.w, roi.y), color, 2);
     }
 
-    void PosePipeline::printMetadata(const eox::dnn::PoseOutput &results, cv::Mat &output) const {
+    void PosePipeline::printMetadata(cv::Mat &output) const {
         cv::Point mid(roi.c.x, roi.c.y);
         cv::Point end(roi.e.x, roi.e.y);
         cv::Scalar pc(0, 255, 255);
@@ -98,7 +98,7 @@ namespace eox::dnn {
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "SCORE POS: " + std::to_string(results.score),
+                    "SCORE POS: " + std::to_string(_pose_score),
                     cv::Point(40, 200),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
@@ -110,32 +110,38 @@ namespace eox::dnn {
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "DETECTED  ROI: " + (std::string) (!prediction ? "T" : "F"),
+                    "SCORE ROI: " + std::to_string(_roi_score),
                     cv::Point(40, 280),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "PREDICTED ROI: " + (std::string) (prediction ? "T" : "F"),
+                    "DETECTED  ROI: " + (std::string) (!prediction ? "T" : "F"),
                     cv::Point(40, 320),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "DISCARDED ROI: " + (std::string) (discarded_roi ? "T" : "F"),
+                    "PREDICTED ROI: " + (std::string) (prediction ? "T" : "F"),
                     cv::Point(40, 360),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "PRESERVED ROI: " + (std::string) (preserved_roi ? "T" : "F"),
+                    "DISCARDED ROI: " + (std::string) (discarded_roi ? "T" : "F"),
                     cv::Point(40, 400),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
 
         cv::putText(output,
-                    "ROLLBACK  ROI: " + (std::string) (rollback_roi ? "T" : "F"),
+                    "PRESERVED ROI: " + (std::string) (preserved_roi ? "T" : "F"),
                     cv::Point(40, 440),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "ROLLBACK  ROI: " + (std::string) (rollback_roi ? "T" : "F"),
+                    cv::Point(40, 480),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
     }

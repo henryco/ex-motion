@@ -134,7 +134,65 @@ namespace eox::dnn {
 
     };
 
-    extern const int body_joints[31][2];
+    /**
+     * see media/pose_landmark_topology.svg
+     */
+    const int body_joints[31][2] = {
+            {0,  2},
+            {0,  5},
+            {2,  7},
+            {5,  8},
+
+            {10, 9},
+
+            {12, 11},
+
+            {12, 14},
+            {14, 16},
+            {16, 22},
+            {16, 18},
+            {16, 20},
+            {18, 20},
+
+            {11, 13},
+            {13, 15},
+            {15, 21},
+            {15, 17},
+            {15, 19},
+            {17, 19},
+
+            {12, 24},
+            {24, 23},
+            {11, 23},
+
+            {24, 26},
+            {26, 28},
+            {28, 32},
+            {28, 30},
+            {32, 30},
+
+            {23, 25},
+            {25, 27},
+            {27, 29},
+            {27, 31},
+            {29, 31},
+    };
+
+    namespace LM {
+        const int NOSE = 0;
+
+        const int SHOULDER = 11;
+        const int SHOULDER_L = SHOULDER + 0;
+        const int SHOULDER_R = SHOULDER + 1;
+
+        const int HIP = 23;
+        const int HIP_L = HIP + 0;
+        const int HIP_R = HIP + 1;
+
+        const int R = 33;
+        const int R_MID = R + 0;
+        const int R_END = R + 1;
+    }
 
     double sigmoid(double x);
 

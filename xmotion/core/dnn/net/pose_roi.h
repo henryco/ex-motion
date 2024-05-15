@@ -41,15 +41,15 @@ namespace eox::dnn {
 
         [[nodiscard]] RoI forward(const PoseRoiInput &data) const;
 
-        [[nodiscard]] int getMargin() const;
+        [[nodiscard]] float getMargin() const;
 
-        [[nodiscard]] int getFixX() const;
+        [[nodiscard]] float getFixX() const;
 
-        [[nodiscard]] int getFixY() const;
+        [[nodiscard]] float getFixY() const;
 
-        [[nodiscard]] int getScaleX() const;
+        [[nodiscard]] float getScaleX() const;
 
-        [[nodiscard]] int getScaleY() const;
+        [[nodiscard]] float getScaleY() const;
 
         PoseRoi &setMargin(float margin);
 

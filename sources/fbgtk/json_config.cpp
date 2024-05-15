@@ -59,8 +59,9 @@ namespace xm::data::def {
     PoseThresholds poseThresholds() {
         return {
             .detector = 0.5f,
-            .presence = 0.5f,
-            .pose = 0.5f
+            .marks = 0.5f,
+            .pose = 0.5f,
+            .roi = 0.f
         };
     }
 
@@ -236,8 +237,9 @@ namespace xm::data {
     void from_json(const nlohmann::json &j, PoseThresholds &t) {
         const auto def = xm::data::def::poseThresholds();
         t.detector = j.value("detector", def.detector);
-        t.presence = j.value("presence", def.presence);
+        t.marks = j.value("marks", def.marks);
         t.pose = j.value("pose", def.pose);
+        t.roi = j.value("roi", def.roi);
     }
 
     void from_json(const nlohmann::json &j, Pose &p) {

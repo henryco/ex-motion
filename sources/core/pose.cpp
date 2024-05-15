@@ -104,8 +104,9 @@ void xm::Pose::start() {
         p->setBodyModel(config.body_model);
         p->setDetectorModel(config.detector_model);
         p->setDetectorThreshold(config.threshold_detector);
-        p->setPresenceThreshold(config.threshold_presence);
+        p->setMarksThreshold(config.threshold_marks);
         p->setPoseThreshold(config.threshold_pose);
+        p->setRoiThreshold(config.threshold_roi);
         p->setFilterVelocityScale(config.filter_velocity_factor);
         p->setFilterWindowSize(config.filter_windows_size);
         p->setFilterTargetFps(config.filter_target_fps);

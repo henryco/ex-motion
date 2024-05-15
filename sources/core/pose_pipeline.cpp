@@ -40,16 +40,23 @@ namespace eox::dnn {
         // roi from previous iteration
         const auto previous_roi = roi;
 
+        // output data structures
         PosePipelineOutput output;
         cv::Mat source;
 
         if (prediction) {
+            _pose_score = 0;
+            _roi_score = 0;
+
             // crop using roi
-            source = frame(cv::Rect(roi.x, roi.y, roi.w, roi.h));
+            source = frame(cv::Rect((int) roi.x,(int) roi.y,(int) roi.w,(int) roi.h));
         }
 
             // No prediction or to close to the border
         else {
+            _detector_score = 0;
+            _pose_score = 0;
+            _roi_score = 0;
 
             // prepare detector roi
             detector.setRoiMargin(roi_margin);
@@ -72,7 +79,7 @@ namespace eox::dnn {
                     roi = {};
 
                     frame.copyTo(*debug);
-                    printMetadata({}, *debug);
+                    printMetadata(*debug);
                 }
 
                 return output;
@@ -110,7 +117,7 @@ namespace eox::dnn {
             face.h *= (float) frame.rows;
 
             roi = eox::dnn::clamp_roi(body, frame.cols, frame.rows);
-            source = frame(cv::Rect(roi.x, roi.y, roi.w, roi.h));
+            source = frame(cv::Rect((int) roi.x, (int) roi.y, (int) roi.w, (int) roi.h));
 
             if (!discarded_roi) {
                 // Reset filters ONLY IF this is clear detector run (no points found previously)
@@ -124,8 +131,18 @@ namespace eox::dnn {
         auto result = pose.inference(source);
         const auto now = timestamp();
 
+        // for debug purpose
+        _pose_score = result.score;
+
         if (result.score > threshold_pose) {
             eox::dnn::Landmark landmarks[39];
+
+            // reset roi status flags
+            discarded_roi = false;
+            preserved_roi = false;
+            rollback_roi = false;
+
+            // decode landmarks and turn it back into image coordinate space (denormalize)
             for (int i = 0; i < 39; i++) {
                 landmarks[i] = {
                         // turning x,y into common (global) coordinates
@@ -153,6 +170,54 @@ namespace eox::dnn {
                 landmarks[i].z = fz;
             }
 
+            // ROI threshold check when its reasonable
+            if (threshold_roi > 0 && threshold_roi < 1) {
+                // points of interest for ROI threshold check
+                const int POI[] = {
+                        eox::dnn::LM::NOSE,
+                        eox::dnn::LM::R_MID,
+                        eox::dnn::LM::HIP_L,
+                        eox::dnn::LM::HIP_R,
+                        eox::dnn::LM::SHOULDER_L,
+                        eox::dnn::LM::SHOULDER_R,
+                };
+
+                // ROI threshold check, currently only horizontal
+                for (const auto &i: POI) {
+                    const auto &point = landmarks[i];
+
+                    // ROI radius (actually half of the horizontal length)
+                    const auto roi_r = roi.w * .5f;
+
+                    // ROI center (actually horizontal part of the center)
+                    const auto roi_c = roi.x + roi_r;
+
+                    // normalized horizontal position of the point
+                    const auto position = std::abs(point.x - roi_c) / roi_r;
+
+                    // normalized distance of point from the ROI border
+                    const auto distance = 1.f - position;
+
+                    // for debug purpose
+                    _roi_score = _roi_score > 0 ? std::min(distance, _roi_score) : distance;
+
+                    // too close to the ROI borders
+                    if (distance < threshold_roi) {
+
+                        if (debug) {
+                            frame.copyTo(*debug);
+                            drawRoi(*debug);
+                            printMetadata(*debug);
+                        }
+
+                        output.present = false;
+                        output.score = 0.f;
+                        prediction = false;
+                        return output;
+                    }
+                }
+            }
+
             // perform segmentation
             if (segmentation()) {
                 // if needed
@@ -162,17 +227,9 @@ namespace eox::dnn {
                 segmented = frame;
             }
 
-            // debug is a pointer actually, nullptr => false
-            if (debug) {
-                segmented.copyTo(*debug);
-                drawJoints(landmarks, *debug);
-                drawLandmarks(landmarks, result.landmarks_3d, *debug);
-                drawRoi(*debug);
-                printMetadata(result, *debug);
-            }
-
-            rollback_roi = false;
-
+            /*
+             * === === === === ROI HEURISTICS === === === ===
+             */
             // detector run due to roi being discarded previously
             if (!prediction && !first_run && roi_rollback_window > 0) {
 
@@ -214,8 +271,6 @@ namespace eox::dnn {
                     .setFixY(roi_padding_y)
                     .setScale(roi_scale)
                     .forward(eox::dnn::roiFromPoseLandmarks39(landmarks));
-            discarded_roi = false;
-            preserved_roi = false;
 
             // checking if we really need to use new roi
             if (prediction && roi_center_window > 0) {
@@ -258,16 +313,26 @@ namespace eox::dnn {
                 discarded_roi = true;
                 prediction = false;
             }
+            /*
+             * === === === === ROI HEURISTICS === === === ===
+             */
+
+
+            // debug is a pointer actually, nullptr => false
+            if (debug) {
+                segmented.copyTo(*debug);
+                drawJoints(landmarks, *debug);
+                drawLandmarks(landmarks, result.landmarks_3d, *debug);
+                drawRoi(*debug);
+                printMetadata(*debug);
+            }
 
             // preparing output
-            {
-                memcpy(output.segmentation, result.segmentation, 256 * 256 * sizeof(float));
-                memcpy(output.ws_landmarks, result.landmarks_3d, 39 * sizeof(eox::dnn::Coord3d));
-                memcpy(output.landmarks, landmarks, 39 * sizeof(eox::dnn::Landmark));
-
-                output.score = result.score;
-                output.present = true;
-            }
+            memcpy(output.segmentation, result.segmentation, 256 * 256 * sizeof(float));
+            memcpy(output.ws_landmarks, result.landmarks_3d, 39 * sizeof(eox::dnn::Coord3d));
+            memcpy(output.landmarks, landmarks, 39 * sizeof(eox::dnn::Landmark));
+            output.score = result.score;
+            output.present = true;
 
         } else {
 
@@ -275,15 +340,17 @@ namespace eox::dnn {
             if (prediction) {
                 preserved_roi = false;
                 discarded_roi = false;
+                rollback_roi = false;
                 prediction = false;
                 return inference(frame, segmented, debug);
             }
 
             // still nothing
             if (debug) {
+
                 frame.copyTo(*debug);
                 drawRoi(*debug);
-                printMetadata(result, *debug);
+                printMetadata(*debug);
             }
         }
 

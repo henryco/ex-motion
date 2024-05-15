@@ -109,6 +109,7 @@ void xm::Pose::start() {
         p->setFilterVelocityScale(config.filter_velocity_factor);
         p->setFilterWindowSize(config.filter_windows_size);
         p->setFilterTargetFps(config.filter_target_fps);
+        p->setRoiRollbackWindow(config.roi_rollback_window);
         p->setRoiPredictionWindow(config.roi_center_window);
         p->setRoiClampWindow(config.roi_clamp_window);
         p->setRoiScale(config.roi_scale);

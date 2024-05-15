@@ -122,6 +122,7 @@ namespace xm::data {
     } Calibration;
 
     typedef struct {
+        float rollback_window;
         float center_window;
         float clamp_window;
         float scale;

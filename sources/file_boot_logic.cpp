@@ -174,6 +174,7 @@ namespace xm {
             const xm::nview::Initial params = {
                     .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(config.pose.detector)),
                     .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(config.pose.body)),
+                    .roi_rollback_window = config.pose.roi.rollback_window,
                     .roi_center_window = config.pose.roi.center_window,
                     .roi_clamp_window = config.pose.roi.clamp_window,
                     .roi_margin = config.pose.roi.margin,

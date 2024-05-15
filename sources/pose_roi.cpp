@@ -8,6 +8,14 @@
 
 namespace eox::dnn {
 
+    eox::dnn::Landmark mid(const eox::dnn::PoseRoiInput &input) {
+        return input.landmarks[33];
+    }
+
+    eox::dnn::Landmark end(const eox::dnn::PoseRoiInput &input) {
+        return input.landmarks[34];
+    }
+
     PoseRoiInput roiFromPoseLandmarks39(const Landmark landmarks[39]) {
         PoseRoiInput output;
         for (int i = 0; i < 39; i++)

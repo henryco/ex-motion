@@ -132,6 +132,12 @@ namespace eox::dnn {
                     cv::Point(40, 400),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "ROLLBACK  ROI: " + (std::string) (rollback_roi ? "T" : "F"),
+                    cv::Point(40, 440),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
     }
 
 }

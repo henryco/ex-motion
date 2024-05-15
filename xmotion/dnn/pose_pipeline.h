@@ -57,6 +57,7 @@ namespace eox::dnn {
 
         bool preserved_roi = false;
         bool discarded_roi = false;
+        bool rollback_roi = false;
         bool prediction = false;
         bool initialized = false;
 
@@ -67,6 +68,7 @@ namespace eox::dnn {
         float roi_padding_y = 0.f;
         float roi_scale = 1.2f;
 
+        float roi_rollback_window = 0.f;
         float roi_center_window = 0.f;
         float roi_clamp_window = 0.f;
 
@@ -111,6 +113,8 @@ namespace eox::dnn {
 
         void setRoiClampWindow(float window);
 
+        void setRoiRollbackWindow(float window);
+
         void setRoiMargin(float margin);
 
         void setRoiPaddingX(float padding);
@@ -118,6 +122,8 @@ namespace eox::dnn {
         void setRoiPaddingY(float padding);
 
         void setRoiScale(float scale);
+
+        [[nodiscard]] float getRoiRollbackWindow() const;
 
         [[nodiscard]] float getRoiScale() const;
 

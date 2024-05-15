@@ -84,8 +84,16 @@ namespace eox::dnn {
         roi_center_window = window;
     }
 
+    void PosePipeline::setRoiRollbackWindow(float window) {
+        roi_rollback_window = window;
+    }
+
     void PosePipeline::setRoiMargin(float margin) {
         roi_margin = margin;
+    }
+
+    float PosePipeline::getRoiRollbackWindow() const {
+        return roi_rollback_window;
     }
 
     float PosePipeline::getRoiScale() const {

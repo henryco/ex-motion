@@ -21,6 +21,7 @@ namespace xm::nview {
         DetectorModel detector_model = eox::dnn::box::F_16;
         BodyModel body_model = eox::dnn::pose::FULL_F32;
 
+        float roi_rollback_window = 0.f;
         float roi_center_window = 0.f;
         float roi_clamp_window = 0.f;
         float roi_margin = 0.f;

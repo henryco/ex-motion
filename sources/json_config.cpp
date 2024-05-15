@@ -46,6 +46,7 @@ namespace xm::data::def {
 
     PoseRoi poseRoi() {
         return {
+            .rollback_window = 0.f,
             .center_window = 0.f,
             .clamp_window = 0.f,
             .scale = 1.2f,
@@ -222,6 +223,7 @@ namespace xm::data {
         r.scale = j.value("scale", def.scale);
         r.center_window = j.value("center_window", def.center_window);
         r.clamp_window = j.value("clamp_window", def.clamp_window);
+        r.rollback_window = j.value("rollback_window", def.rollback_window);
     }
 
     void from_json(const nlohmann::json &j, PoseFilter &f) {

@@ -31,13 +31,18 @@ namespace eox::dnn {
     }
 
     PosePipelineOutput PosePipeline::inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug) {
+        const bool first_run = !initialized;
+
         if (!initialized) {
             init();
         }
 
+        // roi from previous iteration
+        const auto previous_roi = roi;
+
         PosePipelineOutput output;
         cv::Mat source;
-//prediction = false;
+
         if (prediction) {
             // crop using roi
             source = frame(cv::Rect(roi.x, roi.y, roi.w, roi.h));
@@ -51,17 +56,24 @@ namespace eox::dnn {
             detector.setRoiPaddingX(roi_padding_x);
             detector.setRoiPaddingY(roi_padding_y);
             detector.setRoiScale(roi_scale);
-            detector.setThreshold(threshold_detector);
+            detector.setThreshold(std::min(0.5f, threshold_detector));
 
             // using pose detector
             auto detections = detector.inference(frame);
 
+            // nothing detected or results is just not satisfying
             if (detections.empty() || detections[0].score < threshold_detector) {
                 output.present = false;
                 output.score = 0;
 
-                if (debug)
+                if (debug) {
+                    if (!detections.empty())
+                        _detector_score = detections[0].score;
+                    roi = {};
+
                     frame.copyTo(*debug);
+                    printMetadata({}, *debug);
+                }
 
                 return output;
             }
@@ -159,6 +171,39 @@ namespace eox::dnn {
                 printMetadata(result, *debug);
             }
 
+            rollback_roi = false;
+
+            // detector run due to roi being discarded previously
+            if (!prediction && !first_run && roi_rollback_window > 0) {
+
+                // MID point extracted from landmarks
+                const auto found_origins = eox::dnn::roiFromPoseLandmarks39(landmarks);
+                const auto found_mid = eox::dnn::mid(found_origins);
+
+                // MID point extracted from detector
+                const auto expected_mid = roi.c;
+
+                // radius of the expected roi circle
+                const auto roi_radius = std::sqrt(
+                        std::pow(roi.c.x - roi.e.x, 2.f)
+                        + std::pow(roi.c.y - roi.e.y, 2.f));
+
+                // Euclidean distance between expected and expected mid-points
+                const auto dist = std::sqrt(
+                        std::pow(found_mid.x - expected_mid.x, 2.f)
+                        + std::pow(found_mid.y - expected_mid.y, 2.f));
+
+                // normalized distance
+                const auto norm_dist = dist / roi_radius;
+
+                // if far enough from expected mid, rolling back to pre-discarded roi
+                roi = (norm_dist < roi_rollback_window)
+                        ? roi
+                        : previous_roi;
+
+                rollback_roi = norm_dist >= roi_rollback_window;
+            }
+
             // saving old roi just in case
             const auto roi_old = roi;
 
@@ -174,19 +219,25 @@ namespace eox::dnn {
 
             // checking if we really need to use new roi
             if (prediction && roi_center_window > 0) {
+
+                // Euclidean distance between mid-points of new and old roi
                 const float c_dist = std::sqrt(
                         std::pow(roi.c.x - roi_old.c.x, 2.f)
                         + std::pow(roi.c.y - roi_old.c.y, 2.f));
+
+                // radius of the old roi circle
                 const float radius = std::sqrt(
                         std::pow(roi_old.c.x - roi_old.e.x, 2.f)
                         + std::pow(roi_old.c.y - roi_old.e.y, 2.f));
-                const float ratio = c_dist / radius;
 
-                roi = (ratio >= roi_center_window)
+                // normalized distance
+                const float norm_dist = c_dist / radius;
+
+                roi = (norm_dist >= roi_center_window)
                       ? roi
                       : roi_old;
 
-                preserved_roi = ratio < roi_center_window;
+                preserved_roi = norm_dist < roi_center_window;
             }
 
             // clamping roi to prevent index out of range error
@@ -194,10 +245,13 @@ namespace eox::dnn {
             const auto ratio_roi_w = clamped_roi.w / roi.w;
             const auto ratio_roi_h = clamped_roi.h / roi.h;
 
+            // new roi is clamped roi
+            roi = clamped_roi;
+
             // checking if clamped roi big enough
             if (ratio_roi_w > roi_clamp_window && ratio_roi_h > roi_clamp_window) {
                 // it is, we can use it
-                roi = clamped_roi;
+                discarded_roi = false;
                 prediction = true;
             } else {
                 // it's not, gotta use detector
@@ -229,6 +283,7 @@ namespace eox::dnn {
             if (debug) {
                 frame.copyTo(*debug);
                 drawRoi(*debug);
+                printMetadata(result, *debug);
             }
         }
 

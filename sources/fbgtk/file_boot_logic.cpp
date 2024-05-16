@@ -82,7 +82,9 @@ namespace xm {
                     .E = pair.E,
                     .F = pair.F,
                     .RT = pair.RT,
-                    .RT0 = pair.RT0,
+                    .RTo = pair.RTo,
+                    .Eo = pair.Eo,
+                    .Fo = pair.Fo,
                     .error = pair.mre
                 });
 

@@ -52,11 +52,17 @@ namespace xm::cross {
          * according to first camera within the chain.
          * \ref Pair::RTp
          */
-        cv::Mat RT0;
+        cv::Mat RTo;
 
-        cv::Mat E0;
+        /**
+         * Essential matrix according to FIRST camera within chain
+         */
+        cv::Mat Eo;
 
-        cv::Mat F0;
+        /**
+         * Fundamental matrix according to FIRST camera within chain
+         */
+        cv::Mat Fo;
 
         /**
         * Mean re-projection error

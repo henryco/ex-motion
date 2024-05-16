@@ -116,7 +116,17 @@ namespace xm::data::ocv {
          * according to first camera within the chain.
          * \ref CrossCalibration::RTp
          */
-        cv::Mat RT0;
+        cv::Mat RTo;
+
+        /**
+         * Essential matrix according to FIRST camera within chain
+         */
+        cv::Mat Eo;
+
+        /**
+         * Fundamental matrix according to FIRST camera within chain
+         */
+        cv::Mat Fo;
 
         /**
          * Mean re-projection error

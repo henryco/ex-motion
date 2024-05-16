@@ -82,4 +82,7 @@ gen
 build
 
 cmake-build-debug
+/cmake-build-debug
 dev_mappings
+map_devices.sh
+/map_devices.sh

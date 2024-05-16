@@ -186,15 +186,15 @@ void xm::CrossCalibration::calibrate() {
         Ri.copyTo(RTi(cv::Rect(0, 0, 3, 3)));
         Ti.copyTo(RTi(cv::Rect(3, 0, 1, 3)));
 
-        cv::Mat RT0;
+        cv::Mat RTo;
 
         // first pair
         if (i == 0) {
-            RT0 = RTi.clone();
+            RTo = RTi.clone();
         }
             // last pair
         else if (config.closed && i == total_pairs - 1) {
-            if (cv::invert(RTi, RT0) == 0)
+            if (cv::invert(RTi, RTo) == 0)
                 // WTF, but also:
                 goto JAIL;
         }
@@ -202,7 +202,7 @@ void xm::CrossCalibration::calibrate() {
         else {
             JAIL:
             // We are going through the, well..., chain ¯\_(ツ)_/¯
-            RT0 = pairs.back().RT0 * RTi;
+            RTo = pairs.back().RT0 * RTi;
         }
 
         pairs.push_back({
@@ -211,7 +211,7 @@ void xm::CrossCalibration::calibrate() {
                                 .E = Ei,
                                 .F = Fi,
                                 .RT = RTi,
-                                .RT0 = RT0,
+                                .RT0 = RTo,
                                 .mre = rms
                         });
 

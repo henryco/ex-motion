@@ -45,7 +45,7 @@ namespace xm::cross {
          * └ 0 0 0 1  ┘
          * \endcode
          */
-        cv::Mat RTp;
+        cv::Mat RT;
 
         /**
          * Same as [R|t] matrix, but
@@ -53,6 +53,10 @@ namespace xm::cross {
          * \ref Pair::RTp
          */
         cv::Mat RT0;
+
+        cv::Mat E0;
+
+        cv::Mat F0;
 
         /**
         * Mean re-projection error

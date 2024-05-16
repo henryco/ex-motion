@@ -30,11 +30,16 @@ bool xm::Calibration::capture_squares(const cv::Mat &frame) {
         return false;
     }
 
-    const auto remains = timer.tick([this, &squares]() {
+    const auto callback = [this, &squares]() {
         image_points.push_back(squares.corners);
-    });
+    };
 
-    results.remains_ms = remains;
+    if (config.delay <= 0) {
+        callback();
+    } else {
+        results.remains_ms = timer.tick(callback);
+    }
+
     results.remains_cap = config.total - (int) image_points.size();
     results.ready = results.remains_cap <= 0;
 

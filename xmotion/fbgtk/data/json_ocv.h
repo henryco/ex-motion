@@ -109,7 +109,7 @@ namespace xm::data::ocv {
          * └ 0 0 0 1  ┘
          * \endcode
          */
-        cv::Mat RTp;
+        cv::Mat RT;
 
         /**
          * Same as [R|t] matrix, but

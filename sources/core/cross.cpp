@@ -77,7 +77,7 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
         return false;
     }
 
-    const auto remains = timer.tick([this, &squares_l, &squares_r]() {
+    const auto callback = [this, &squares_l, &squares_r]() {
         if (image_points.empty()) {
             image_points.emplace_back();
         }
@@ -89,11 +89,16 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
 
         image_points.back().push_back(l_r_points);
         counter += 1;
-    });
+    };
 
-    results.current = current_pair;
+    if (config.delay <= 0) {
+        callback();
+    } else {
+        results.remains_ms = timer.tick(callback);
+    }
+
     results.remains_cap = config.total - counter;
-    results.remains_ms = remains;
+    results.current = current_pair;
     results.ready = false;
 
     if (results.remains_cap <= 0) {
@@ -205,7 +210,7 @@ void xm::CrossCalibration::calibrate() {
                                 .T = Ti,
                                 .E = Ei,
                                 .F = Fi,
-                                .RTp = RTi,
+                                .RT = RTi,
                                 .RT0 = RT0,
                                 .mre = rms
                         });

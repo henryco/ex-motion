@@ -81,7 +81,7 @@ namespace xm {
                     .T = pair.T,
                     .E = pair.E,
                     .F = pair.F,
-                    .RTp = pair.RTp,
+                    .RT = pair.RT,
                     .RT0 = pair.RT0,
                     .error = pair.mre
                 });

@@ -147,14 +147,19 @@ namespace xm::data {
     typedef struct {
         pose::ModeDetector detector;
         pose::ModelBody body;
+    } PoseModel;
+
+    typedef struct {
+        std::string calibration;
         PoseThresholds threshold;
         PoseFilter filter;
+        PoseModel model;
         PoseRoi roi;
-        // TODO
     } PoseDevice;
 
     typedef struct {
         std::vector<PoseDevice> devices;
+        std::vector<std::string> stereo;
         bool segmentation;
         int threads;
     } Pose;

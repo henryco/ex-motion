@@ -176,11 +176,11 @@ namespace xm {
             std::vector<xm::nview::Device> vec;
             vec.reserve(config.pose.devices.size());
             for (const auto &device: config.pose.devices) {
+                const auto calibration = xm::data::ocv::read_calibration(device.calibration);
                 vec.push_back(
                         {
-                            // TODO CAMERA MATRIX, R, T, E, F, etc
-                                .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.detector)),
-                                .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(device.body)),
+                                .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),
+                                .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(device.model.body)),
                                 .roi_rollback_window = device.roi.rollback_window,
                                 .roi_center_window = device.roi.center_window,
                                 .roi_clamp_window = device.roi.clamp_window,
@@ -195,11 +195,28 @@ namespace xm {
                                 .filter_velocity_factor = device.filter.velocity,
                                 .filter_windows_size = device.filter.window,
                                 .filter_target_fps = device.filter.fps,
+                                .K = calibration.K,
+                                .D = calibration.D
                         });
+            }
+
+            std::vector<xm::nview::StereoPair> pairs;
+            pairs.reserve(config.pose.stereo.size());
+            for (const auto &pair_name: config.pose.stereo) {
+                const auto cross_calibration = xm::data::ocv::read_cross_calibration(pair_name);
+                pairs.push_back({
+                    .E = cross_calibration.E,
+                    .F = cross_calibration.F,
+                    .RT = cross_calibration.RT,
+                    .Eo = cross_calibration.Eo,
+                    .Fo = cross_calibration.Fo,
+                    .RTo = cross_calibration.RTo
+                });
             }
 
             const xm::nview::Initial params = {
                     .devices = vec,
+                    .pairs = pairs,
                     .segmentation = config.pose.segmentation,
                     .threads = config.pose.threads <= 0
                                ? config.misc.cpu

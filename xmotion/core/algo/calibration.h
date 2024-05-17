@@ -20,6 +20,11 @@ namespace xm::calib {
 
         /**
          * Calibration matrix 3x3
+         * \code
+         * ┌ax    xo┐
+         * │   ay yo│
+         * └       1┘
+         * \endcode
          */
         cv::Mat K;
 

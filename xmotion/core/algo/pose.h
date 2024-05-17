@@ -17,6 +17,44 @@ namespace xm::nview {
     using DetectorModel = eox::dnn::box::Model;
     using BodyModel = eox::dnn::pose::Model;
 
+    typedef struct StereoPair {
+        /**
+         * Essential matrix
+         */
+        cv::Mat E;
+
+        /**
+         * Fundamental matrix
+         */
+        cv::Mat F;
+
+        /**
+         * Rotation-translation matrix
+         * \code
+         * ┌ R R R tx ┐
+         * │ R R R ty │
+         * │ R R R tz │
+         * └ 0 0 0 1  ┘
+         * \endcode
+         */
+        cv::Mat RT;
+
+        /**
+         * Essential matrix according to first camera
+         */
+        cv::Mat Eo;
+
+        /**
+         * Fundamental matrix according to first camera
+         */
+        cv::Mat Fo;
+
+        /**
+         * Rotation-translation matrix according to fist camera
+         */
+        cv::Mat RTo;
+    } StereoPair;
+
     typedef struct Device {
         /**
          * BlazePose detector model
@@ -119,11 +157,33 @@ namespace xm::nview {
          */
         int filter_target_fps = 30;
 
+        /**
+         * Camera calibration matrix 3x3
+         * \code
+         * ┌ax    xo┐
+         * │   ay yo│
+         * └       1┘
+         * \endcode
+         */
+        cv::Mat K;
+
+        /**
+         * Distortion coefficients
+         */
+        cv::Mat D;
     } Device;
 
     typedef struct Initial {
 
+        /**
+         * Camera devices
+         */
         std::vector<Device> devices;
+
+        /**
+         * Stereo pairs
+         */
+        std::vector<StereoPair> pairs;
 
         /**
          * Enable pose segmentation

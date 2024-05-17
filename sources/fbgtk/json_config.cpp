@@ -73,12 +73,19 @@ namespace xm::data::def {
         };
     }
 
-    PoseDevice poseDevice() {
+    PoseModel poseModel() {
         return {
                 .detector = pose::F_16,
                 .body = pose::FULL_F32,
+        };
+    }
+
+    PoseDevice poseDevice() {
+        return {
+                .calibration = "",
                 .threshold = xm::data::def::poseThresholds(),
                 .filter = xm::data::def::poseFilter(),
+                .model = xm::data::def::poseModel(),
                 .roi = xm::data::def::poseRoi()
         };
     }
@@ -248,10 +255,16 @@ namespace xm::data {
         t.roi = j.value("roi", def.roi);
     }
 
+    void from_json(const nlohmann::json &j, PoseModel &m) {
+        const auto def = xm::data::def::poseModel();
+        m.detector = j.value("detector", def.detector);
+        m.body = j.value("body", def.body);
+    }
+
     void from_json(const nlohmann::json &j, PoseDevice &d) {
         const auto def = xm::data::def::poseDevice();
-        d.detector = j.value("detector", def.detector);
-        d.body = j.value("detector", def.body);
+        j.at("calibration").get_to(d.calibration);
+        d.model = j.value("model", def.model);
         d.threshold = j.value("threshold", def.threshold);
         d.filter = j.value("filter", def.filter);
         d.roi = j.value("roi", def.roi);
@@ -260,6 +273,7 @@ namespace xm::data {
     void from_json(const nlohmann::json &j, Pose &p) {
         const auto def = xm::data::def::pose();
         j.at("devices").get_to(p.devices);
+        j.at("stereo").get_to(p.stereo);
         p.segmentation = j.value("segmentation", def.segmentation);
         p.threads = j.value("threads", def.threads);
     }

@@ -39,47 +39,53 @@ namespace xm::data::def {
 
     Misc misc() {
         return {
-            .debug = false,
-            .cpu = 8
+                .debug = false,
+                .cpu = 8
         };
     }
 
     PoseRoi poseRoi() {
         return {
-            .rollback_window = 0.f,
-            .center_window = 0.f,
-            .clamp_window = 0.f,
-            .scale = 1.2f,
-            .margin = 0.f,
-            .padding_x = 0.f,
-            .padding_y = 0.f
+                .rollback_window = 0.f,
+                .center_window = 0.f,
+                .clamp_window = 0.f,
+                .scale = 1.2f,
+                .margin = 0.f,
+                .padding_x = 0.f,
+                .padding_y = 0.f
         };
     }
 
     PoseThresholds poseThresholds() {
         return {
-            .detector = 0.5f,
-            .marks = 0.5f,
-            .pose = 0.5f,
-            .roi = 0.f
+                .detector = 0.5f,
+                .marks = 0.5f,
+                .pose = 0.5f,
+                .roi = 0.f
         };
     }
 
     PoseFilter poseFilter() {
         return {
-            .velocity = 0.5f,
-            .window = 30,
-            .fps = 30
+                .velocity = 0.5f,
+                .window = 30,
+                .fps = 30
         };
     }
 
-    Pose pose() {
+    PoseDevice poseDevice() {
         return {
                 .detector = pose::F_16,
                 .body = pose::FULL_F32,
                 .threshold = xm::data::def::poseThresholds(),
                 .filter = xm::data::def::poseFilter(),
-                .roi = xm::data::def::poseRoi(),
+                .roi = xm::data::def::poseRoi()
+        };
+    }
+
+    Pose pose() {
+        return {
+                .devices = {},
                 .segmentation = false,
                 .threads = 0
         };
@@ -242,13 +248,18 @@ namespace xm::data {
         t.roi = j.value("roi", def.roi);
     }
 
+    void from_json(const nlohmann::json &j, PoseDevice &d) {
+        const auto def = xm::data::def::poseDevice();
+        d.detector = j.value("detector", def.detector);
+        d.body = j.value("detector", def.body);
+        d.threshold = j.value("threshold", def.threshold);
+        d.filter = j.value("filter", def.filter);
+        d.roi = j.value("roi", def.roi);
+    }
+
     void from_json(const nlohmann::json &j, Pose &p) {
         const auto def = xm::data::def::pose();
-        p.detector = j.value("detector", def.detector);
-        p.body = j.value("detector", def.body);
-        p.threshold = j.value("threshold", def.threshold);
-        p.filter = j.value("filter", def.filter);
-        p.roi = j.value("roi", def.roi);
+        j.at("devices").get_to(p.devices);
         p.segmentation = j.value("segmentation", def.segmentation);
         p.threads = j.value("threads", def.threads);
     }

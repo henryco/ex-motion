@@ -76,16 +76,16 @@ namespace xm {
                 log->info("Saving cross calibration results: [{}]", i);
                 const auto pair = results.calibrated.at(i);
                 xm::data::ocv::write_cross_calibration(file, {
-                    .name = config.calibration.name + postfix,
-                    .R = pair.R,
-                    .T = pair.T,
-                    .E = pair.E,
-                    .F = pair.F,
-                    .RT = pair.RT,
-                    .RTo = pair.RTo,
-                    .Eo = pair.Eo,
-                    .Fo = pair.Fo,
-                    .error = pair.mre
+                        .name = config.calibration.name + postfix,
+                        .R = pair.R,
+                        .T = pair.T,
+                        .E = pair.E,
+                        .F = pair.F,
+                        .RT = pair.RT,
+                        .RTo = pair.RTo,
+                        .Eo = pair.Eo,
+                        .Fo = pair.Fo,
+                        .error = pair.mre
                 });
 
                 log->info("saved: [{}]", i);
@@ -173,28 +173,37 @@ namespace xm {
             logic = std::make_unique<xm::Pose>();
             logic->debug(config.misc.debug);
 
+            std::vector<xm::nview::Device> vec;
+            vec.reserve(config.pose.devices.size());
+            for (const auto &device: config.pose.devices) {
+                vec.push_back(
+                        {
+                            // TODO CAMERA MATRIX, R, T, E, F, etc
+                                .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.detector)),
+                                .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(device.body)),
+                                .roi_rollback_window = device.roi.rollback_window,
+                                .roi_center_window = device.roi.center_window,
+                                .roi_clamp_window = device.roi.clamp_window,
+                                .roi_margin = device.roi.margin,
+                                .roi_scale = device.roi.scale,
+                                .roi_padding_x = device.roi.padding_x,
+                                .roi_padding_y = device.roi.padding_y,
+                                .threshold_detector = device.threshold.detector,
+                                .threshold_marks = device.threshold.marks,
+                                .threshold_pose = device.threshold.pose,
+                                .threshold_roi = device.threshold.roi,
+                                .filter_velocity_factor = device.filter.velocity,
+                                .filter_windows_size = device.filter.window,
+                                .filter_target_fps = device.filter.fps,
+                        });
+            }
+
             const xm::nview::Initial params = {
-                    .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(config.pose.detector)),
-                    .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(config.pose.body)),
-                    .roi_rollback_window = config.pose.roi.rollback_window,
-                    .roi_center_window = config.pose.roi.center_window,
-                    .roi_clamp_window = config.pose.roi.clamp_window,
-                    .roi_margin = config.pose.roi.margin,
-                    .roi_scale = config.pose.roi.scale,
-                    .roi_padding_x = config.pose.roi.padding_x,
-                    .roi_padding_y = config.pose.roi.padding_y,
-                    .threshold_detector = config.pose.threshold.detector,
-                    .threshold_marks = config.pose.threshold.marks,
-                    .threshold_pose = config.pose.threshold.pose,
-                    .threshold_roi = config.pose.threshold.roi,
-                    .filter_velocity_factor = config.pose.filter.velocity,
-                    .filter_windows_size = config.pose.filter.window,
-                    .filter_target_fps = config.pose.filter.fps,
+                    .devices = vec,
                     .segmentation = config.pose.segmentation,
                     .threads = config.pose.threads <= 0
-                            ? config.misc.cpu
-                            : std::min(config.pose.threads, config.misc.cpu),
-                    .views = (int) config.camera.capture.size()
+                               ? config.misc.cpu
+                               : std::min(config.pose.threads, config.misc.cpu)
             };
 
             (static_cast<xm::Pose *>(logic.get()))->init(params);

@@ -45,11 +45,11 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
 void xm::Pose::enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &io_features,
                                  const std::vector<cv::Mat> &in_frames,
                                  std::vector<cv::Mat> &out_frames) {
-    io_features.reserve(config.views);
-    out_frames.reserve(config.views);
+    io_features.reserve(config.devices.size());
+    out_frames.reserve(config.devices.size());
 
     int i = 0, j = 0;
-    while (i < config.views) {
+    while (i < config.devices.size()) {
         if (j >= workers.size())
             j = 0;
 
@@ -98,25 +98,25 @@ bool xm::Pose::resolve_inference(std::vector<std::future<eox::dnn::PosePipelineO
 void xm::Pose::start() {
     stop();
 
-    for (int i = 0; i < config.views; ++i) {
+    for (const auto &device: config.devices) {
         auto p = std::make_unique<eox::dnn::PosePipeline>();
         p->enableSegmentation(config.segmentation);
-        p->setBodyModel(config.body_model);
-        p->setDetectorModel(config.detector_model);
-        p->setDetectorThreshold(config.threshold_detector);
-        p->setMarksThreshold(config.threshold_marks);
-        p->setPoseThreshold(config.threshold_pose);
-        p->setRoiThreshold(config.threshold_roi);
-        p->setFilterVelocityScale(config.filter_velocity_factor);
-        p->setFilterWindowSize(config.filter_windows_size);
-        p->setFilterTargetFps(config.filter_target_fps);
-        p->setRoiRollbackWindow(config.roi_rollback_window);
-        p->setRoiPredictionWindow(config.roi_center_window);
-        p->setRoiClampWindow(config.roi_clamp_window);
-        p->setRoiScale(config.roi_scale);
-        p->setRoiMargin(config.roi_margin);
-        p->setRoiPaddingX(config.roi_padding_x);
-        p->setRoiPaddingY(config.roi_padding_y);
+        p->setBodyModel(device.body_model);
+        p->setDetectorModel(device.detector_model);
+        p->setDetectorThreshold(device.threshold_detector);
+        p->setMarksThreshold(device.threshold_marks);
+        p->setPoseThreshold(device.threshold_pose);
+        p->setRoiThreshold(device.threshold_roi);
+        p->setFilterVelocityScale(device.filter_velocity_factor);
+        p->setFilterWindowSize(device.filter_windows_size);
+        p->setFilterTargetFps(device.filter_target_fps);
+        p->setRoiRollbackWindow(device.roi_rollback_window);
+        p->setRoiPredictionWindow(device.roi_center_window);
+        p->setRoiClampWindow(device.roi_clamp_window);
+        p->setRoiScale(device.roi_scale);
+        p->setRoiMargin(device.roi_margin);
+        p->setRoiPaddingX(device.roi_padding_x);
+        p->setRoiPaddingY(device.roi_padding_y);
         poses.push_back(std::move(p));
     }
 

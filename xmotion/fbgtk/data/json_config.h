@@ -150,6 +150,11 @@ namespace xm::data {
         PoseThresholds threshold;
         PoseFilter filter;
         PoseRoi roi;
+        // TODO
+    } PoseDevice;
+
+    typedef struct {
+        std::vector<PoseDevice> devices;
         bool segmentation;
         int threads;
     } Pose;

@@ -17,8 +17,7 @@ namespace xm::nview {
     using DetectorModel = eox::dnn::box::Model;
     using BodyModel = eox::dnn::pose::Model;
 
-    typedef struct Initial {
-
+    typedef struct Device {
         /**
          * BlazePose detector model
          */
@@ -120,6 +119,12 @@ namespace xm::nview {
          */
         int filter_target_fps = 30;
 
+    } Device;
+
+    typedef struct Initial {
+
+        std::vector<Device> devices;
+
         /**
          * Enable pose segmentation
          */
@@ -129,11 +134,6 @@ namespace xm::nview {
          * Number of worker threads
          */
         int threads;
-
-        /**
-         * Number of distinct views (images)
-         */
-        int views;
     } Initial;
 
     typedef struct Result {

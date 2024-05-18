@@ -153,8 +153,8 @@ namespace xm {
             std::vector<cv::Mat> K, D;
             for (const auto &item: config.calibration.cross.calibrated) {
                 const std::filesystem::path root = project_file;
-                const std::filesystem::path name = item + ".json";
-                const std::string file = (root.parent_path() / name).string();
+                const std::filesystem::path name = item;
+                const std::string file = (name.is_absolute() ? name : (root.parent_path() / name)).string();
 
                 const auto calibration = xm::data::ocv::read_calibration(file);
                 log->info("Read calibration file: {}", calibration.name);
@@ -203,7 +203,11 @@ namespace xm {
             std::vector<xm::nview::StereoPair> pairs;
             pairs.reserve(config.pose.stereo.size());
             for (const auto &pair_name: config.pose.stereo) {
-                const auto cross_calibration = xm::data::ocv::read_cross_calibration(pair_name);
+                const std::filesystem::path root = project_file;
+                const std::filesystem::path name = pair_name;
+                const std::string file = (name.is_absolute() ? name : (root.parent_path() / name)).string();
+
+                const auto cross_calibration = xm::data::ocv::read_cross_calibration(file);
                 pairs.push_back({
                     .E = cross_calibration.E,
                     .F = cross_calibration.F,

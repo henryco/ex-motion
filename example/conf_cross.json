@@ -2,7 +2,7 @@
   "type": "cross_calibration",
 
   "gui": {
-    "scale": 0.45,
+    "scale": 0.4,
     "vertical": true
   },
 

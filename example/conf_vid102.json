@@ -1,0 +1,44 @@
+{
+  "type": "calibration",
+
+  "gui": {
+    "scale": 0.55
+  },
+
+  "misc": {
+    "debug": true
+  },
+
+  "camera": {
+    "fast": false,
+    "capture": [
+      {
+        "id": "/dev/video102",
+        "name": "TSTC_2",
+        "width": 1920,
+        "height": 1080,
+        "fps": 60,
+        "codec": "MJPG",
+        "buffer": 2,
+        "flip": {
+          "x": true,
+          "y": true
+        }
+      }
+    ]
+  },
+
+  "calibration": {
+    "name": "rc_vid102",
+    "total": 50,
+    "delay": 5000,
+
+    "pattern": {
+      "type": "radon",
+      "columns": 15,
+      "rows": 10,
+      "size": 35
+    }
+  }
+
+}

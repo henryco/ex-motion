@@ -1,0 +1,51 @@
+{
+  "type": "calibration",
+
+  "gui": {
+    "scale": 0.9
+  },
+
+  "misc": {
+    "debug": true
+  },
+
+  "camera": {
+    "fast": false,
+    "capture": [
+      {
+        "id": "/dev/video103",
+        "name": "a4_tech_1",
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
+        "codec": "MJPG",
+        "buffer": 2,
+        "rotate": true,
+        "flip": {
+          "x": true,
+          "y": true
+        },
+        "region": {
+          "x": 0,
+          "y": 0,
+          "h": 1080,
+          "w": 1920
+        }
+      }
+    ]
+  },
+
+  "calibration": {
+    "name": "rc_vid103",
+    "total": 50,
+    "delay": 5000,
+
+    "pattern": {
+      "type": "radon",
+      "columns": 15,
+      "rows": 10,
+      "size": 35
+    }
+  }
+
+}

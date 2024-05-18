@@ -53,7 +53,7 @@ namespace xm {
             camera->save(os, device_id, c.name);
             os.close();
 
-            log->info("saved camera settings for: {} | {}", device_id, c.name);
+            log->info("saved camera settings for: [{}|{}], {}", device_id, c.name, conf.string());
             return;
         }
     }
@@ -64,12 +64,12 @@ namespace xm {
         std::filesystem::path conf = project_dir / file;
 
         if (!std::filesystem::exists(conf)) {
-            log->debug("No configuration file found for camera device: {} | {} ", device_id, name);
+            log->debug("No configuration file found for camera device: [{}|{}], {}", device_id, name, conf.string());
             return;
         }
 
         std::ifstream is(conf);
-        log->info("reading configuration for camera device: {} | {}", device_id, name);
+        log->info("reading configuration for camera device: [{}|{}], {}", device_id, name, conf.string());
         camera->read(is, device_id, name);
         is.close();
     }

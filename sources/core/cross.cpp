@@ -17,6 +17,26 @@ void xm::CrossCalibration::init(const xm::cross::Initial &params) {
     image_points.reserve(total_pairs);
 }
 
+xm::CrossCalibration &xm::CrossCalibration::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+    if (!is_active() || _frames.empty()) {
+        images.clear();
+        images.reserve(_frames.size());
+        for (auto &img: _frames)
+            images.push_back(img);
+        put_debug_text();
+        return *this;
+    }
+
+    if (!capture_squares(_frames)) {
+        put_debug_text();
+        return *this;
+    }
+
+    calibrate();
+
+    return *this;
+}
+
 bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) {
 
     if (current_pair >= total_pairs) {
@@ -267,26 +287,6 @@ void xm::CrossCalibration::calibrate() {
     results.current = 0;
     results.remains_ms = 0;
     results.remains_cap = 0;
-}
-
-xm::CrossCalibration &xm::CrossCalibration::proceed(float delta, const std::vector<cv::Mat> &_frames) {
-    if (!is_active() || _frames.empty()) {
-        images.clear();
-        images.reserve(_frames.size());
-        for (auto &img: _frames)
-            images.push_back(img);
-        put_debug_text();
-        return *this;
-    }
-
-    if (!capture_squares(_frames)) {
-        put_debug_text();
-        return *this;
-    }
-
-    calibrate();
-
-    return *this;
 }
 
 void xm::CrossCalibration::put_debug_text() {

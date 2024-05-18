@@ -146,9 +146,9 @@ namespace xm {
     std::vector<cv::Mat> StereoCamera::capture() {
         const auto results = captureWithName();
         std::vector<cv::Mat> vec;
-        vec.reserve(results.size());
-        for (const auto &pair: results)
-            vec.push_back(pair.second);
+        vec.reserve(properties.size());
+        for (const auto &prop: properties)
+            vec.push_back(results.at(prop.name));
         return vec;
     }
 

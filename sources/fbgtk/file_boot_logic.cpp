@@ -157,7 +157,7 @@ namespace xm {
                 const std::string file = (name.is_absolute() ? name : (root.parent_path() / name)).string();
 
                 const auto calibration = xm::data::ocv::read_calibration(file);
-                log->info("Read calibration file: {}", calibration.name);
+                log->info("Reading calibration file: {}, {}", calibration.name, file);
                 K.push_back(calibration.K);
                 D.push_back(calibration.D);
             }
@@ -176,6 +176,11 @@ namespace xm {
             std::vector<xm::nview::Device> vec;
             vec.reserve(config.pose.devices.size());
             for (const auto &device: config.pose.devices) {
+                const std::filesystem::path root = project_file;
+                const std::filesystem::path name = device.calibration;
+                const std::string file = (name.is_absolute() ? name : (root.parent_path() / name)).string();
+
+                log->info("Reading calibration file: {}, {}", device.calibration, file);
                 const auto calibration = xm::data::ocv::read_calibration(device.calibration);
                 vec.push_back(
                         {
@@ -207,6 +212,7 @@ namespace xm {
                 const std::filesystem::path name = pair_name;
                 const std::string file = (name.is_absolute() ? name : (root.parent_path() / name)).string();
 
+                log->info("Reading cross-calibration file: {}, {}", pair_name, file);
                 const auto cross_calibration = xm::data::ocv::read_cross_calibration(file);
                 pairs.push_back({
                     .E = cross_calibration.E,

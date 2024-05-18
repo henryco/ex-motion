@@ -86,3 +86,5 @@ cmake-build-debug
 dev_mappings
 map_devices.sh
 /map_devices.sh
+example/rc_*
+/example/rc_*

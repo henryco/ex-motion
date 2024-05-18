@@ -2,7 +2,11 @@
   "type": "calibration",
 
   "gui": {
-    "scale": 0.75
+    "scale": 0.85
+  },
+
+  "misc": {
+    "debug": true
   },
 
   "camera": {
@@ -32,14 +36,14 @@
   },
 
   "calibration": {
-    "name": "cd_vid100",
+    "name": "rc_vid100",
     "total": 50,
-    "delay": 2000,
+    "delay": 5000,
 
     "pattern": {
       "type": "radon",
-      "columns": 9,
-      "rows": 7,
+      "columns": 15,
+      "rows": 10,
       "size": 30
     }
   }

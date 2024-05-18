@@ -75,7 +75,7 @@
 
   "calibration": {
     "name": "rc_cross_0x3x1x2",
-    "total": 50,
+    "total": 20,
     "delay": 5000,
     "pattern": {
       "type": "chessboard",
@@ -88,8 +88,8 @@
       "calibrated": [
         "rc_vid100.json",
         "rc_vid103.json",
-        "rc_vid102.json",
-        "rc_vid101.json"
+        "rc_vid101.json",
+        "rc_vid102.json"
       ]
     }
   }

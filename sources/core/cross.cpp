@@ -46,7 +46,7 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
     }
 
     const int left = current_pair;
-    const int right = ((left + 1) >= total_pairs) ? 0 : (left + 1);
+    const int right = ((left + 1) >= config.views) ? 0 : (left + 1);
 
     images.clear();
     images.reserve(_frames.size());

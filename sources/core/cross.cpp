@@ -287,6 +287,7 @@ void xm::CrossCalibration::calibrate() {
     results.current = 0;
     results.remains_ms = 0;
     results.remains_cap = 0;
+    results.calibrated = pairs;
 }
 
 void xm::CrossCalibration::put_debug_text() {

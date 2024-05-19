@@ -1,0 +1,43 @@
+{
+  "type": "calibration",
+
+  "gui": {
+    "frame": {
+      "w": 720,
+      "h": 1280
+    }
+  },
+
+  "misc": {
+    "debug": true
+  },
+
+  "camera": {
+    "fast": false,
+    "capture": [
+      {
+        "id": "/dev/video11",
+        "name": "vid100",
+        "width": 1920,
+        "height": 4320,
+        "fps": 30,
+        "codec": "YU12",
+        "buffer": 2
+      }
+    ]
+  },
+
+  "calibration": {
+    "name": "rc_vid100",
+    "total": 50,
+    "delay": 5000,
+
+    "pattern": {
+      "type": "radon",
+      "columns": 15,
+      "rows": 10,
+      "size": 35
+    }
+  }
+
+}

@@ -6,11 +6,10 @@
   },
 
   "gui": {
-    "scale": 0.4,
     "vertical": true,
     "frame": {
-      "w": 1920,
-      "h": 1080
+      "w": 640,
+      "h": 360
     }
   },
 
@@ -19,12 +18,12 @@
     "capture": [
 
       {
-        "id": "/dev/video8",
+        "id": "/dev/video11",
         "name": "vid100",
         "width": 1920,
         "height": 4320,
         "fps": 60,
-        "codec": "YUYV",
+        "codec": "YU12",
         "buffer": 2,
         "rotate": true,
         "flip": {
@@ -40,12 +39,12 @@
       },
 
       {
-        "id": "/dev/video8",
+        "id": "/dev/video11",
         "name": "vid103",
         "width": 1920,
         "height": 4320,
         "fps": 60,
-        "codec": "YUYV",
+        "codec": "YU12",
         "buffer": 2,
         "rotate": true,
         "flip": {
@@ -61,12 +60,12 @@
       },
 
       {
-        "id": "/dev/video8",
+        "id": "/dev/video11",
         "name": "vid101",
         "width": 1920,
         "height": 4320,
         "fps": 60,
-        "codec": "YUYV",
+        "codec": "YU12",
         "buffer": 2,
         "region": {
           "x": 0,
@@ -77,12 +76,12 @@
       },
 
       {
-        "id": "/dev/video8",
+        "id": "/dev/video11",
         "name": "vid102",
         "width": 1920,
         "height": 4320,
         "fps": 60,
-        "codec": "YUYV",
+        "codec": "YU12",
         "buffer": 2,
         "region": {
           "x": 0,

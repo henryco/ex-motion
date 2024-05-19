@@ -15,13 +15,11 @@ namespace xm {
     void FileBoot::update(float delta, float _, float fps) {
         window->setFps((int) fps);
 
-        const auto frames = camera->capture();
-//        logic->proceed(delta, frames);
-//        process_results();
+        logic->proceed(delta, camera->capture());
+        process_results();
 
         if (!bypass)
-//            window->refresh(logic->frames());
-            window->refresh(frames);
+            window->refresh(logic->frames());
         else
             window->refresh(false);
     }

@@ -60,18 +60,14 @@ namespace eox::xgtk {
         }
     }
 
-    void GLImage::setFrame(const cv::Mat &_frame) {
-        frames.clear();
-        frames.emplace_back(_frame);
-    }
-
     void GLImage::setFrames(const std::vector<cv::Mat>& _frames) {
         frames.clear();
         for (const auto& item: _frames) {
-            // YES, we NEED TO COPY IT
-            frames.push_back(std::move(fitSize(item)));
+            // YES, we NEED TO FIT IT
+            frames.push_back(fitSize(item));
         }
     }
+
     void GLImage::update(const std::vector<cv::Mat>& _frames) {
         setFrames(_frames);
         update();
@@ -255,8 +251,11 @@ namespace eox::xgtk {
     }
 
     cv::Mat GLImage::fitSize(const cv::Mat &in) const {
-        if (in.cols == width && in.rows == height)
-            return in;
+        if (in.cols == width && in.rows == height) {
+            cv::Mat out;
+            in.copyTo(out);
+            return out;
+        }
 
         const float scale = std::min((float) width / (float) in.cols, (float) height / (float) in.rows);
         const float n_w = (float) in.cols * scale;

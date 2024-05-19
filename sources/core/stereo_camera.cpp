@@ -28,9 +28,7 @@ namespace xm {
     }
 
     void StereoCamera::open(const SCamProp &prop) {
-
-        auto cpy = prop; // TODO: RECALL HOW COPY/REFERENCES work in c++
-        properties.push_back(cpy);
+        properties.push_back(prop);
 
         if (captures.contains(prop.device_id) && captures.at(prop.device_id).isOpened()) {
             log->warn("capture: {} is already open", prop.device_id);
@@ -113,29 +111,41 @@ namespace xm {
         // CROPPING AND FLIPPING
         std::map<std::string, cv::Mat> images;
         for (const auto &property: properties) {
-            auto &src = frames.at(property.device_id);
+            const auto &src = frames.at(property.device_id);
             cv::Mat dst;
 
             // whole frame
             if (property.x == 0 && property.y == 0 && property.w == property.width && property.h == property.height)
-                dst = src;
+                src.copyTo(dst);
             // sub region
             else
-                dst = src(cv::Rect(property.x, property.y, property.w, property.h)).clone();
+                src(cv::Rect(property.x, property.y, property.w, property.h)).copyTo(dst);
 
             // flip x and y
-            if (property.flip_x && property.flip_y)
-                cv::flip(dst, dst, -1);
+            if (property.flip_x && property.flip_y) {
+                cv::Mat tmp;
+                cv::flip(dst, tmp, -1);
+                tmp.copyTo(dst);
+            }
             // flip x
-            else if (property.flip_x && !property.flip_y)
+            else if (property.flip_x && !property.flip_y) {
+                cv::Mat tmp;
                 cv::flip(dst, dst, 1);
+                tmp.copyTo(dst);
+            }
             // flip y
-            else if (property.flip_y && !property.flip_x)
+            else if (property.flip_y && !property.flip_x) {
+                cv::Mat tmp;
                 cv::flip(dst, dst, 0);
+                tmp.copyTo(dst);
+            }
 
             // Rotate 90* clockwise
-            if (property.rotate)
-                cv::rotate(dst, dst, cv::ROTATE_90_CLOCKWISE);
+            if (property.rotate) {
+                cv::Mat tmp;
+                cv::rotate(dst, tmp, cv::ROTATE_90_CLOCKWISE);
+                tmp.copyTo(dst);
+            }
 
             images[property.name] = dst;
         }

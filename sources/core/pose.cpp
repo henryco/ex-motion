@@ -2,6 +2,7 @@
 // Created by henryco on 4/22/24.
 //
 
+#include <opencv2/calib3d.hpp>
 #include "../../xmotion/core/algo/pose.h"
 #include "../../xmotion/core/utils/eox_globals.h"
 
@@ -15,14 +16,25 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
-        for (auto &img: _frames)
-            images.push_back(img);
+
+        if (_frames.size() != config.devices.size()) {
+            results.error = true;
+            return *this;
+        }
+
+        for (int i = 0; i < _frames.size(); i++)
+            images.push_back(undistorted(_frames.at(i), i));
         return *this;
     }
 
+    std::vector<cv::Mat> input_frames;
+    input_frames.reserve(_frames.size());
+    for (int i = 0; i < _frames.size(); i++)
+        input_frames.push_back(undistorted(_frames.at(i), i));
+
     std::vector<cv::Mat> output_frames;
     std::vector<std::future<eox::dnn::PosePipelineOutput>> features;
-    enqueue_inference(features, _frames, output_frames);
+    enqueue_inference(features, input_frames, output_frames);
 
     std::vector<eox::dnn::PosePipelineOutput> outputs;
     if (!resolve_inference(features, outputs)) {
@@ -95,6 +107,16 @@ bool xm::Pose::resolve_inference(std::vector<std::future<eox::dnn::PosePipelineO
     return true;
 }
 
+
+cv::Mat xm::Pose::undistorted(const cv::Mat &in, int index) {
+    if (!config.devices.at(index).undistort_source)
+        return in;
+    const auto &maps = remap_maps.at(index);
+    cv::Mat undistorted;
+    cv::remap(in, undistorted, maps.map1, maps.map2, cv::INTER_LINEAR);
+    return std::move(undistorted);
+}
+
 void xm::Pose::start() {
     stop();
 
@@ -124,6 +146,31 @@ void xm::Pose::start() {
         auto p = std::make_unique<eox::util::ThreadPool>();
         p->start(1);
         workers.push_back(std::move(p));
+    }
+
+    remap_maps.clear();
+    remap_maps.reserve(config.devices.size());
+    for (const auto &device: config.devices) {
+        auto im_size = cv::Size(device.width, device.height);
+        auto new_mat = cv::getOptimalNewCameraMatrix(
+                device.K,
+                device.D,
+                im_size,
+                device.undistort_alpha);
+        cv::Mat map_1, map_2;
+        cv::initUndistortRectifyMap(
+                device.K,
+                device.D,
+                cv::Mat(),
+                new_mat,
+                im_size,
+                CV_16SC2,
+                map_1,
+                map_2);
+        remap_maps.emplace_back(
+                new_mat,
+                map_1,
+                map_2);
     }
 
     results.error = false;

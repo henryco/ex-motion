@@ -6,91 +6,68 @@
   },
 
   "gui": {
-    "vertical": true,
+    "layout": [2,2],
+    "scale": 1.25,
     "frame": {
-      "w": 640,
-      "h": 360
+      "w": 380,
+      "h": 640
     }
   },
 
   "camera": {
     "fast": false,
     "capture": [
-
       {
-        "id": "/dev/video11",
-        "name": "vid100",
+        "id": "/dev/video100",
+        "name": "razer_kiyo",
         "width": 1920,
-        "height": 4320,
-        "fps": 60,
-        "codec": "YU12",
+        "height": 1080,
+        "fps": 30,
+        "codec": "MJPG",
         "buffer": 2,
         "rotate": true,
         "flip": {
           "x": true,
           "y": true
-        },
-        "region": {
-          "x": 0,
-          "y": 0,
-          "h": 1080,
-          "w": 1920
         }
       },
 
       {
-        "id": "/dev/video11",
-        "name": "vid103",
+        "id": "/dev/video103",
+        "name": "a4_tech_1",
         "width": 1920,
-        "height": 4320,
-        "fps": 60,
-        "codec": "YU12",
+        "height": 1080,
+        "fps": 30,
+        "codec": "MJPG",
         "buffer": 2,
         "rotate": true,
         "flip": {
           "x": true,
           "y": true
-        },
-        "region": {
-          "x": 0,
-          "y": 3240,
-          "h": 1080,
-          "w": 1920
         }
       },
 
       {
-        "id": "/dev/video11",
-        "name": "vid101",
+        "id": "/dev/video101",
+        "name": "TSTC_1",
         "width": 1920,
-        "height": 4320,
+        "height": 1080,
         "fps": 60,
-        "codec": "YU12",
+        "codec": "MJPG",
         "buffer": 2,
-        "region": {
-          "x": 0,
-          "y": 1080,
-          "h": 1080,
-          "w": 1920
-        }
+        "rotate": true
       },
 
       {
-        "id": "/dev/video11",
-        "name": "vid102",
+        "id": "/dev/video102",
+        "name": "TSTC_2",
         "width": 1920,
-        "height": 4320,
+        "height": 1080,
         "fps": 60,
-        "codec": "YU12",
+        "codec": "MJPG",
         "buffer": 2,
-        "region": {
-          "x": 0,
-          "y": 2160,
-          "h": 1080,
-          "w": 1920
-        }
+        "rotate": true
       }
-
     ]
   },
 
@@ -151,7 +128,7 @@
           "roi": 0.2,
           "marks": 0.85,
           "pose": 0.99925,
-          "detector": 0.9
+          "detector": 0.75
         },
         "roi": {
           "rollback_window": 0.1,
@@ -174,7 +151,7 @@
           "roi": 0.2,
           "marks": 0.85,
           "pose": 0.99925,
-          "detector": 0.9
+          "detector": 0.75
         },
         "roi": {
           "rollback_window": 0.1,

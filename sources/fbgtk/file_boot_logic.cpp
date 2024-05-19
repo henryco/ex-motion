@@ -106,8 +106,8 @@ namespace xm {
             logic = std::make_unique<xm::Calibration>();
             logic->debug(config.misc.debug);
 
-            const auto w = config.camera.capture[0].width;
-            const auto h = config.camera.capture[0].height;
+            const auto w = config.camera.capture[0].region.w;
+            const auto h = config.camera.capture[0].region.h;
             const auto r = config.camera.capture[0].rotate;
 
             xm::calib::Initial params = {
@@ -175,6 +175,7 @@ namespace xm {
 
             std::vector<xm::nview::Device> vec;
             vec.reserve(config.pose.devices.size());
+            int i = 0;
             for (const auto &device: config.pose.devices) {
                 const std::filesystem::path root = project_file;
                 const std::filesystem::path name = device.calibration;
@@ -182,6 +183,9 @@ namespace xm {
 
                 log->info("Reading calibration file: {}, {}", device.calibration, file);
                 const auto calibration = xm::data::ocv::read_calibration(file);
+                const auto rotate = config.camera.capture[i].rotate;
+                const auto width = config.camera.capture[i].region.w;
+                const auto height = config.camera.capture[i].region.h;
                 vec.push_back(
                         {
                                 .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),
@@ -200,9 +204,16 @@ namespace xm {
                                 .filter_velocity_factor = device.filter.velocity,
                                 .filter_windows_size = device.filter.window,
                                 .filter_target_fps = device.filter.fps,
+                                .undistort_source = device.undistort.source,
+                                .undistort_points = device.undistort.points,
+                                .undistort_alpha = device.undistort.alpha,
+                                .width = rotate ? height : width,
+                                .height = rotate ? width : height,
                                 .K = calibration.K,
                                 .D = calibration.D
                         });
+
+                i++;
             }
 
             std::vector<xm::nview::StereoPair> pairs;

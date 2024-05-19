@@ -12,6 +12,9 @@
 #include "../utils/thread_pool.h"
 #include "../dnn/pose_pipeline.h"
 
+#include <spdlog/logger.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 namespace xm::nview {
 
     using DetectorModel = eox::dnn::box::Model;
@@ -158,13 +161,41 @@ namespace xm::nview {
         int filter_target_fps = 30;
 
         /**
-         * Camera calibration matrix 3x3
-         * \code
-         * ┌ax    xo┐
-         * │   ay yo│
-         * └       1┘
-         * \endcode
+         * Undistort input image
          */
+        bool undistort_source = false;
+
+        /**
+         * Undistort position of localized points
+         */
+        bool undistort_points = true;
+
+        /**
+         * [0.0 ... 1.0]
+         * Free scaling parameter:
+         * 0 - only valid pixels
+         * 1 - all pixels
+         */
+        float undistort_alpha = 0;
+
+        /**
+           * Image width
+           */
+        int width;
+
+        /**
+         * Image height
+         */
+        int height;
+
+        /**
+        * Camera calibration matrix 3x3
+        * \code
+        * ┌ax    xo┐
+        * │   ay yo│
+        * └       1┘
+        * \endcode
+        */
         cv::Mat K;
 
         /**
@@ -196,6 +227,12 @@ namespace xm::nview {
         int threads;
     } Initial;
 
+    typedef struct ReMaps {
+        cv::Mat newK;
+        cv::Mat map1;
+        cv::Mat map2;
+    } ReMaps;
+
     typedef struct Result {
         bool error;
     } Result;
@@ -204,7 +241,11 @@ namespace xm::nview {
 namespace xm {
 
     class Pose : public xm::Logic {
+        static inline const auto log =
+                spdlog::stdout_color_mt("pose_estimation");
+
     private:
+        std::vector<xm::nview::ReMaps> remap_maps{};
         std::vector<cv::Mat> images{};
         xm::nview::Result results{};
         xm::nview::Initial config{};
@@ -250,6 +291,8 @@ namespace xm {
 
         static bool resolve_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &in_features,
                                       std::vector<eox::dnn::PosePipelineOutput> &out_results);
+
+        cv::Mat undistorted(const cv::Mat &in, int index);
     };
 
 } // xm

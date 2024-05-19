@@ -2,8 +2,11 @@
   "type": "cross_calibration",
 
   "gui": {
-    "scale": 0.4,
-    "vertical": true
+    "vertical": true,
+    "frame": {
+      "w": 640,
+      "h": 360
+    }
   },
 
   "misc": {
@@ -51,10 +54,7 @@
         "fps": 60,
         "codec": "MJPG",
         "buffer": 2,
-        "flip": {
-          "x": true,
-          "y": true
-        }
+        "rotate": true
       },
 
       {
@@ -65,10 +65,7 @@
         "fps": 60,
         "codec": "MJPG",
         "buffer": 2,
-        "flip": {
-          "x": true,
-          "y": true
-        }
+        "rotate": true
       }
     ]
   },

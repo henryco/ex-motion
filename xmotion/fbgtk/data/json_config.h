@@ -156,8 +156,15 @@ namespace xm::data {
     } PoseModel;
 
     typedef struct {
+        bool source;
+        bool points;
+        float alpha;
+    } PoseUndistort;
+
+    typedef struct {
         std::string calibration;
         PoseThresholds threshold;
+        PoseUndistort undistort;
         PoseFilter filter;
         PoseModel model;
         PoseRoi roi;

@@ -64,6 +64,14 @@ namespace xm::data::def {
         };
     }
 
+    PoseUndistort poseUndistort() {
+        return {
+          .source = false,
+          .points = true,
+          .alpha = 0.f
+        };
+    }
+
     PoseThresholds poseThresholds() {
         return {
                 .detector = 0.5f,
@@ -92,6 +100,7 @@ namespace xm::data::def {
         return {
                 .calibration = "",
                 .threshold = xm::data::def::poseThresholds(),
+                .undistort = xm::data::def::poseUndistort(),
                 .filter = xm::data::def::poseFilter(),
                 .model = xm::data::def::poseModel(),
                 .roi = xm::data::def::poseRoi()
@@ -262,6 +271,13 @@ namespace xm::data {
         f.fps = j.value("fps", def.fps);
     }
 
+    void from_json(const nlohmann::json &j, PoseUndistort &u) {
+        const auto def = xm::data::def::poseUndistort();
+        u.source = j.value("source", def.source);
+        u.points = j.value("points", def.points);
+        u.alpha = j.value("alpha", def.alpha);
+    }
+
     void from_json(const nlohmann::json &j, PoseThresholds &t) {
         const auto def = xm::data::def::poseThresholds();
         t.detector = j.value("detector", def.detector);
@@ -281,6 +297,7 @@ namespace xm::data {
         j.at("calibration").get_to(d.calibration);
         d.model = j.value("model", def.model);
         d.threshold = j.value("threshold", def.threshold);
+        d.undistort = j.value("undistort", def.undistort);
         d.filter = j.value("filter", def.filter);
         d.roi = j.value("roi", def.roi);
     }

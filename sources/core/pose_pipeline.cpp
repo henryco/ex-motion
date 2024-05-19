@@ -63,7 +63,7 @@ namespace eox::dnn {
             detector.setRoiPaddingX(roi_padding_x);
             detector.setRoiPaddingY(roi_padding_y);
             detector.setRoiScale(roi_scale);
-            detector.setThreshold(std::min(0.5f, threshold_detector));
+            detector.setThreshold(std::min(0.1f, threshold_detector));
 
             // using pose detector
             auto detections = detector.inference(frame);

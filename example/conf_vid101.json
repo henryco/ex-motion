@@ -2,7 +2,11 @@
   "type": "calibration",
 
   "gui": {
-    "scale": 0.55
+    "scale": 1.2,
+    "frame": {
+      "w": 720,
+      "h": 1280
+    }
   },
 
   "misc": {
@@ -20,9 +24,10 @@
         "fps": 60,
         "codec": "MJPG",
         "buffer": 2,
+        "rotate": true,
         "flip": {
-          "x": true,
-          "y": true
+          "x": false,
+          "y": false
         }
       }
     ]

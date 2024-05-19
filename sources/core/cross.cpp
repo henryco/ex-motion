@@ -172,7 +172,7 @@ void xm::CrossCalibration::calibrate() {
 
     // cross calibration, for each pair
     for (int i = 0; i < total_pairs; i++) {
-        const int j = ((i + 1) >= total_pairs) ? 0 : (i + 1);
+        const int j = ((i + 1) >= config.views) ? 0 : (i + 1);
 
         const auto K1 = config.K[i];
         const auto K2 = config.K[j];
@@ -189,6 +189,7 @@ void xm::CrossCalibration::calibrate() {
             corners_r.push_back(item[1]);
         }
 
+        log->info("stereo calibrate pair: [{},{}]", i, j);
         const auto rms = cv::stereoCalibrate(
                 object_points,
                 corners_l,
@@ -237,7 +238,7 @@ void xm::CrossCalibration::calibrate() {
             // In the middle of the chain...
         else {
             JAIL:
-            // We are going through the, well..., chain ¯\_(ツ)_/¯
+
             // rotation-translation matrix (world basis change)
             RTo = pairs.back().RTo * RTi;
 
@@ -250,8 +251,7 @@ void xm::CrossCalibration::calibrate() {
             const auto Toz = To.at<double>(2);
 
             // skew-symmetric matrix of vector To
-            const auto Tx =
-                    (cv::Mat_<double>(3, 3) << 0, -Toz, Toy, Toz, 0, -Tox, -Toy, Tox, 0);
+            const cv::Mat Tx = (cv::Mat_<double>(3, 3) << 0, -Toz, Toy, Toz, 0, -Tox, -Toy, Tox, 0);
 
             cv::Mat K2_inv, K2_inv_T, K1_inv;
             if (cv::invert(K2, K2_inv) == 0)

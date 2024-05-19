@@ -28,9 +28,17 @@ namespace xm::data::def {
         };
     }
 
+    GuiFrame guiFrame() {
+        return {
+          .w = 0,
+          .h = 0
+        };
+    }
+
     Gui gui() {
         return {
                 .layout = std::vector<int>{},
+                .frame = guiFrame(),
                 .vertical = false,
                 .scale = 1.f,
                 .fps = 300
@@ -205,8 +213,15 @@ namespace xm::data {
         }
     }
 
+    void from_json(const nlohmann::json &j, GuiFrame &f) {
+        const auto def = xm::data::def::guiFrame();
+        f.w = j.value("w", def.w);
+        f.h = j.value("h", def.h);
+    }
+
     void from_json(const nlohmann::json &j, Gui &g) {
         g.layout = j.value("layout", std::vector<int>{});
+        g.frame = j.value("frame", xm::data::def::guiFrame());
         g.vertical = j.value("vertical", false);
         g.scale = j.value("scale", 1.f);
         g.fps = j.value("fps", 300);

@@ -15,11 +15,13 @@ namespace xm {
     void FileBoot::update(float delta, float _, float fps) {
         window->setFps((int) fps);
 
-        logic->proceed(delta, camera->capture());
-        process_results();
+        const auto frames = camera->capture();
+//        logic->proceed(delta, frames);
+//        process_results();
 
         if (!bypass)
-            window->refresh(logic->frames());
+//            window->refresh(logic->frames());
+            window->refresh(frames);
         else
             window->refresh(false);
     }
@@ -181,7 +183,7 @@ namespace xm {
                 const std::string file = (name.is_absolute() ? name : (root.parent_path() / name)).string();
 
                 log->info("Reading calibration file: {}, {}", device.calibration, file);
-                const auto calibration = xm::data::ocv::read_calibration(device.calibration);
+                const auto calibration = xm::data::ocv::read_calibration(file);
                 vec.push_back(
                         {
                                 .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),

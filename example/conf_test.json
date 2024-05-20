@@ -1,0 +1,189 @@
+{
+  "type": "pose",
+
+  "misc": {
+    "debug": true
+  },
+
+  "gui": {
+    "layout": [2,2],
+    "scale": 1.25,
+    "frame": {
+      "w": 380,
+      "h": 640
+    }
+  },
+
+  "camera": {
+    "fast": false,
+    "capture": [
+      {
+        "id": "/dev/video11",
+        "name": "vid100",
+        "width": 4320,
+        "height": 1920,
+        "fps": 30,
+        "codec": "YU12",
+        "buffer": 2,
+        "region": {
+          "x": 0,
+          "y": 0,
+          "w": 1080,
+          "h": 1920
+        }
+      },
+
+      {
+        "id": "/dev/video11",
+        "name": "vid103",
+        "width": 4320,
+        "height": 1920,
+        "fps": 30,
+        "codec": "YU12",
+        "buffer": 2,
+        "region": {
+          "x": 1080,
+          "y": 0,
+          "w": 1080,
+          "h": 1920
+        }
+      },
+
+      {
+        "id": "/dev/video11",
+        "name": "vid101",
+        "width": 4320,
+        "height": 1920,
+        "fps": 30,
+        "codec": "YU12",
+        "buffer": 2,
+        "region": {
+          "x": 2160,
+          "y": 0,
+          "w": 1080,
+          "h": 1920
+        }
+      },
+
+      {
+        "id": "/dev/video11",
+        "name": "vid102",
+        "width": 4320,
+        "height": 1920,
+        "fps": 30,
+        "codec": "YU12",
+        "buffer": 2,
+        "region": {
+          "x": 3240,
+          "y": 0,
+          "w": 1080,
+          "h": 1920
+        }
+      }
+    ]
+  },
+
+  "pose": {
+    "segmentation": false,
+    "devices": [
+
+      {
+        "calibration": "rc_vid100.json",
+        "body": "full_f32",
+        "threshold": {
+          "roi": 0.33,
+          "marks": 0.85,
+          "pose": 0.99025,
+          "detector": 0.75
+        },
+        "roi": {
+          "rollback_window": 0.1,
+          "center_window": 0.025,
+          "clamp_window": 0.45,
+          "scale": 1.1,
+          "margin": 30
+        },
+        "filter": {
+          "velocity": 0.015,
+          "window": 60,
+          "fps": 60
+        }
+      },
+
+      {
+        "calibration": "rc_vid103.json",
+        "body": "full_f32",
+        "threshold": {
+          "roi": 0.33,
+          "marks": 0.85,
+          "pose": 0.99025,
+          "detector": 0.7
+        },
+        "roi": {
+          "rollback_window": 0.1,
+          "center_window": 0.025,
+          "clamp_window": 0.45,
+          "scale": 1.1,
+          "margin": 30
+        },
+        "filter": {
+          "velocity": 0.015,
+          "window": 60,
+          "fps": 60
+        }
+      },
+
+      {
+        "calibration": "rc_vid101.json",
+        "body": "full_f32",
+        "threshold": {
+          "roi": 0.2,
+          "marks": 0.85,
+          "pose": 0.99025,
+          "detector": 0.35
+        },
+        "roi": {
+          "rollback_window": 0.1,
+          "center_window": 0.015,
+          "clamp_window": 0.45,
+          "scale": 1.22,
+          "margin": 30
+        },
+        "filter": {
+          "velocity": 0.015,
+          "window": 60,
+          "fps": 60
+        }
+      },
+
+      {
+        "calibration": "rc_vid102.json",
+        "body": "full_f32",
+        "threshold": {
+          "roi": 0.2,
+          "marks": 0.85,
+          "pose": 0.99025,
+          "detector": 0.35
+        },
+        "roi": {
+          "rollback_window": 0.1,
+          "center_window": 0.015,
+          "clamp_window": 0.45,
+          "scale": 1.22,
+          "margin": 30
+        },
+        "filter": {
+          "velocity": 0.015,
+          "window": 60,
+          "fps": 60
+        }
+      }
+
+    ],
+    "stereo": [
+      "rc_cross_0x3x1x2_0.json",
+      "rc_cross_0x3x1x2_1.json",
+      "rc_cross_0x3x1x2_2.json"
+    ]
+  }
+}

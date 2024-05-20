@@ -45,6 +45,8 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
 
     // TODO: PROCESS RESULTS
 
+
+
     images.clear();
     for (const auto &frame: output_frames) {
         images.push_back(frame);

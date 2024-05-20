@@ -90,6 +90,7 @@
       {
         "calibration": "rc_vid100.json",
         "body": "full_f32",
+        "detector": "f_32",
         "threshold": {
           "roi": 0.33,
           "marks": 0.85,
@@ -113,6 +114,7 @@
       {
         "calibration": "rc_vid103.json",
         "body": "full_f32",
+        "detector": "f_32",
         "threshold": {
           "roi": 0.33,
           "marks": 0.85,
@@ -136,6 +138,7 @@
       {
         "calibration": "rc_vid101.json",
         "body": "full_f32",
+        "detector": "f_32",
         "threshold": {
           "roi": 0.2,
           "marks": 0.85,
@@ -159,6 +162,7 @@
       {
         "calibration": "rc_vid102.json",
         "body": "full_f32",
+        "detector": "f_32",
         "threshold": {
           "roi": 0.2,
           "marks": 0.85,

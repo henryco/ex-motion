@@ -23,14 +23,15 @@ namespace eox::dnn {
     }
 
     PosePipelineOutput PosePipeline::pass(const cv::Mat &frame, cv::Mat &segmented) {
-        return inference(frame, segmented, nullptr);
+        return inference(frame, segmented, nullptr, std::chrono::system_clock::now(), 1);
     }
 
     PosePipelineOutput PosePipeline::pass(const cv::Mat &frame, cv::Mat &segmented, cv::Mat &debug) {
-        return inference(frame, segmented, &debug);
+        const auto n = std::chrono::high_resolution_clock::now();
+        return inference(frame, segmented, &debug, std::chrono::system_clock::now(), 1);
     }
 
-    PosePipelineOutput PosePipeline::inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug) {
+    PosePipelineOutput PosePipeline::inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug, PoseTimePoint t0, int rec_n) {
         const bool first_run = !initialized;
 
         if (!initialized) {
@@ -42,6 +43,8 @@ namespace eox::dnn {
 
         // output data structures
         PosePipelineOutput output;
+        output.present = false;
+        output.score = 0.f;
         cv::Mat source;
 
         if (prediction) {
@@ -79,7 +82,7 @@ namespace eox::dnn {
                     roi = {};
 
                     frame.copyTo(*debug);
-                    printMetadata(*debug);
+                    printMetadata(*debug, t0, rec_n);
                 }
 
                 return output;
@@ -206,8 +209,8 @@ namespace eox::dnn {
 
                         if (debug) {
                             frame.copyTo(*debug);
+                            printMetadata(*debug, t0, rec_n);
                             drawRoi(*debug);
-                            printMetadata(*debug);
                         }
 
                         output.present = false;
@@ -321,10 +324,10 @@ namespace eox::dnn {
             // debug is a pointer actually, nullptr => false
             if (debug) {
                 segmented.copyTo(*debug);
+                printMetadata(*debug, t0, rec_n);
                 drawJoints(landmarks, *debug);
                 drawLandmarks(landmarks, result.landmarks_3d, *debug);
                 drawRoi(*debug);
-                printMetadata(*debug);
             }
 
             // preparing output
@@ -342,15 +345,15 @@ namespace eox::dnn {
                 discarded_roi = false;
                 rollback_roi = false;
                 prediction = false;
-                return inference(frame, segmented, debug);
+                return inference(frame, segmented, debug, t0, rec_n + 1);
             }
 
             // still nothing
             if (debug) {
 
                 frame.copyTo(*debug);
+                printMetadata(*debug, t0, rec_n);
                 drawRoi(*debug);
-                printMetadata(*debug);
             }
         }
 

@@ -78,7 +78,10 @@ namespace eox::dnn {
         cv::line(output, p2, cv::Point(roi.x + roi.w, roi.y), color, 2);
     }
 
-    void PosePipeline::printMetadata(cv::Mat &output) const {
+    void PosePipeline::printMetadata(cv::Mat &output, PoseTimePoint t0, int rec_n) const {
+        const auto t1 = std::chrono::high_resolution_clock::now();
+        const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
+
         cv::Point mid(roi.c.x, roi.c.y);
         cv::Point end(roi.e.x, roi.e.y);
         cv::Scalar pc(0, 255, 255);
@@ -142,6 +145,18 @@ namespace eox::dnn {
         cv::putText(output,
                     "ROLLBACK  ROI: " + (std::string) (rollback_roi ? "T" : "F"),
                     cv::Point(40, 480),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "INFERENCE TIME: " + std::to_string(duration.count()) + "ms",
+                    cv::Point(40, 520),
+                    cv::FONT_HERSHEY_SIMPLEX, 0.7,
+                    cv::Scalar(0, 0, 255), 2);
+
+        cv::putText(output,
+                    "INFERENCE N: " + std::to_string(rec_n),
+                    cv::Point(40, 560),
                     cv::FONT_HERSHEY_SIMPLEX, 0.7,
                     cv::Scalar(0, 0, 255), 2);
     }

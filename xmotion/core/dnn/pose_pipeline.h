@@ -16,6 +16,8 @@
 
 namespace eox::dnn {
 
+    using PoseTimePoint = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
+
     using PosePipelineOutput = struct {
 
         /**
@@ -240,7 +242,12 @@ namespace eox::dnn {
         [[nodiscard]] eox::dnn::box::Model getDetectorModel() const;
 
     protected:
-        [[nodiscard]] PosePipelineOutput inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug);
+        [[nodiscard]] PosePipelineOutput inference(
+                const cv::Mat &frame,
+                cv::Mat &segmented,
+                cv::Mat *debug,
+                PoseTimePoint t0,
+                int rec_n);
 
         void performSegmentation(float segmentation_array[128 * 128], const cv::Mat &frame, cv::Mat &out) const;
 
@@ -250,7 +257,7 @@ namespace eox::dnn {
 
         void drawRoi(cv::Mat &output) const;
 
-        void printMetadata(cv::Mat &output) const;
+        void printMetadata(cv::Mat &output, PoseTimePoint t0, int rec_n) const;
 
         [[nodiscard]] std::chrono::nanoseconds timestamp() const;
     };

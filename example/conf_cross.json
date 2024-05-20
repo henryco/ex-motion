@@ -2,10 +2,11 @@
   "type": "cross_calibration",
 
   "gui": {
-    "vertical": true,
+    "layout": [2,2],
+    "scale": 1.25,
     "frame": {
-      "w": 640,
-      "h": 360
+      "w": 380,
+      "h": 640
     }
   },
 
@@ -72,7 +73,7 @@
 
   "calibration": {
     "name": "rc_cross_0x3x1x2",
-    "total": 20,
+    "total": 40,
     "delay": 5000,
     "pattern": {
       "type": "chessboard",

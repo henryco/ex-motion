@@ -70,10 +70,10 @@ void xm::Pose::init_epipolar_matrix() {
 
             // Rotation-translation matrix from CURRENT device to the very FIRST one
             const cv::Mat RTo_from = (idx_from == 0)
-                                     ? cv::Mat::eye(4, 4, CV_32F)
+                                     ? cv::Mat::eye(4, 4, CV_64F)
                                      : config.pairs.at(idx_from - 1).RTo;
             const cv::Mat RTo_to = (idx_to == 0)
-                                   ? cv::Mat::eye(4, 4, CV_32F)
+                                   ? cv::Mat::eye(4, 4, CV_64F)
                                    : config.pairs.at(idx_to - 1).RTo;
 
             // FROM -> origin -> TO

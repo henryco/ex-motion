@@ -106,4 +106,23 @@ namespace xm::ocv {
         return out;
     }
 
+    std::string print_matrix(const cv::Mat &in) {
+        const int w = in.cols;
+        const int h = in.rows;
+        std::string result = "\n";
+        result += "[\n";
+        for (int y = 0; y < h; y++) {
+            result + "[";
+            for (int x = 0; x < w; x++) {
+                if (x != 0)
+                    result += ", ";
+                result += std::to_string(in.at<float>(x, y));
+            }
+            result + "]\n";
+        }
+
+        return result + "]";
+    }
+
+
 }

@@ -61,10 +61,6 @@ void xm::Pose::init_epipolar_matrix() {
         epipolar_matrix[i] = new nview::StereoPair[epipolar_matrix_size];
 
         for (int j = 0; j < epipolar_matrix_size; j++) {
-            if (i == j)
-                // self reference
-                continue;
-
             const auto &idx_from = i;
             const auto &idx_to = j;
 
@@ -96,19 +92,11 @@ void xm::Pose::init_epipolar_matrix() {
             const cv::Mat K_to = config.devices.at(idx_from).K; // A
             const cv::Mat K_from = config.devices.at(idx_to).K; // B
 
-            // Calibration matrix inversions
-            cv::Mat K_to_INV_TRP, K_to_INV, K_from_INV;
-            if (cv::invert(K_to, K_to_INV) == 0)
-                throw std::runtime_error("K^(-1) != 0 !!! WTD");
-            if (cv::invert(K_from, K_from_INV) == 0)
-                throw std::runtime_error("K^(-1) != 0 !!! WTD");
-            cv::transpose(K_to_INV, K_to_INV_TRP);
-
             // Essential matrix
             const cv::Mat E = T_x * R;
 
             // Fundamental matrix
-            const cv::Mat F = K_to_INV_TRP * E * K_from_INV;
+            const cv::Mat F = K_to.inv().t() * E * K_from.inv();
 
             epipolar_matrix[i][j] = {
                     .E = E,
@@ -170,9 +158,6 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
     for (int i = 0; i < output_frames.size(); i++) {
         std::vector<std::vector<cv::Vec4f>> epi_vec;
         for (int j = 0; j < output_frames.size(); j++) {
-            // skip itself
-            if (i == j)
-                continue;
 
             const auto pose_output = outputs.at(j);
             if (!pose_output.present)
@@ -190,9 +175,11 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
             points_from_epi_line(output_frames.at(i), end_line, ep1, ep2);
 
             if (DEBUG && config.show_epilines) {
-                const auto color = xm::ocv::distinct_color(j, (int) output_frames.size());
-                cv::line(output_frames.at(i), mp1, mp2, color, 2);
-                cv::line(output_frames.at(i), ep1, ep2, color, 2);
+                const auto color = i == j
+                                   ? cv::Scalar(255, 255, 255)
+                                   : xm::ocv::distinct_color(j, (int) output_frames.size());
+                cv::line(output_frames.at(i), mp1, mp2, color, 3);
+                cv::line(output_frames.at(i), ep1, ep2, color, 3);
             }
         }
 
@@ -268,32 +255,30 @@ void xm::Pose::points_from_epi_line(const cv::Mat &img, const cv::Vec3f &line, c
 cv::Vec3f xm::Pose::epi_line_from_point(const cv::Point2f &point, int idx_point, int idx_line) const {
     if (idx_line > epipolar_matrix_size || idx_point > epipolar_matrix_size || idx_point < 0 || idx_line < 0)
         throw std::runtime_error("index out of bound error [epipolar_matrix]");
-    if (idx_point == idx_line)
-        throw std::runtime_error("idx_point == idx_line (but this is prohibited)");
 
     const auto &F = epipolar_matrix[idx_line][idx_point].F;
 
-//    {
-//        std::vector<cv::Vec3f> vec;
-//        cv::computeCorrespondEpilines(std::vector<cv::Point2f>{point}, 1, F, vec);
-//        return vec[0];
-//    }
-
     {
-        const cv::Mat pt = (cv::Mat_<double>(3, 1) << point.x, point.y, 1.f);
-        const cv::Mat line = F * pt;
-        cv::Vec3f res = {
-                (float) line.at<double>(0, 0),
-                (float) line.at<double>(1, 0),
-                (float) line.at<double>(2, 0)
-        };
-        const auto norm = (float) std::sqrt(std::pow(res[0], 2) + std::pow(res[1], 2));
-        if (norm != 0) {
-            res[0] /= norm;
-            res[1] /= norm;
-            res[2] /= norm;
-        }
-        return res;
+        std::vector<cv::Vec3f> vec;
+        cv::computeCorrespondEpilines(std::vector<cv::Point2f>{point}, 1, F, vec);
+        return vec[0];
     }
+
+//    {
+//        const cv::Mat pt = (cv::Mat_<double>(3, 1) << point.x, point.y, 1.f);
+//        const cv::Mat line = F * pt;
+//        cv::Vec3f res = {
+//                (float) line.at<double>(0, 0),
+//                (float) line.at<double>(1, 0),
+//                (float) line.at<double>(2, 0)
+//        };
+//        const auto norm = (float) std::sqrt(std::pow(res[0], 2) + std::pow(res[1], 2));
+//        if (norm != 0) {
+//            res[0] /= norm;
+//            res[1] /= norm;
+//            res[2] /= norm;
+//        }
+//        return res;
+//    }
 }
 

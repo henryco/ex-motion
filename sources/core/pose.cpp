@@ -234,6 +234,9 @@ std::vector<cv::Point2f> xm::Pose::undistorted(const eox::dnn::Landmark *in, int
     if (!config.devices.at(index).undistort_points)
         return distorted_points;
 
+    if (config.devices.at(index).undistort_source)
+        return distorted_points;
+
     const auto R = cv::Mat::eye(3, 3, CV_64F);
     const auto K = config.devices.at(index).K.clone();
     const auto D = config.devices.at(index).D.clone();

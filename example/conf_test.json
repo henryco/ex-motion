@@ -85,6 +85,8 @@
 
   "pose": {
     "segmentation": false,
+    "show_epilines": true,
+
     "devices": [
 
       {

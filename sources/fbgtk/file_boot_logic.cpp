@@ -235,9 +235,10 @@ namespace xm {
                     .devices = vec,
                     .pairs = pairs,
                     .segmentation = config.pose.segmentation,
+                    .show_epilines = config.pose.show_epilines,
                     .threads = config.pose.threads <= 0
                                ? config.misc.cpu
-                               : std::min(config.pose.threads, config.misc.cpu)
+                               : std::min(config.pose.threads, config.misc.cpu),
             };
 
             (static_cast<xm::Pose *>(logic.get()))->init(params);

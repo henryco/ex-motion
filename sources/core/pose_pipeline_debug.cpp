@@ -71,7 +71,7 @@ namespace eox::dnn {
     void PosePipeline::drawRoi(cv::Mat &output) const {
         const auto p1 = cv::Point(roi.x, roi.y);
         const auto p2 = cv::Point(roi.x + roi.w, roi.y + roi.h);
-        cv::Scalar color(0, 255, 0);
+        cv::Scalar color(255, 255, 255);
         cv::line(output, p1, cv::Point(roi.x + roi.w, roi.y), color, 2);
         cv::line(output, p1, cv::Point(roi.x, roi.y + roi.h), color, 2);
         cv::line(output, p2, cv::Point(roi.x, roi.y + roi.h), color, 2);

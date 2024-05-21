@@ -189,9 +189,11 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
             points_from_epi_line(output_frames.at(i), mid_line, mp1, mp2);
             points_from_epi_line(output_frames.at(i), end_line, ep1, ep2);
 
-            const auto color = xm::ocv::distinct_color(j, (int) output_frames.size());
-            cv::line(output_frames.at(i), mp1, mp2, color, 2);
-            cv::line(output_frames.at(i), ep1, ep2, color, 2);
+            if (DEBUG && config.show_epilines) {
+                const auto color = xm::ocv::distinct_color(j, (int) output_frames.size());
+                cv::line(output_frames.at(i), mp1, mp2, color, 2);
+                cv::line(output_frames.at(i), ep1, ep2, color, 2);
+            }
         }
 
         if (epi_vec.empty())

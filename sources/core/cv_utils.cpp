@@ -77,27 +77,23 @@ namespace xm::ocv {
     }
 
     cv::Scalar distinct_color(int index, int N) {
-        if (index < 0 || index >= N) {
-            throw std::out_of_range("Index out of range");
-        }
+        // Ensure the index is within bounds
+        if (index < 0 || index >= N)
+            throw std::out_of_range("Index out of bounds");
 
-        // Convert index to hue in HSV color space
-        int hue = (index * 360 / N) % 360;  // Hue varies from 0 to 360
+        // Calculate hue value in degrees (0-360) equally spaced for N colors
+        // Convert hue to the range [0, 179] as used in OpenCV
+        const auto hue = (360.0 * index / N) / 2;
 
-        // Saturation and value are fixed to max for bright colors
-        int saturation = 255;
-        int value = 255;
+        // HSV values (hue, saturation, value)
+        const cv::Mat hsv(1, 1, CV_8UC3, cv::Scalar(hue, 255, 255));
 
-        // Create HSV color
-        cv::Mat hsv(1, 1, CV_8UC3, cv::Scalar(hue, saturation, value));
-
-        // Convert HSV color to BGR color
         cv::Mat bgr;
         cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
 
-        // Return the BGR color as cv::Scalar
-        cv::Vec3b bgrVec = bgr.at<cv::Vec3b>(0, 0);
-        return cv::Scalar(bgrVec[0], bgrVec[1], bgrVec[2]); // NOLINT(*-return-braced-init-list)
+        // Extract BGR values
+        const cv::Vec3b bgrPixel = bgr.at<cv::Vec3b>(0, 0);
+        return cv::Scalar(bgrPixel[0], bgrPixel[1], bgrPixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
     cv::Mat inverse(const cv::Mat &in) {
@@ -105,24 +101,5 @@ namespace xm::ocv {
         cv::invert(in, out);
         return out;
     }
-
-    std::string print_matrix(const cv::Mat &in) {
-        const int w = in.cols;
-        const int h = in.rows;
-        std::string result = "\n";
-        result += "[\n";
-        for (int y = 0; y < h; y++) {
-            result + "[";
-            for (int x = 0; x < w; x++) {
-                if (x != 0)
-                    result += ", ";
-                result += std::to_string(in.at<float>(x, y));
-            }
-            result + "]\n";
-        }
-
-        return result + "]";
-    }
-
 
 }

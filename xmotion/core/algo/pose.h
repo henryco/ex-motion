@@ -212,9 +212,15 @@ namespace xm::nview {
         bool segmentation;
 
         /**
+        * Draw epilines or not
+        */
+        bool show_epilines;
+
+        /**
          * Number of worker threads
          */
         int threads;
+
     } Initial;
 
     typedef struct ReMaps {

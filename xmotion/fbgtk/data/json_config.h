@@ -173,6 +173,7 @@ namespace xm::data {
     typedef struct {
         std::vector<PoseDevice> devices;
         std::vector<std::string> stereo;
+        bool show_epilines;
         bool segmentation;
         int threads;
     } Pose;

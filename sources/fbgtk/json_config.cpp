@@ -110,6 +110,7 @@ namespace xm::data::def {
     Pose pose() {
         return {
                 .devices = {},
+                .show_epilines = false,
                 .segmentation = false,
                 .threads = 0
         };
@@ -306,6 +307,7 @@ namespace xm::data {
         const auto def = xm::data::def::pose();
         j.at("devices").get_to(p.devices);
         j.at("stereo").get_to(p.stereo);
+        p.show_epilines = j.value("show_epilines", def.show_epilines);
         p.segmentation = j.value("segmentation", def.segmentation);
         p.threads = j.value("threads", def.threads);
     }

@@ -92,9 +92,9 @@ void xm::Pose::init_epipolar_matrix() {
             // Skew-symmetric matrix of vector To
             const cv::Mat T_x = (cv::Mat_<double>(3, 3) << 0, -Tz, Ty, Tz, 0, -Tx, -Ty, Tx, 0);
 
-            // Calibration matrices (3x3)
-            const cv::Mat K_to = config.devices.at(idx_to).K; // A
-            const cv::Mat K_from = config.devices.at(idx_from).K; // B
+            // Calibration matrices (3x3), yep inverse order
+            const cv::Mat K_to = config.devices.at(idx_from).K; // A
+            const cv::Mat K_from = config.devices.at(idx_to).K; // B
 
             // Calibration matrix inversions
             cv::Mat K_to_INV_TRP, K_to_INV, K_from_INV;
@@ -189,9 +189,9 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
             points_from_epi_line(output_frames.at(i), mid_line, mp1, mp2);
             points_from_epi_line(output_frames.at(i), end_line, ep1, ep2);
 
-            const auto color = xm::ocv::distinct_color(i, (int) output_frames.size());
-            cv::line(output_frames.at(i), mp1, mp2, color);
-            cv::line(output_frames.at(i), ep1, ep2, color);
+            const auto color = xm::ocv::distinct_color(j, (int) output_frames.size());
+            cv::line(output_frames.at(i), mp1, mp2, color, 2);
+            cv::line(output_frames.at(i), ep1, ep2, color, 2);
         }
 
         if (epi_vec.empty())
@@ -266,14 +266,29 @@ cv::Vec3f xm::Pose::epi_line_from_point(const cv::Point2f &point, int idx_point,
     if (idx_point == idx_line)
         throw std::runtime_error("idx_point == idx_line (but this is prohibited)");
 
-    const auto &F = epipolar_matrix[idx_point][idx_line].F;
-    const cv::Mat pt = (cv::Mat_<float>(3, 1) << point.x, point.y, 1.f);
-    const cv::Mat line = F * pt;
+    const auto &F = epipolar_matrix[idx_line][idx_point].F;
 
-    return {
-            line.at<float>(0, 0),
-            line.at<float>(1, 0),
-            line.at<float>(2, 0)
-    };
+//    {
+//        std::vector<cv::Vec3f> vec;
+//        cv::computeCorrespondEpilines(std::vector<cv::Point2f>{point}, 1, F, vec);
+//        return vec[0];
+//    }
+
+    {
+        const cv::Mat pt = (cv::Mat_<double>(3, 1) << point.x, point.y, 1.f);
+        const cv::Mat line = F * pt;
+        cv::Vec3f res = {
+                (float) line.at<double>(0, 0),
+                (float) line.at<double>(1, 0),
+                (float) line.at<double>(2, 0)
+        };
+        const auto norm = (float) std::sqrt(std::pow(res[0], 2) + std::pow(res[1], 2));
+        if (norm != 0) {
+            res[0] /= norm;
+            res[1] /= norm;
+            res[2] /= norm;
+        }
+        return res;
+    }
 }
 

@@ -67,7 +67,7 @@ namespace xm::data::def {
     PoseUndistort poseUndistort() {
         return {
           .source = false,
-          .points = true,
+          .points = false,
           .alpha = 0.f
         };
     }

@@ -76,5 +76,34 @@ namespace xm::ocv {
         };
     }
 
+    cv::Scalar distinct_color(int index, int N) {
+        if (index < 0 || index >= N) {
+            throw std::out_of_range("Index out of range");
+        }
+
+        // Convert index to hue in HSV color space
+        int hue = (index * 360 / N) % 360;  // Hue varies from 0 to 360
+
+        // Saturation and value are fixed to max for bright colors
+        int saturation = 255;
+        int value = 255;
+
+        // Create HSV color
+        cv::Mat hsv(1, 1, CV_8UC3, cv::Scalar(hue, saturation, value));
+
+        // Convert HSV color to BGR color
+        cv::Mat bgr;
+        cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
+
+        // Return the BGR color as cv::Scalar
+        cv::Vec3b bgrVec = bgr.at<cv::Vec3b>(0, 0);
+        return cv::Scalar(bgrVec[0], bgrVec[1], bgrVec[2]); // NOLINT(*-return-braced-init-list)
+    }
+
+    cv::Mat inverse(const cv::Mat &in) {
+        cv::Mat out;
+        cv::invert(in, out);
+        return out;
+    }
 
 }

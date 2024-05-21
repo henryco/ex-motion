@@ -124,6 +124,7 @@ set(SOURCE_FILES
         sources/core/pose_pipeline_debug.cpp
         sources/core/pose_pipeline_aux.cpp
         sources/core/d_dummy_camera.cpp
+        sources/core/pose_aux.cpp
 )
 
 if (UNIX AND NOT APPLE)

@@ -55,16 +55,6 @@ namespace xm::cross {
         cv::Mat RTo;
 
         /**
-         * Essential matrix according to FIRST camera within chain
-         */
-        cv::Mat Eo;
-
-        /**
-         * Fundamental matrix according to FIRST camera within chain
-         */
-        cv::Mat Fo;
-
-        /**
         * Mean re-projection error
         * (root mean square)
         */

@@ -213,14 +213,9 @@ void xm::CrossCalibration::calibrate() {
          */
         cv::Mat RTo;
 
-        // Essential matrix according to FIRST camera within chain
-        cv::Mat Eo;
-
-        // Fundamental matrix according to FIRST camera within chain
-        cv::Mat Fo;
         if (i == 0) {
             // first pair
-            RTo = RTi.clone();
+            RTi.copyTo(RTo);
         }
             // last pair
         else if (config.closed && i == total_pairs - 1) {
@@ -228,43 +223,12 @@ void xm::CrossCalibration::calibrate() {
             if (cv::invert(RTi, RTo) == 0)
                 // WTF, but also:
                 goto JAIL;
-
-            // essential matrix
-            cv::transpose(Ei, Eo);
-
-            // fundamental matrix
-            cv::transpose(Fi, Fo);
         }
             // In the middle of the chain...
         else {
             JAIL:
-
             // rotation-translation matrix (world basis change)
             RTo = pairs.back().RTo * RTi;
-
-            // computing essential and fundamental matrix according to FIRST camera within the chain
-            const auto Ro = RTo(cv::Rect(0, 0, 3, 3)).clone();
-            const auto To = RTo.col(3).clone();
-
-            const auto Tox = To.at<double>(0);
-            const auto Toy = To.at<double>(1);
-            const auto Toz = To.at<double>(2);
-
-            // skew-symmetric matrix of vector To
-            const cv::Mat Tx = (cv::Mat_<double>(3, 3) << 0, -Toz, Toy, Toz, 0, -Tox, -Toy, Tox, 0);
-
-            cv::Mat K2_inv, K2_inv_T, K1_inv;
-            if (cv::invert(K2, K2_inv) == 0)
-                throw std::runtime_error("K2^(-1) != 0 !!! WTF?");
-            if (cv::invert(K1, K1_inv) == 0)
-                throw std::runtime_error("K1^(-1) != 0 !!! WTF?");
-            cv::transpose(K2_inv, K2_inv_T);
-
-            // essential matrix
-            Eo = Tx * Ro;
-
-            // fundamental matrix
-            Fo = K2_inv_T * Eo * K1_inv;
         }
 
         pairs.push_back({
@@ -274,8 +238,6 @@ void xm::CrossCalibration::calibrate() {
                                 .F = Fi,
                                 .RT = RTi,
                                 .RTo = RTo,
-                                .Eo = Eo,
-                                .Fo = Fo,
                                 .mre = rms
                         });
 

@@ -4,152 +4,28 @@
 
 #include <opencv2/calib3d.hpp>
 #include "../../xmotion/core/algo/pose.h"
-#include "../../xmotion/core/utils/eox_globals.h"
-
+#include "../../xmotion/core/utils/cv_utils.h"
 
 void xm::Pose::init(const xm::nview::Initial &params) {
     results.error = false;
     config = params;
+
+    init_validate();
+    init_undistort_maps();
+    init_epipolar_matrix();
 }
 
-xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
-    if (!is_active() || _frames.empty()) {
-        images.clear();
-        images.reserve(_frames.size());
-
-        if (_frames.size() != config.devices.size()) {
-            results.error = true;
-            return *this;
-        }
-
-        for (int i = 0; i < _frames.size(); i++)
-            images.push_back(undistorted(_frames.at(i), i));
-        return *this;
-    }
-
-    std::vector<cv::Mat> input_frames;
-    input_frames.reserve(_frames.size());
-    for (int i = 0; i < _frames.size(); i++)
-        input_frames.push_back(undistorted(_frames.at(i), i));
-
-    std::vector<cv::Mat> output_frames;
-    std::vector<std::future<eox::dnn::PosePipelineOutput>> features;
-    enqueue_inference(features, input_frames, output_frames);
-
-    std::vector<eox::dnn::PosePipelineOutput> outputs;
-    if (!resolve_inference(features, outputs)) {
-        stop();
-        results.error = true;
-        return *this;
-    }
-
-    // TODO: PROCESS RESULTS
-
-
-
-    images.clear();
-    for (const auto &frame: output_frames) {
-        images.push_back(frame);
-    }
-
-    results.error = false;
-    return *this;
-}
-
-void xm::Pose::enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &io_features,
-                                 const std::vector<cv::Mat> &in_frames,
-                                 std::vector<cv::Mat> &out_frames) {
-    io_features.reserve(config.devices.size());
-    out_frames.reserve(config.devices.size());
-
-    int i = 0, j = 0;
-    while (i < config.devices.size()) {
-        if (j >= workers.size())
-            j = 0;
-
-        const auto &frame = in_frames.at(i);
-        const auto &pose = poses.at(i);
-
-        if (DEBUG) {
-            out_frames.emplace_back();
-            io_features.push_back(
-                    workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
-                            [i, frame, &pose, &out_frames]() -> eox::dnn::PosePipelineOutput {
-                                cv::Mat segmented;
-                                return pose->pass(frame, segmented, out_frames.at(i));
-                            }));
-        } else {
-            out_frames.push_back(frame);
-            io_features.push_back(
-                    workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
-                            [i, frame, &pose]() -> eox::dnn::PosePipelineOutput {
-                                cv::Mat segmented;
-                                return pose->pass(frame, segmented);
-                            }));
-        }
-
-        i++;
-        j++;
-    }
-}
-
-bool xm::Pose::resolve_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &in_futures,
-                                 std::vector<eox::dnn::PosePipelineOutput> &out_results) {
-    for (auto &feature: in_futures) {
-        if (!feature.valid())
-            return false;
-        if (feature.wait_for(std::chrono::milliseconds(eox::globals::TIMEOUT_MS)) == std::future_status::timeout)
-            return false;
-        try {
-            out_results.push_back(feature.get());
-        } catch (const std::exception &e) {
-            return false;
-        }
-    }
-    return true;
+void xm::Pose::init_validate() {
+    for (const auto &pair: config.pairs)
+        if (pair.E.empty() || pair.F.empty() || pair.RTo.empty() || pair.RT.empty())
+            throw std::runtime_error("Neither of matrices: [E, F, RT, Eo, Fo, RTo] can be empty!");
+    for (const auto &device: config.devices)
+        if (device.K.empty())
+            throw std::runtime_error("Calibration matrix K for device cannot be empty");
 }
 
 
-cv::Mat xm::Pose::undistorted(const cv::Mat &in, int index) {
-    if (!config.devices.at(index).undistort_source)
-        return in;
-    const auto &maps = remap_maps.at(index);
-    cv::Mat undistorted;
-    cv::remap(in, undistorted, maps.map1, maps.map2, cv::INTER_LINEAR);
-    return std::move(undistorted);
-}
-
-void xm::Pose::start() {
-    stop();
-
-    for (const auto &device: config.devices) {
-        auto p = std::make_unique<eox::dnn::PosePipeline>();
-        p->enableSegmentation(config.segmentation);
-        p->setBodyModel(device.body_model);
-        p->setDetectorModel(device.detector_model);
-        p->setDetectorThreshold(device.threshold_detector);
-        p->setMarksThreshold(device.threshold_marks);
-        p->setPoseThreshold(device.threshold_pose);
-        p->setRoiThreshold(device.threshold_roi);
-        p->setFilterVelocityScale(device.filter_velocity_factor);
-        p->setFilterWindowSize(device.filter_windows_size);
-        p->setFilterTargetFps(device.filter_target_fps);
-        p->setRoiRollbackWindow(device.roi_rollback_window);
-        p->setRoiPredictionWindow(device.roi_center_window);
-        p->setRoiClampWindow(device.roi_clamp_window);
-        p->setRoiScale(device.roi_scale);
-        p->setRoiMargin(device.roi_margin);
-        p->setRoiPaddingX(device.roi_padding_x);
-        p->setRoiPaddingY(device.roi_padding_y);
-        poses.push_back(std::move(p));
-    }
-
-    for (int i = 0; i < config.threads; ++i) {
-        auto p = std::make_unique<eox::util::ThreadPool>();
-        p->start(1);
-        workers.push_back(std::move(p));
-    }
-
+void xm::Pose::init_undistort_maps() {
     remap_maps.clear();
     remap_maps.reserve(config.devices.size());
     for (const auto &device: config.devices) {
@@ -174,39 +50,230 @@ void xm::Pose::start() {
                 map_1,
                 map_2);
     }
+}
+
+
+void xm::Pose::init_epipolar_matrix() {
+    epipolar_matrix_size = (int) config.devices.size();
+    epipolar_matrix = new xm::nview::StereoPair *[epipolar_matrix_size];
+
+    for (int i = 0; i < epipolar_matrix_size; i++) {
+        epipolar_matrix[i] = new nview::StereoPair[epipolar_matrix_size];
+
+        for (int j = 0; j < epipolar_matrix_size; j++) {
+            if (i == j)
+                // self reference
+                continue;
+
+            const auto &idx_from = i;
+            const auto &idx_to = j;
+
+            // Rotation-translation matrix from CURRENT device to the very FIRST one
+            const cv::Mat RTo_from = (idx_from == 0)
+                                     ? cv::Mat::eye(4, 4, CV_32F)
+                                     : config.pairs.at(idx_from - 1).RTo;
+            const cv::Mat RTo_to = (idx_to == 0)
+                                   ? cv::Mat::eye(4, 4, CV_32F)
+                                   : config.pairs.at(idx_to - 1).RTo;
+
+            // FROM -> origin -> TO
+            // (RT_to)^(-1) * RT_from
+            const cv::Mat RT = xm::ocv::inverse(RTo_to) * RTo_from;
+
+            // Computing essential and fundamental matrix according to FIRST camera within the chain
+            const auto R = RT(cv::Rect(0, 0, 3, 3)).clone();
+            const auto T = RT.col(3).clone();
+
+            // Elements of Translation vector
+            const auto Tx = T.at<double>(0);
+            const auto Ty = T.at<double>(1);
+            const auto Tz = T.at<double>(2);
+
+            // Skew-symmetric matrix of vector To
+            const cv::Mat T_x = (cv::Mat_<double>(3, 3) << 0, -Tz, Ty, Tz, 0, -Tx, -Ty, Tx, 0);
+
+            // Calibration matrices (3x3)
+            const cv::Mat K_to = config.devices.at(idx_to).K; // A
+            const cv::Mat K_from = config.devices.at(idx_from).K; // B
+
+            // Calibration matrix inversions
+            cv::Mat K_to_INV_TRP, K_to_INV, K_from_INV;
+            if (cv::invert(K_to, K_to_INV) == 0)
+                throw std::runtime_error("K^(-1) != 0 !!! WTD");
+            if (cv::invert(K_from, K_from_INV) == 0)
+                throw std::runtime_error("K^(-1) != 0 !!! WTD");
+            cv::transpose(K_to_INV, K_to_INV_TRP);
+
+            // Essential matrix
+            const cv::Mat E = T_x * R;
+
+            // Fundamental matrix
+            const cv::Mat F = K_to_INV_TRP * E * K_from_INV;
+
+            epipolar_matrix[i][j] = {
+                    .E = E,
+                    .F = F,
+                    .RT = RT,
+                    .RTo = RTo_from
+            };
+        }
+    }
+}
+
+
+xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+    if (!is_active() || _frames.empty()) {
+        images.clear();
+        images.reserve(_frames.size());
+
+        if (_frames.size() != config.devices.size()) {
+            results.err_msg = "Number of devices != number of frames";
+            results.error = true;
+            return *this;
+        }
+
+        for (int i = 0; i < _frames.size(); i++)
+            images.push_back(undistorted(_frames.at(i), i));
+        return *this;
+    }
+
+    std::vector<cv::Mat> input_frames;
+    input_frames.reserve(_frames.size());
+    for (int i = 0; i < _frames.size(); i++)
+        input_frames.push_back(undistorted(_frames.at(i), i));
+
+    std::vector<cv::Mat> output_frames;
+    std::vector<std::future<eox::dnn::PosePipelineOutput>> features;
+    enqueue_inference(features, input_frames, output_frames);
+
+    std::vector<eox::dnn::PosePipelineOutput> outputs;
+    if (!resolve_inference(features, outputs)) {
+        stop();
+        results.err_msg = "DNN inference error";
+        results.error = true;
+        return *this;
+    }
+
+    if (outputs.size() != _frames.size() || output_frames.size() != _frames.size()) {
+        results.err_msg = "Number of outputs != input frames";
+        results.error = true;
+        return *this;
+    }
+
+    // TODO: PROCESS RESULTS ===========================================================================================
+
+
+
+
+
+
+    for (int i = 0; i < output_frames.size(); i++) {
+        std::vector<std::vector<cv::Vec4f>> epi_vec;
+        for (int j = 0; j < output_frames.size(); j++) {
+            // skip itself
+            if (i == j)
+                continue;
+
+            const auto pose_output = outputs.at(j);
+            if (!pose_output.present)
+                continue;
+
+            const auto points = undistorted(pose_output.landmarks, 39, j);
+            const auto mid = points.at(eox::dnn::LM::R_MID);
+            const auto end = points.at(eox::dnn::LM::R_END);
+
+            const auto mid_line = epi_line_from_point(mid, j, i);
+            const auto end_line = epi_line_from_point(end, j, i);
+
+            cv::Point2i mp1, mp2, ep1, ep2;
+            points_from_epi_line(output_frames.at(i), mid_line, mp1, mp2);
+            points_from_epi_line(output_frames.at(i), end_line, ep1, ep2);
+
+            const auto color = xm::ocv::distinct_color(i, (int) output_frames.size());
+            cv::line(output_frames.at(i), mp1, mp2, color);
+            cv::line(output_frames.at(i), ep1, ep2, color);
+        }
+
+        if (epi_vec.empty())
+            continue;
+    }
+
+
+
+
+
+
+    // TODO: PROCESS RESULTS ===========================================================================================
+
+    images.clear();
+    for (const auto &frame: output_frames) {
+        images.push_back(frame);
+    }
 
     results.error = false;
-    active = true;
+    return *this;
 }
 
-void xm::Pose::stop() {
-    active = false;
-    release();
+cv::Mat xm::Pose::undistorted(const cv::Mat &in, int index) const {
+    if (!config.devices.at(index).undistort_source)
+        return in;
+    const auto &maps = remap_maps.at(index);
+    cv::Mat undistorted;
+    cv::remap(in, undistorted, maps.map1, maps.map2, cv::INTER_LINEAR);
+    return std::move(undistorted);
 }
 
-void xm::Pose::release() {
-    for (auto &worker: workers)
-        worker->shutdown();
-    workers.clear();
-    poses.clear();
+std::vector<cv::Point2f> xm::Pose::undistorted(const eox::dnn::Landmark *in, int num, int index) const {
+    std::vector<cv::Point2f> distorted_points;
+    distorted_points.reserve(num);
+    for (int i = 0; i < num; ++i)
+        distorted_points.emplace_back(in[i].x, in[i].y);
+
+    if (!config.devices.at(index).undistort_points)
+        return distorted_points;
+
+    const auto R = cv::Mat::eye(3, 3, CV_64F);
+    const auto K = config.devices.at(index).K.clone();
+    const auto D = config.devices.at(index).D.clone();
+
+    std::vector<cv::Point2f> points;
+    cv::undistortPoints(distorted_points, points, K, D, R, K);
+    return points;
 }
 
-bool xm::Pose::is_active() const {
-    return active;
+void xm::Pose::points_from_epi_line(const cv::Mat &img, const cv::Vec3f &line, cv::Point2i &p1, cv::Point2i &p2) const {
+    const float a = line[0];
+    const float b = line[1];
+    const float c = line[2];
+
+    // Find two points on the line
+    if (b != 0) {
+        p1.x = 0;
+        p1.y = (int) (-c / b);
+        p2.x = img.cols;
+        p2.y = (int) (-(c + a * (float) img.cols) / b);
+    } else {
+        p1.x = (int) (-c / a);
+        p1.y = 0;
+        p2.x = (int) (-(c + b * (float) img.rows));
+        p2.y = img.rows;
+    }
 }
 
-const std::vector<cv::Mat> &xm::Pose::frames() const {
-    return images;
+cv::Vec3f xm::Pose::epi_line_from_point(const cv::Point2f &point, int idx_point, int idx_line) const {
+    if (idx_line > epipolar_matrix_size || idx_point > epipolar_matrix_size || idx_point < 0 || idx_line < 0)
+        throw std::runtime_error("index out of bound error [epipolar_matrix]");
+    if (idx_point == idx_line)
+        throw std::runtime_error("idx_point == idx_line (but this is prohibited)");
+
+    const auto &F = epipolar_matrix[idx_point][idx_line].F;
+    const cv::Mat pt = (cv::Mat_<float>(3, 1) << point.x, point.y, 1.f);
+    const cv::Mat line = F * pt;
+
+    return {
+            line.at<float>(0, 0),
+            line.at<float>(1, 0),
+            line.at<float>(2, 0)
+    };
 }
 
-const xm::nview::Result &xm::Pose::result() const {
-    return results;
-}
-
-void xm::Pose::debug(bool _debug) {
-    DEBUG = _debug;
-}
-
-xm::Pose::~Pose() {
-    release();
-}

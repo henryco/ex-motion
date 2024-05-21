@@ -83,8 +83,6 @@ namespace xm {
                         .F = pair.F,
                         .RT = pair.RT,
                         .RTo = pair.RTo,
-                        .Eo = pair.Eo,
-                        .Fo = pair.Fo,
                         .error = pair.mre
                 });
 
@@ -229,8 +227,6 @@ namespace xm {
                     .E = cross_calibration.E,
                     .F = cross_calibration.F,
                     .RT = cross_calibration.RT,
-                    .Eo = cross_calibration.Eo,
-                    .Fo = cross_calibration.Fo,
                     .RTo = cross_calibration.RTo
                 });
             }

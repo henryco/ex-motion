@@ -103,6 +103,13 @@ namespace xm::ocv {
             uint rows,
             bool sb = false,
             int flag = 0);
+
+    /**
+     * Function to generate distinct colors for a given integer < N
+     */
+    cv::Scalar distinct_color(int index, int N);
+
+    cv::Mat inverse(const cv::Mat &in);
 }
 
 

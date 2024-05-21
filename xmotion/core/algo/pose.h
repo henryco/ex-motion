@@ -43,16 +43,6 @@ namespace xm::nview {
         cv::Mat RT;
 
         /**
-         * Essential matrix according to first camera
-         */
-        cv::Mat Eo;
-
-        /**
-         * Fundamental matrix according to first camera
-         */
-        cv::Mat Fo;
-
-        /**
          * Rotation-translation matrix according to fist camera
          */
         cv::Mat RTo;
@@ -168,7 +158,7 @@ namespace xm::nview {
         /**
          * Undistort position of localized points
          */
-        bool undistort_points = true;
+        bool undistort_points = false;
 
         /**
          * [0.0 ... 1.0]
@@ -235,6 +225,7 @@ namespace xm::nview {
 
     typedef struct Result {
         bool error;
+        std::string err_msg;
     } Result;
 }
 
@@ -245,6 +236,19 @@ namespace xm {
                 spdlog::stdout_color_mt("pose_estimation");
 
     private:
+        /**
+         * NxN matrix of stereo pairs (F, E and RT)
+         * Pairs: (from -> to)
+         * \code
+         *    t0 t1 t2
+         * f0 ┌X      ┐
+         * f1 │   X   │
+         * f2 └      X┘
+         * \endcode
+         */
+        xm::nview::StereoPair **epipolar_matrix = nullptr;
+        int epipolar_matrix_size = 0;
+
         std::vector<xm::nview::ReMaps> remap_maps{};
         std::vector<cv::Mat> images{};
         xm::nview::Result results{};
@@ -292,7 +296,19 @@ namespace xm {
         static bool resolve_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &in_features,
                                       std::vector<eox::dnn::PosePipelineOutput> &out_results);
 
-        cv::Mat undistorted(const cv::Mat &in, int index);
+        cv::Mat undistorted(const cv::Mat &in, int index) const;
+
+        std::vector<cv::Point2f> undistorted(const eox::dnn::Landmark *in, int num, int index) const;
+
+        cv::Vec3f epi_line_from_point(const cv::Point2f &point, int idx_point, int idx_line) const;
+
+        void points_from_epi_line(const cv::Mat &img, const cv::Vec3f &line, cv::Point2i &p1, cv::Point2i &p2) const;
+
+        void init_epipolar_matrix();
+
+        void init_undistort_maps();
+
+        void init_validate();
     };
 
 } // xm

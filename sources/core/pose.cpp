@@ -74,7 +74,7 @@ void xm::Pose::init_epipolar_matrix() {
 
             // FROM -> origin -> TO
             // (RT_to)^(-1) * RT_from
-            const cv::Mat RT = xm::ocv::inverse(RTo_to) * RTo_from;
+            const cv::Mat RT = RTo_to.inv() * RTo_from;
 
             // Computing essential and fundamental matrix according to FIRST camera within the chain
             const auto R = RT(cv::Rect(0, 0, 3, 3)).clone();

@@ -109,7 +109,6 @@ namespace xm::ocv {
      */
     cv::Scalar distinct_color(int index, int N);
 
-    cv::Mat inverse(const cv::Mat &in);
 }
 
 

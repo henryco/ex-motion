@@ -96,10 +96,4 @@ namespace xm::ocv {
         return cv::Scalar(bgrPixel[0], bgrPixel[1], bgrPixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
-    cv::Mat inverse(const cv::Mat &in) {
-        cv::Mat out;
-        cv::invert(in, out);
-        return out;
-    }
-
 }

@@ -98,6 +98,8 @@ void xm::Pose::init_epipolar_matrix() {
             // Fundamental matrix
             const cv::Mat F = K_to.inv().t() * E * K_from.inv();
 
+            log->debug("{}->{} : [{},{},{}]", idx_from, idx_to, Tx, Ty, Tz);
+
             epipolar_matrix[i][j] = {
                     .E = E,
                     .F = F,

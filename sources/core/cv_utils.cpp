@@ -96,4 +96,21 @@ namespace xm::ocv {
         return cv::Scalar(bgrPixel[0], bgrPixel[1], bgrPixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
+    std::string print_matrix(const cv::Mat &in) {
+        const auto w = in.cols;
+        const auto h = in.rows;
+        std::string str = "\n[\n";
+        for (int y = 0; y < h; y++) {
+            str += "    [";
+            for (int x = 0; x < w; x++) {
+                if (x != 0)
+                    str += ", ";
+                str += std::to_string(in.row(y).at<double>(x));
+            }
+            str += "]\n";
+        }
+        str += "]";
+        return str;
+    }
+
 }

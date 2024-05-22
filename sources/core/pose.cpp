@@ -99,6 +99,9 @@ void xm::Pose::init_epipolar_matrix() {
             const cv::Mat F = K_to.inv().t() * E * K_from.inv();
 
             log->debug("{}->{} : [{},{},{}]", idx_from, idx_to, Tx, Ty, Tz);
+            log->debug("RT from:[{}][{}] {}", idx_from, idx_to, xm::ocv::print_matrix(RTo_from));
+            log->debug("RT to:[{}][{}] {}", idx_from, idx_to, xm::ocv::print_matrix(RTo_to));
+            log->debug("RT result:[{}][{}] {}", idx_from, idx_to, xm::ocv::print_matrix(RT));
 
             epipolar_matrix[i][j] = {
                     .E = E,

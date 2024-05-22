@@ -109,6 +109,7 @@ namespace xm::ocv {
      */
     cv::Scalar distinct_color(int index, int N);
 
+    std::string print_matrix(const cv::Mat &in);
 }
 
 

@@ -9,7 +9,7 @@
 
 namespace xm::util::epi {
 
-    Pair calibrated_pair(const cv::Mat &K1, const cv::Mat &K2, const cv::Mat &RT) {
+    CalibPair calibrated_pair(const cv::Mat &K1, const cv::Mat &K2, const cv::Mat &RT) {
         return {
             .K1 = K1.clone(),
             .K2 = K2.clone(),
@@ -19,18 +19,18 @@ namespace xm::util::epi {
         };
     }
 
-    Matrix::Row::Row(Pair *_data, int _size, int _row) {
+    Matrix::Row::Row(EpiPair *_data, int _size, int _row) {
         data = _data;
         size = _size;
         row = _row;
     }
 
-    Pair &Matrix::Row::operator[](int col) {
+    EpiPair &Matrix::Row::operator[](int col) {
         assert(col >= 0 && col < size);
         return data[(row * size) + col];
     }
 
-    const Pair &Matrix::Row::operator[](int col) const {
+    const EpiPair &Matrix::Row::operator[](int col) const {
         assert(col >= 0 && col < size);
         return data[(row * size) + col];
     }
@@ -45,17 +45,20 @@ namespace xm::util::epi {
         return {epipolar_matrix, epipolar_matrix_size, row};
     }
 
-    Matrix::Matrix(Pair *data, int size) {
-        epipolar_matrix_size = size;
-        epipolar_matrix = data;
+    void Matrix::release() {
+        if (epipolar_matrix == nullptr)
+            return;
+        // good old manual memory management
+        delete[] epipolar_matrix;
+        epipolar_matrix = nullptr;
     }
 
-    Matrix::Matrix(const Matrix &src) {
-        if (src.epipolar_matrix == nullptr)
+    void Matrix::copyFrom(const Matrix &src) {
+        if (this == &src || src.epipolar_matrix == nullptr)
             return;
 
         epipolar_matrix_size = src.epipolar_matrix_size;
-        epipolar_matrix = new Pair[epipolar_matrix_size * epipolar_matrix_size];
+        epipolar_matrix = new EpiPair[epipolar_matrix_size * epipolar_matrix_size];
         for (int i = 0; i < epipolar_matrix_size; i++) {
             for (int j = 0; j < epipolar_matrix_size; j++) {
                 const auto index = (i * epipolar_matrix_size) + j;
@@ -68,6 +71,15 @@ namespace xm::util::epi {
         }
     }
 
+    Matrix::Matrix(EpiPair *data, int size) {
+        epipolar_matrix_size = size;
+        epipolar_matrix = data;
+    }
+
+    Matrix::Matrix(const Matrix &src) {
+        copyFrom(src);
+    }
+
     Matrix::Matrix(Matrix &&ref) noexcept {
         epipolar_matrix_size = ref.epipolar_matrix_size;
         epipolar_matrix = ref.epipolar_matrix;
@@ -76,27 +88,34 @@ namespace xm::util::epi {
     }
 
     Matrix::~Matrix() {
-        if (epipolar_matrix == nullptr)
-            return;
-
-        // good old manual memory management
-        delete[] epipolar_matrix;
-        epipolar_matrix = nullptr;
+        release();
     }
 
-    const int Matrix::rows() const {
+    Matrix &Matrix::operator=(const Matrix &src) {
+        if (this == &src)
+            return *this;
+        release();
+        copyFrom(src);
+        return *this;
+    }
+
+    int Matrix::rows() const {
         return epipolar_matrix_size;
     }
 
-    const int Matrix::cols() const {
+    int Matrix::cols() const {
         return epipolar_matrix_size;
     }
 
-    const int Matrix::size() const {
+    int Matrix::size() const {
         return epipolar_matrix_size * epipolar_matrix_size;
     }
 
-    std::vector<Pair> chain_to_origin(const std::vector<Pair> &chain, bool closed) {
+    bool Matrix::empty() const {
+        return epipolar_matrix_size == 0 || epipolar_matrix == nullptr;
+    }
+
+    std::vector<CalibPair> chain_to_origin(const std::vector<CalibPair> &chain, bool closed) {
         const int size = (int) chain.size() - (closed ? 1 : 0);
 
         // pairs (from, to): RT_from -> to
@@ -106,7 +125,7 @@ namespace xm::util::epi {
 
         // pairs (from, origin): RT_from -> origin
         // [(0,0), (1,0), (2,0), (3,0)]
-        std::vector<Pair> relative;
+        std::vector<CalibPair> relative;
         relative.reserve(size + 1);
 
         // real first pair, just identity matrix, (0,0): 0 -> 0
@@ -172,7 +191,7 @@ namespace xm::util::epi {
         return relative;
     }
 
-    Matrix Matrix::from_chain(const std::vector<Pair> &chain, bool closed, bool origin) {
+    Matrix Matrix::from_chain(const std::vector<CalibPair> &chain, bool closed, bool origin) {
 
         // [(0,0), (1,0), (2,0), (3,0), ...]
         const auto &devices = !origin
@@ -187,7 +206,7 @@ namespace xm::util::epi {
          * f1 │.  X  .│
          * f2 └.  .  X┘
          */
-        auto *epipolar_matrix = new Pair[size * size];
+        auto *epipolar_matrix = new EpiPair[size * size];
 
         for (int i = 0; i < size; i++) {
             // i: from device
@@ -242,8 +261,5 @@ namespace xm::util::epi {
         return {epipolar_matrix, size};
     }
 }
-
-
-
 
 #pragma clang diagnostic pop

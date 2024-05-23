@@ -123,15 +123,4 @@ void xm::Pose::debug(bool _debug) {
 
 xm::Pose::~Pose() {
     release();
-
-    if (epipolar_matrix == nullptr)
-        return;
-
-    // good old manual memory management
-    for (int i = 0; i < epipolar_matrix_size; i++) {
-        delete[] epipolar_matrix[i];
-        epipolar_matrix[i] = nullptr;
-    }
-    delete[] epipolar_matrix;
-    epipolar_matrix = nullptr;
 }

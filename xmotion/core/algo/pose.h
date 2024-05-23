@@ -11,6 +11,7 @@
 #include "i_logic.h"
 #include "../utils/thread_pool.h"
 #include "../dnn/pose_pipeline.h"
+#include "../utils/epi_util.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -202,9 +203,9 @@ namespace xm::nview {
         std::vector<Device> devices;
 
         /**
-         * Stereo pairs
+         * Epipolar matrix
          */
-        std::vector<StereoPair> pairs;
+        xm::util::epi::Matrix epi_matrix;
 
         /**
          * Enable pose segmentation
@@ -248,19 +249,6 @@ namespace xm {
                 spdlog::stdout_color_mt("pose_estimation");
 
     private:
-        /**
-         * NxN matrix of stereo pairs (F, E and RT)
-         * Pairs: (from -> to)
-         * \code
-         *    t0 t1 t2
-         * f0 ┌X      ┐
-         * f1 │   X   │
-         * f2 └      X┘
-         * \endcode
-         */
-        xm::nview::StereoPair **epipolar_matrix = nullptr;
-        int epipolar_matrix_size = 0;
-
         std::vector<xm::nview::ReMaps> remap_maps{};
         std::vector<cv::Mat> images{};
         xm::nview::Result results{};
@@ -315,8 +303,6 @@ namespace xm {
         cv::Vec3f epi_line_from_point(const cv::Point2f &point, int idx_point, int idx_line) const;
 
         void points_from_epi_line(const cv::Mat &img, const cv::Vec3f &line, cv::Point2i &p1, cv::Point2i &p2) const;
-
-        void init_epipolar_matrix();
 
         void init_undistort_maps();
 

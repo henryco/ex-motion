@@ -12,18 +12,17 @@ void xm::Pose::init(const xm::nview::Initial &params) {
 
     init_validate();
     init_undistort_maps();
-    init_epipolar_matrix();
 }
 
 void xm::Pose::init_validate() {
-    for (const auto &pair: config.pairs)
-        if (pair.E.empty() || pair.F.empty() || pair.RTo.empty() || pair.RT.empty())
-            throw std::runtime_error("Neither of matrices: [E, F, RT, Eo, Fo, RTo] can be empty!");
+    if (config.epi_matrix.empty())
+        throw std::runtime_error("Epipolar matrix cannot be empty");
+    if (config.devices.empty())
+        throw std::runtime_error("Devices vector cannot be empty");
     for (const auto &device: config.devices)
         if (device.K.empty())
             throw std::runtime_error("Calibration matrix K for device cannot be empty");
 }
-
 
 void xm::Pose::init_undistort_maps() {
     remap_maps.clear();
@@ -51,69 +50,6 @@ void xm::Pose::init_undistort_maps() {
                 map_2);
     }
 }
-
-
-void xm::Pose::init_epipolar_matrix() {
-    epipolar_matrix_size = (int) config.devices.size();
-    epipolar_matrix = new xm::nview::StereoPair *[epipolar_matrix_size];
-
-    for (int i = 0; i < epipolar_matrix_size; i++) {
-        epipolar_matrix[i] = new nview::StereoPair[epipolar_matrix_size];
-
-        for (int j = 0; j < epipolar_matrix_size; j++) {
-            const auto &idx_from = i;
-            const auto &idx_to = j;
-
-            // Rotation-translation matrix from CURRENT device to the very FIRST one
-            const cv::Mat RTo_from = (idx_from == 0)
-                                     ? cv::Mat::eye(4, 4, CV_64F)
-                                     : config.pairs.at(idx_from - 1).RTo;    // i
-            const cv::Mat RTo_to = (idx_to == 0)
-                                   ? cv::Mat::eye(4, 4, CV_64F)
-                                   : config.pairs.at(idx_to - 1).RTo;        // j
-
-            // FROM -> origin -> TO
-            // (RT_to)^(-1) * RT_from
-            const cv::Mat RT = RTo_to.inv() * RTo_from;
-
-            // Computing essential and fundamental matrix according to FIRST camera within the chain
-            const auto R = RT(cv::Rect(0, 0, 3, 3)).clone();
-            const auto T = RT.col(3).clone();
-
-            // Elements of Translation vector
-            const auto Tx = T.at<double>(0);
-            const auto Ty = T.at<double>(1);
-            const auto Tz = T.at<double>(2);
-
-            // Skew-symmetric matrix of vector To
-            const cv::Mat T_x = (cv::Mat_<double>(3, 3) << 0, -Tz, Ty, Tz, 0, -Tx, -Ty, Tx, 0);
-
-            // Calibration matrices (3x3)
-            const cv::Mat K_i = config.devices.at(i).K; // FROM
-            const cv::Mat K_j = config.devices.at(j).K; // TO
-
-            // Essential matrix
-            const cv::Mat E = T_x * R;
-
-            // Fundamental matrix: l_j = F_ij * x_i
-            const cv::Mat F = (K_i.inv().t() * E * K_j.inv()).t();
-
-            log->debug("{}->{} : [{},{},{}]", idx_from, idx_to, Tx, Ty, Tz);
-            log->debug("RT from:[{}][{}] {}", idx_from, idx_to, xm::ocv::print_matrix(RTo_from));
-            log->debug("RT to:[{}][{}] {}", idx_from, idx_to, xm::ocv::print_matrix(RTo_to));
-            log->debug("RT result:[{}][{}] {}", idx_from, idx_to, xm::ocv::print_matrix(RT));
-            log->debug("F:[{}][{}] {}", idx_from, idx_to, xm::ocv::print_matrix(F));
-
-            epipolar_matrix[i][j] = {
-                    .E = E,
-                    .F = F,
-                    .RT = RT,
-                    .RTo = RTo_from
-            };
-        }
-    }
-}
-
 
 xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
     if (!is_active() || _frames.empty()) {
@@ -261,11 +197,9 @@ void xm::Pose::points_from_epi_line(const cv::Mat &img, const cv::Vec3f &line, c
 }
 
 cv::Vec3f xm::Pose::epi_line_from_point(const cv::Point2f &point, int idx_point, int idx_line) const {
-    if (idx_line > epipolar_matrix_size || idx_point > epipolar_matrix_size || idx_point < 0 || idx_line < 0)
-        throw std::out_of_range("index out of bound error [epipolar_matrix]");
 
     // map point to line: idx_point -> idx_line
-    const auto &F = epipolar_matrix[idx_point][idx_line].F;
+    const auto &F = config.epi_matrix[idx_point][idx_line].F;
 
 //    {
 //        std::vector<cv::Vec3f> vec;

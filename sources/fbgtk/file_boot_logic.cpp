@@ -214,7 +214,7 @@ namespace xm {
                 i++;
             }
 
-            std::vector<xm::nview::StereoPair> pairs;
+            std::vector<xm::util::epi::CalibPair> pairs;
             pairs.reserve(config.pose.stereo.size());
             for (const auto &pair_name: config.pose.stereo) {
                 const std::filesystem::path root = project_file;
@@ -223,17 +223,18 @@ namespace xm {
 
                 log->info("Reading cross-calibration file: {}, {}", pair_name, file);
                 const auto cross_calibration = xm::data::ocv::read_cross_calibration(file);
-                pairs.push_back({
-                    .E = cross_calibration.E,
-                    .F = cross_calibration.F,
-                    .RT = cross_calibration.RT,
-                    .RTo = cross_calibration.RTo
-                });
+//                pairs.push_back({
+//                    .E = cross_calibration.E,
+//                    .F = cross_calibration.F,
+//                    .RT = cross_calibration.RT,
+//                    .RTo = cross_calibration.RTo
+//                });
+                // TODO
             }
 
             const xm::nview::Initial params = {
                     .devices = vec,
-                    .pairs = pairs,
+                    .epi_matrix = xm::util::epi::Matrix::from_chain(pairs), // TODO
                     .segmentation = config.pose.segmentation,
                     .show_epilines = config.pose.show_epilines,
                     .threads = config.pose.threads <= 0

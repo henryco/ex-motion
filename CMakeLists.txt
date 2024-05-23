@@ -87,6 +87,7 @@ set(SOURCE_FILES
         xmotion/core/utils/cv_utils.h
         xmotion/fbgtk/data/json_ocv.h
         xmotion/core/algo/cross.h
+        xmotion/core/utils/epi_util.h
 
         sources/core/velocity_filter.cpp
         sources/core/low_pass_filter.cpp
@@ -125,6 +126,7 @@ set(SOURCE_FILES
         sources/core/pose_pipeline_aux.cpp
         sources/core/d_dummy_camera.cpp
         sources/core/pose_aux.cpp
+        sources/core/epi_util.cpp
 )
 
 if (UNIX AND NOT APPLE)

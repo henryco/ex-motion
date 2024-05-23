@@ -30,10 +30,10 @@ void xm::data::ocv::write_calibration(const std::string &file, const xm::data::o
     fs.release();
 }
 
-void xm::data::ocv::write_cross_calibration(const std::string &file, const xm::data::ocv::CrossCalibration &c) {
+void xm::data::ocv::write_chain_calibration(const std::string &file, const xm::data::ocv::ChainCalibration &c) {
     cv::FileStorage fs(file, cv::FileStorage::WRITE);
     {
-        fs << "type" << "cross_calibration";
+        fs << "type" << "chain_calibration";
         fs << "name" << c.name;
         fs << "timestamp" << utc_iso_date_str_now();
         fs << "R" << c.R;
@@ -41,7 +41,6 @@ void xm::data::ocv::write_cross_calibration(const std::string &file, const xm::d
         fs << "E" << c.E;
         fs << "F" << c.F;
         fs << "RT" << c.RT;
-        fs << "RTo" << c.RTo;
         fs << "error" << c.error;
     }
     fs.release();
@@ -73,22 +72,19 @@ xm::data::ocv::Calibration xm::data::ocv::read_calibration(const std::string &fi
     return c;
 }
 
-xm::data::ocv::CrossCalibration xm::data::ocv::read_cross_calibration(const std::string &file) {
+xm::data::ocv::ChainCalibration xm::data::ocv::read_chain_calibration(const std::string &file) {
     if (!std::filesystem::exists(file))
         throw std::runtime_error("File: " + file + " does not exists!");
 
-    CrossCalibration c;
+    ChainCalibration c;
     cv::FileStorage fs(file, cv::FileStorage::READ);
     {
-        fs["type"] >> c.type;
         fs["name"] >> c.name;
-        fs["timestamp"] >> c.timestamp;
         fs["R"] >> c.R;
         fs["T"] >> c.T;
         fs["E"] >> c.E;
         fs["F"] >> c.F;
         fs["RT"] >> c.RT;
-        fs["RTo"] >> c.RTo;
         fs["error"] >> c.error;
     }
     return c;

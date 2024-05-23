@@ -196,13 +196,13 @@ namespace xm {
             const std::filesystem::path name = pair_name;
             const std::string file = (name.is_absolute() ? name : (root.parent_path() / name)).string();
 
-            log->info("Reading cross-calibration file: {}, {}", pair_name, file);
-            const auto cross_calibration = xm::data::ocv::read_cross_calibration(file);
+            log->info("Reading chain-calibration file: {}, {}", pair_name, file);
+            const auto chain_calibration = xm::data::ocv::read_chain_calibration(file);
 //                pairs.push_back({
-//                    .E = cross_calibration.E,
-//                    .F = cross_calibration.F,
-//                    .RT = cross_calibration.RT,
-//                    .RTo = cross_calibration.RTo
+//                    .E = chain_calibration.E,
+//                    .F = chain_calibration.F,
+//                    .RT = chain_calibration.RT,
+//                    .RTo = chain_calibration.RTo
 //                });
             // TODO
         }
@@ -268,7 +268,7 @@ namespace xm {
 
             log->info("Saving cross calibration results: [{}]", i);
             const auto pair = results.calibrated.at(i);
-            xm::data::ocv::write_cross_calibration(file, {
+            xm::data::ocv::write_chain_calibration(file, {
                     .name = config.calibration.name + postfix,
                     .R = pair.R,
                     .T = pair.T,

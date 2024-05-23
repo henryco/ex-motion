@@ -73,11 +73,7 @@ namespace xm::data::ocv {
     } Calibration;
 
     typedef struct ChainCalibration {
-        std::string type;
-
         std::string name;
-
-        std::string timestamp;
 
         /**
          * Rotation matrix 3x3
@@ -112,26 +108,19 @@ namespace xm::data::ocv {
         cv::Mat RT;
 
         /**
-         * Same as [R|t] matrix, but
-         * according to first camera within the chain.
-         * \ref CrossCalibration::RTp
-         */
-        cv::Mat RTo;
-
-        /**
          * Mean re-projection error
          * (root mean square)
          */
         double error;
-    } CrossCalibration;
+    } ChainCalibration;
 
     void write_calibration(const std::string &file, const Calibration &c);
 
     Calibration read_calibration(const std::string &file);
 
-    void write_cross_calibration(const std::string &file, const CrossCalibration &c);
+    void write_chain_calibration(const std::string &file, const ChainCalibration &c);
 
-    CrossCalibration read_cross_calibration(const std::string &file);
+    ChainCalibration read_chain_calibration(const std::string &file);
 
     std::string utc_iso_date_str_now();
 }

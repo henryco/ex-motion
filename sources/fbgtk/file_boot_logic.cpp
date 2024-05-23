@@ -259,12 +259,24 @@ namespace xm {
         logic->stop();
 
         const auto total = results.calibrated.size();
-        for (int i = 0; i < total; ++i) {
-            const std::string postfix = (total == 1) ? "" : ("_" + std::to_string(i));
+        std::filesystem::path root = project_file;
+        root = root.parent_path();
 
-            const std::filesystem::path root = project_file;
-            const std::filesystem::path name = config.calibration.name + postfix + ".json";
-            const std::string file = (root.parent_path() / name).string();
+        if (total > 1) {
+            const std::filesystem::path file = config.calibration.name;
+            const std::filesystem::path path = root / file;
+            if (!std::filesystem::exists(path)) {
+                if (!std::filesystem::create_directories(path)) {
+                    throw std::runtime_error("Cannot create directory: " + path.string());
+                }
+            }
+            root = path;
+        }
+
+        for (int i = 0; i < total; ++i) {
+            const std::filesystem::path name = (total == 1 ? config.calibration.name : std::to_string(i)) + ".json";
+            const std::string postfix = (total == 1) ? "" : ("_" + std::to_string(i));
+            const std::string file = (root / name).string();
 
             log->info("Saving cross calibration results: [{}]", i);
             const auto pair = results.calibrated.at(i);

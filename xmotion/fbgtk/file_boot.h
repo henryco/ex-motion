@@ -58,6 +58,22 @@ namespace xm {
         void on_camera_save(const std::string &device_id);
 
         void on_camera_read(const std::string &device_id, const std::string &name);
+
+        void opt_single_calibration();
+
+        void opt_chain_calibration();
+
+        void opt_cross_calibration();
+
+        void opt_pose_estimation();
+
+        void on_single_results();
+
+        void on_chain_results();
+
+        void on_cross_results();
+
+        void on_pose_results();
     };
 
 } // xm

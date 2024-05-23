@@ -4,10 +4,10 @@
 
 #include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
-#include "../../xmotion/core/algo/cross.h"
+#include "../../xmotion/core/algo/chain.h"
 #include "../../xmotion/core/utils/cv_utils.h"
 
-void xm::CrossCalibration::init(const xm::cross::Initial &params) {
+void xm::ChainCalibration::init(const xm::chain::Initial &params) {
     timer.set_delay(params.delay);
     config = params;
 
@@ -17,7 +17,7 @@ void xm::CrossCalibration::init(const xm::cross::Initial &params) {
     image_points.reserve(total_pairs);
 }
 
-xm::CrossCalibration &xm::CrossCalibration::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+xm::ChainCalibration &xm::ChainCalibration::proceed(float delta, const std::vector<cv::Mat> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
@@ -37,7 +37,7 @@ xm::CrossCalibration &xm::CrossCalibration::proceed(float delta, const std::vect
     return *this;
 }
 
-bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) {
+bool xm::ChainCalibration::capture_squares(const std::vector<cv::Mat> &_frames) {
 
     if (current_pair >= total_pairs) {
         results.current = 0;
@@ -150,7 +150,7 @@ bool xm::CrossCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
     return false;
 }
 
-void xm::CrossCalibration::calibrate() {
+void xm::ChainCalibration::calibrate() {
 
     // Prepare object points (0,0,0), (1,0,0), (2,0,0) ... (8,5,0)
     std::vector<cv::Point3f> obj_p;
@@ -167,7 +167,7 @@ void xm::CrossCalibration::calibrate() {
         object_points.push_back(obj_p);
     }
 
-    std::vector<xm::cross::Pair> pairs;
+    std::vector<xm::chain::Pair> pairs;
     pairs.reserve(total_pairs);
 
     // cross calibration, for each pair
@@ -202,45 +202,18 @@ void xm::CrossCalibration::calibrate() {
                 Ri, Ti, Ei, Fi, RMSi,
                 cv::CALIB_FIX_INTRINSIC);
 
-
         cv::Mat RTi = cv::Mat::eye(4, 4, Ri.type());
         Ri.copyTo(RTi(cv::Rect(0, 0, 3, 3)));
         Ti.copyTo(RTi(cv::Rect(3, 0, 1, 3)));
 
-        /*
-         * [R|t] basis change 4x4 homogeneous matrix
-         * according to FIRST camera within the chain.
-         */
-        cv::Mat RTo;
-
-        if (i == 0) {
-            // first pair
-            RTi.copyTo(RTo);
-        }
-            // last pair
-        else if (config.closed && i == total_pairs - 1) {
-            // rotation-translation matrix (world basis change)
-            if (cv::invert(RTi, RTo) == 0)
-                // WTF, but also:
-                goto JAIL;
-        }
-            // In the middle of the chain...
-        else {
-            JAIL:
-            // rotation-translation matrix (world basis change)
-            RTo = pairs.back().RTo * RTi;
-        }
-
         pairs.push_back({
-                                .R = Ri,
-                                .T = Ti,
-                                .E = Ei,
-                                .F = Fi,
-                                .RT = RTi,
-                                .RTo = RTo,
-                                .mre = rms
-                        });
-
+            .R = Ri,
+            .T = Ti,
+            .E = Ei,
+            .F = Fi,
+            .RT = RTi,
+            .mre = rms
+        });
     }
 
     active = false;
@@ -252,7 +225,7 @@ void xm::CrossCalibration::calibrate() {
     results.calibrated = pairs;
 }
 
-void xm::CrossCalibration::put_debug_text() {
+void xm::ChainCalibration::put_debug_text() {
     if (!DEBUG)
         return;
 
@@ -281,7 +254,7 @@ void xm::CrossCalibration::put_debug_text() {
     cv::putText(images.front(), t2, cv::Point(20, 100), font, 1.5, color, 3);
 }
 
-void xm::CrossCalibration::start() {
+void xm::ChainCalibration::start() {
     results.current = 0;
     results.remains_cap = config.total;
     results.remains_ms = config.delay;
@@ -294,7 +267,7 @@ void xm::CrossCalibration::start() {
     timer.start();
 }
 
-void xm::CrossCalibration::stop() {
+void xm::ChainCalibration::stop() {
     results.current = 0;
     results.remains_cap = 0;
     results.remains_ms = 0;
@@ -307,18 +280,18 @@ void xm::CrossCalibration::stop() {
     timer.stop();
 }
 
-bool xm::CrossCalibration::is_active() const {
+bool xm::ChainCalibration::is_active() const {
     return active;
 }
 
-const std::vector<cv::Mat> &xm::CrossCalibration::frames() const {
+const std::vector<cv::Mat> &xm::ChainCalibration::frames() const {
     return images;
 }
 
-const xm::cross::Result &xm::CrossCalibration::result() const {
+const xm::chain::Result &xm::ChainCalibration::result() const {
     return results;
 }
 
-void xm::CrossCalibration::debug(bool _debug) {
+void xm::ChainCalibration::debug(bool _debug) {
     DEBUG = _debug;
 }

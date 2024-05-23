@@ -14,6 +14,7 @@ namespace xm::data {
     enum ConfigType {
         INVALID = -1,
         CALIBRATION,
+        CHAIN_CALIBRATION,
         CROSS_CALIBRATION,
         POSE
     };
@@ -114,15 +115,15 @@ namespace xm::data {
     } Intrinsics;
 
     typedef struct {
-        std::vector<std::string> calibrated;
+        std::vector<std::string> intrinsics;
         bool closed;
-    } Cross;
+    } Chain;
 
     typedef struct {
         std::string name;
         Intrinsics intrinsics;
         Pattern pattern;
-        Cross cross;
+        Chain chain;
         int total;
         int delay;
     } Calibration;

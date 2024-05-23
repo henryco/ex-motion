@@ -13,7 +13,7 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-namespace xm::cross {
+namespace xm::chain {
     typedef struct Pair {
         /**
          * Rotation matrix 3x3
@@ -46,13 +46,6 @@ namespace xm::cross {
          * \endcode
          */
         cv::Mat RT;
-
-        /**
-         * Same as [R|t] matrix, but
-         * according to first camera within the chain.
-         * \ref Pair::RTp
-         */
-        cv::Mat RTo;
 
         /**
         * Mean re-projection error
@@ -99,18 +92,18 @@ namespace xm::cross {
 
 namespace xm {
 
-    class CrossCalibration : public xm::Logic {
+    class ChainCalibration : public xm::Logic {
 
         static inline const auto log =
-                spdlog::stdout_color_mt("cross_calibration");
+                spdlog::stdout_color_mt("chain_calibration");
 
     private:
         // [pair_numb][image_number][2: (l,r)][points: Rows x Cols][2: (x,y)]
         std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> image_points{};
 
         std::vector<cv::Mat> images{};
-        xm::cross::Result results{};
-        xm::cross::Initial config;
+        xm::chain::Result results{};
+        xm::chain::Initial config;
         eox::utils::Timer timer{};
 
         bool active = false;
@@ -121,9 +114,9 @@ namespace xm {
         int current_pair = 0;
 
     public:
-        void init(const xm::cross::Initial &params);
+        void init(const xm::chain::Initial &params);
 
-        CrossCalibration &proceed(float delta, const std::vector<cv::Mat> &frames) override;
+        ChainCalibration &proceed(float delta, const std::vector<cv::Mat> &frames) override;
 
         bool is_active() const override;
 
@@ -135,7 +128,7 @@ namespace xm {
 
         void debug(bool _debug) override;
 
-        const xm::cross::Result &result() const;
+        const xm::chain::Result &result() const;
 
     protected:
         bool capture_squares(const std::vector<cv::Mat> &_frames);

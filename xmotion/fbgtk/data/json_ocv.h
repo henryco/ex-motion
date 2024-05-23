@@ -72,7 +72,7 @@ namespace xm::data::ocv {
         double error;
     } Calibration;
 
-    typedef struct CrossCalibration {
+    typedef struct ChainCalibration {
         std::string type;
 
         std::string name;

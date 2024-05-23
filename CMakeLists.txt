@@ -86,7 +86,7 @@ set(SOURCE_FILES
         xmotion/core/algo/pose.h
         xmotion/core/utils/cv_utils.h
         xmotion/fbgtk/data/json_ocv.h
-        xmotion/core/algo/cross.h
+        xmotion/core/algo/chain.h
         xmotion/core/utils/epi_util.h
 
         sources/core/velocity_filter.cpp
@@ -120,7 +120,7 @@ set(SOURCE_FILES
         sources/fbgtk/file_boot_logic.cpp
         sources/core/cv_utils.cpp
         sources/fbgtk/json_ocv.cpp
-        sources/core/cross.cpp
+        sources/core/chain.cpp
         sources/core/pose_pipeline.cpp
         sources/core/pose_pipeline_debug.cpp
         sources/core/pose_pipeline_aux.cpp

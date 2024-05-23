@@ -21,9 +21,9 @@ namespace xm::data::def {
         };
     }
 
-    Cross cross() {
+    Chain chain() {
         return {
-                .calibrated = std::vector<std::string>{},
+                .intrinsics = std::vector<std::string>{},
                 .closed = false
         };
     }
@@ -122,6 +122,7 @@ namespace xm::data {
         { INVALID, nullptr },
         { CALIBRATION, "calibration" },
         { CROSS_CALIBRATION, "cross_calibration" },
+        { CHAIN_CALIBRATION, "chain_calibration" },
         { POSE, "pose" },
     })
 
@@ -181,9 +182,9 @@ namespace xm::data {
         t.c = j.value("c", (Intrinsic) xm::data::def::intrinsic());
     }
 
-    void from_json(const nlohmann::json &j, Cross &c) {
+    void from_json(const nlohmann::json &j, Chain &c) {
         c.closed = j.value("closed", false);
-        j.at("calibrated").get_to(c.calibrated);
+        j.at("intrinsics").get_to(c.intrinsics);
     }
 
     void from_json(const nlohmann::json &j, Capture &c) {
@@ -249,7 +250,7 @@ namespace xm::data {
         j.at("pattern").get_to(c.pattern);
 
         c.intrinsics = j.value("intrinsics", xm::data::def::intrinsics());
-        c.cross = j.value("cross", xm::data::def::cross());
+        c.chain = j.value("chain", xm::data::def::chain());
         c.delay = j.value("delay", 5000);
         c.total = j.value("total", 10);
     }

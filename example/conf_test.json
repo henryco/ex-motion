@@ -90,7 +90,7 @@
     "devices": [
 
       {
-        "calibration": "rc_vid100.json",
+        "intrinsics": "rc_vid100.json",
         "body": "full_f32",
         "detector": "f_32",
         "threshold": {
@@ -114,7 +114,7 @@
       },
 
       {
-        "calibration": "rc_vid103.json",
+        "intrinsics": "rc_vid103.json",
         "body": "full_f32",
         "detector": "f_32",
         "threshold": {
@@ -138,7 +138,7 @@
       },
 
       {
-        "calibration": "rc_vid101.json",
+        "intrinsics": "rc_vid101.json",
         "body": "full_f32",
         "detector": "f_32",
         "threshold": {
@@ -162,7 +162,7 @@
       },
 
       {
-        "calibration": "rc_vid102.json",
+        "intrinsics": "rc_vid102.json",
         "body": "full_f32",
         "detector": "f_32",
         "threshold": {
@@ -186,10 +186,13 @@
       }
 
     ],
-    "stereo": [
-      "rc_cross_0x3x1x2_0.json",
-      "rc_cross_0x3x1x2_1.json",
-      "rc_cross_0x3x1x2_2.json"
-    ]
+    "calibration": {
+      "type": "chain_calibration",
+      "files": [
+        "rc_cross_0x3x1x2_0.json",
+        "rc_cross_0x3x1x2_1.json",
+        "rc_cross_0x3x1x2_2.json"
+      ]
+    }
   }
 }

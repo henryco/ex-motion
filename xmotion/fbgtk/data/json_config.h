@@ -163,7 +163,7 @@ namespace xm::data {
     } PoseUndistort;
 
     typedef struct {
-        std::string calibration;
+        std::string intrinsics;
         PoseThresholds threshold;
         PoseUndistort undistort;
         PoseFilter filter;
@@ -172,8 +172,13 @@ namespace xm::data {
     } PoseDevice;
 
     typedef struct {
+        std::vector<std::string> files;
+        ConfigType type;
+    } PoseCalibration;
+
+    typedef struct {
         std::vector<PoseDevice> devices;
-        std::vector<std::string> stereo;
+        PoseCalibration calibration;
         bool show_epilines;
         bool segmentation;
         int threads;
@@ -205,6 +210,9 @@ namespace xm::data {
 
     std::filesystem::path create_dir_rec(const std::filesystem::path &path);
 
+    std::vector<std::string> list_files(const std::filesystem::path &file);
+
+    bool numeric_comparator_asc(const std::string &a, const std::string &b);
 } // xm
 
 #endif //XMOTION_JSON_CONFIG_H

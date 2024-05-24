@@ -98,7 +98,7 @@ namespace xm::data::def {
 
     PoseDevice poseDevice() {
         return {
-                .calibration = "",
+                .intrinsics = "",
                 .threshold = xm::data::def::poseThresholds(),
                 .undistort = xm::data::def::poseUndistort(),
                 .filter = xm::data::def::poseFilter(),
@@ -107,9 +107,17 @@ namespace xm::data::def {
         };
     }
 
+    PoseCalibration poseCalibration() {
+        return {
+            .files = {},
+            .type = xm::data::INVALID
+        };
+    }
+
     Pose pose() {
         return {
                 .devices = {},
+                .calibration = xm::data::def::poseCalibration(),
                 .show_epilines = false,
                 .segmentation = false,
                 .threads = 0
@@ -296,7 +304,7 @@ namespace xm::data {
 
     void from_json(const nlohmann::json &j, PoseDevice &d) {
         const auto def = xm::data::def::poseDevice();
-        j.at("calibration").get_to(d.calibration);
+        j.at("intrinsics").get_to(d.intrinsics);
         d.model = j.value("model", def.model);
         d.threshold = j.value("threshold", def.threshold);
         d.undistort = j.value("undistort", def.undistort);
@@ -304,10 +312,15 @@ namespace xm::data {
         d.roi = j.value("roi", def.roi);
     }
 
+    void from_json(const nlohmann::json &j, PoseCalibration &c) {
+        j.at("files").get_to(c.files);
+        j.at("type").get_to(c.type);
+    }
+
     void from_json(const nlohmann::json &j, Pose &p) {
         const auto def = xm::data::def::pose();
+        j.at("calibration").get_to(p.calibration);
         j.at("devices").get_to(p.devices);
-        j.at("stereo").get_to(p.stereo);
         p.show_epilines = j.value("show_epilines", def.show_epilines);
         p.segmentation = j.value("segmentation", def.segmentation);
         p.threads = j.value("threads", def.threads);
@@ -381,4 +394,30 @@ namespace xm::data {
             throw std::runtime_error("Cannot create directories: " + path.string());
         return path;
     }
+
+    std::vector<std::string> list_files(const std::filesystem::path &file) {
+        if (!std::filesystem::exists(file))
+            return {};
+        if (std::filesystem::is_regular_file(file))
+            return {file.string()};
+        if (!std::filesystem::is_directory(file))
+            return {};
+        std::vector<std::string> files;
+        for (const auto &entry: std::filesystem::directory_iterator(file)) {
+            files.push_back(entry.path().string());
+        }
+        return files;
+    }
+
+    bool numeric_comparator_asc(const std::string &a, const std::string &b) {
+        const auto extract_number = [](const std::string &f) -> int {
+            const auto pos = f.find('.');
+            if (pos != std::string::npos)
+                return std::stoi(f.substr(0, pos));
+            return std::stoi(f);
+        };
+        return extract_number(a) < extract_number(b);
+    }
+
+
 }

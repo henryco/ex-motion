@@ -203,6 +203,8 @@ namespace xm::data {
 
     std::string prepare_project_dir(const char *c_str);
 
+    std::filesystem::path create_dir_rec(const std::filesystem::path &path);
+
 } // xm
 
 #endif //XMOTION_JSON_CONFIG_H

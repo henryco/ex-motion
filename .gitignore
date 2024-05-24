@@ -88,4 +88,6 @@ map_devices.sh
 /map_devices.sh
 example/rc_*
 /example/rc_*
+example/cam
+/example/cam
 *.xcam

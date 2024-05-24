@@ -262,26 +262,17 @@ namespace xm {
         std::filesystem::path root = project_file;
         root = root.parent_path();
 
-        if (total > 1) {
-            const std::filesystem::path file = config.calibration.name;
-            const std::filesystem::path path = root / file;
-            if (!std::filesystem::exists(path)) {
-                if (!std::filesystem::create_directories(path)) {
-                    throw std::runtime_error("Cannot create directory: " + path.string());
-                }
-            }
-            root = path;
-        }
+        if (total > 1)
+            root = xm::data::create_dir_rec(root / config.calibration.name);
 
         for (int i = 0; i < total; ++i) {
             const std::filesystem::path name = (total == 1 ? config.calibration.name : std::to_string(i)) + ".json";
-            const std::string postfix = (total == 1) ? "" : ("_" + std::to_string(i));
             const std::string file = (root / name).string();
 
             log->info("Saving cross calibration results: [{}]", i);
             const auto pair = results.calibrated.at(i);
             xm::data::ocv::write_chain_calibration(file, {
-                    .name = config.calibration.name + postfix,
+                    .name = config.calibration.name + (total == 1 ? "" : ("_" + std::to_string(i))),
                     .R = pair.R,
                     .T = pair.T,
                     .E = pair.E,

@@ -373,4 +373,12 @@ namespace xm::data {
     std::string prepare_project_dir(const char *c_str) {
         return prepare_project_dir(std::string(c_str));
     }
+
+    std::filesystem::path create_dir_rec(const std::filesystem::path &path) {
+        if (std::filesystem::exists(path))
+            return path;
+        if (!std::filesystem::create_directories(path))
+            throw std::runtime_error("Cannot create directories: " + path.string());
+        return path;
+    }
 }

@@ -249,7 +249,7 @@ namespace xm::util::epi {
                 const cv::Mat E = T_x * R;
 
                 // Fundamental matrix: l_j = F_ij * x_i
-                const cv::Mat F = (K_j.inv().t() * E * K_i.inv()).t();
+                const cv::Mat F = (K_j.inv().t() * E * K_i.inv());
 
                 // Real matrix is flat continuous array
                 epipolar_matrix[(i * size) + j] = {

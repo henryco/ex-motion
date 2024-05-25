@@ -184,6 +184,8 @@ namespace xm::util::epi {
 
         void release();
 
+        [[nodiscard]] std::string to_string() const;
+
         /**
          * @param chain calibration chain [(X,Y), (Y,Z), ..., (Z,W)]
          * @param closed whether chain contains last pair (N,0)

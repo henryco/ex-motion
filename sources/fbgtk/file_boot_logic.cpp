@@ -226,6 +226,8 @@ namespace xm {
             // TODO
         }
 
+        log->debug("Epi_matrix: {}", epi_matrix.to_string());
+
         const xm::nview::Initial params = {
                 .devices = vec,
                 .epi_matrix = epi_matrix,

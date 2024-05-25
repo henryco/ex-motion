@@ -6,6 +6,8 @@
 //
 
 #include "../../xmotion/core/utils/epi_util.h"
+#include "../../xmotion/core/utils/cv_utils.h"
+#include <regex>
 
 namespace xm::util::epi {
 
@@ -260,6 +262,26 @@ namespace xm::util::epi {
 
         return {epipolar_matrix, size};
     }
+
+    std::string Matrix::to_string() const {
+        // [
+        //   [i, j]: {Rt:[], E:[], F:[]}
+        // ]
+        std::string str;
+        str += "\n[";
+        for (int i = 0; i < epipolar_matrix_size; i++) {
+            for (int j = 0; j < epipolar_matrix_size; j++) {
+                const auto &data = this[0][i][j];
+                str += "\n[" + std::to_string(i) + "," + std::to_string(j) + "]: ";
+                str += "{Rt:" + std::regex_replace(xm::ocv::print_matrix(data.RT), std::regex("\n"), "") + ", ";
+                str += "E:" + std::regex_replace(xm::ocv::print_matrix(data.E), std::regex("\n"), "") + ", ";
+                str += "F:" + std::regex_replace(xm::ocv::print_matrix(data.F), std::regex("\n"), "") + "}";
+            }
+        }
+        str += "\n]";
+        return str;
+    }
+
 }
 
 #pragma clang diagnostic pop

@@ -107,17 +107,25 @@ namespace xm::data::def {
         };
     }
 
-    PoseCalibration poseCalibration() {
+    ChainCalibration chainCalibration() {
         return {
             .files = {},
-            .type = xm::data::INVALID
+            .closed = false,
+            ._present = false
+        };
+    }
+
+    CrossCalibration crossCalibration() {
+        return {
+          ._present = false
         };
     }
 
     Pose pose() {
         return {
                 .devices = {},
-                .calibration = xm::data::def::poseCalibration(),
+                .chain = xm::data::def::chainCalibration(),
+                .cross = xm::data::def::crossCalibration(),
                 .show_epilines = false,
                 .segmentation = false,
                 .threads = 0
@@ -312,16 +320,24 @@ namespace xm::data {
         d.roi = j.value("roi", def.roi);
     }
 
-    void from_json(const nlohmann::json &j, PoseCalibration &c) {
+    void from_json(const nlohmann::json &j, ChainCalibration &c) {
+        const auto def = xm::data::def::chainCalibration();
         j.at("files").get_to(c.files);
-        j.at("type").get_to(c.type);
+        c.closed = j.value("closed", def.closed);
+        c._present = true;
+    }
+
+    void from_json(const nlohmann::json &j, CrossCalibration &c) {
+        // TODO
+        c._present = true;
     }
 
     void from_json(const nlohmann::json &j, Pose &p) {
         const auto def = xm::data::def::pose();
-        j.at("calibration").get_to(p.calibration);
         j.at("devices").get_to(p.devices);
-        p.show_epilines = j.value("show_epilines", def.show_epilines);
+        p.chain = j.value("chain", def.chain);
+        p.cross = j.value("cross", def.cross);
+        p.show_epilines = j.value("epilines", def.show_epilines);
         p.segmentation = j.value("segmentation", def.segmentation);
         p.threads = j.value("threads", def.threads);
     }

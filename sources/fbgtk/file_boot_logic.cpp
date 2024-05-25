@@ -189,12 +189,12 @@ namespace xm {
         }
 
         xm::util::epi::Matrix epi_matrix;
-        if (config.pose.calibration.type == data::CHAIN_CALIBRATION) {
+        if (config.pose.chain._present) {
 
             int k = 0;
             std::vector<xm::util::epi::CalibPair> pairs;
-            pairs.reserve(config.pose.calibration.files.size());
-            for (const auto &pair_name: config.pose.calibration.files) {
+            pairs.reserve(config.pose.chain.files.size());
+            for (const auto &pair_name: config.pose.chain.files) {
                 const std::filesystem::path root = project_file;
                 const std::filesystem::path name = pair_name;
                 const std::filesystem::path path = (name.is_absolute() ? name : (root.parent_path() / name));
@@ -204,23 +204,25 @@ namespace xm {
 
                 log->info("Reading chain-calibration file: {}, {}", pair_name, path.string());
                 for (const auto &file: files) {
-                    log->info("Reading chain-calibration file: {}, {}", pair_name, file);
-
+                    log->info("Reading chain-calibration file[{}]: {}, {}", k, pair_name, file);
                     const auto chain_calibration = xm::data::ocv::read_chain_calibration(file);
                     pairs.push_back({
+                        .K1 = vec.at(k).K.clone(),
+                        .K2 = vec.at(k + 1).K.clone(),
                         .RT = chain_calibration.RT,
                         .E = chain_calibration.E,
-                        .F = chain_calibration.F
-                        // TODO K1, K2
+                        .F = chain_calibration.F,
                     });
 
                     k++;
+                    if (k >= config.pose.devices.size())
+                        k = 0; // we are spinning
                 }
             }
 
-            epi_matrix = xm::util::epi::Matrix::from_chain(pairs);
+            epi_matrix = xm::util::epi::Matrix::from_chain(pairs, config.pose.chain.closed, false);
 
-        } else if (config.pose.calibration.type == data::CROSS_CALIBRATION) {
+        } else if (config.pose.cross._present) {
             // TODO
         }
 

@@ -173,12 +173,18 @@ namespace xm::data {
 
     typedef struct {
         std::vector<std::string> files;
-        ConfigType type;
-    } PoseCalibration;
+        bool closed;
+        bool _present;
+    } ChainCalibration;
+
+    typedef struct {
+        bool _present;
+    } CrossCalibration;
 
     typedef struct {
         std::vector<PoseDevice> devices;
-        PoseCalibration calibration;
+        ChainCalibration chain;
+        CrossCalibration cross;
         bool show_epilines;
         bool segmentation;
         int threads;

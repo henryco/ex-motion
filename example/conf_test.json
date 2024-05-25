@@ -85,7 +85,7 @@
 
   "pose": {
     "segmentation": false,
-    "show_epilines": true,
+    "epilines": true,
 
     "devices": [
 
@@ -186,8 +186,8 @@
       }
 
     ],
-    "calibration": {
-      "type": "chain_calibration",
+    "chain": {
+      "closed": false,
       "files": [
         "rc_cross_0x3x1x2_0.json",
         "rc_cross_0x3x1x2_1.json",

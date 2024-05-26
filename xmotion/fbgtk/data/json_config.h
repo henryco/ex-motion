@@ -16,6 +16,7 @@ namespace xm::data {
         CALIBRATION,
         CHAIN_CALIBRATION,
         CROSS_CALIBRATION,
+        COMPOSE,
         POSE
     };
 

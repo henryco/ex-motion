@@ -139,6 +139,7 @@ namespace xm::data {
         { CALIBRATION, "calibration" },
         { CROSS_CALIBRATION, "cross_calibration" },
         { CHAIN_CALIBRATION, "chain_calibration" },
+        { COMPOSE, "compose" },
         { POSE, "pose" },
     })
 

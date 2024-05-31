@@ -35,7 +35,7 @@ sudo modprobe v4l2loopback video_nr="$id_list"
 
 for id in "${!id_port_map[@]}"; do
   port="${id_port_map[$id]}"
-  nohup gst-launch-1.0 udpsrc port="$port" caps="application/x-rtp, media=video, clock-rate=90000, encoding-name=JPEG, payload=26" ! rtpjpegdepay ! jpegdec ! videoconvert ! v4l2sink device="/dev/video$id" &
+  nohup gst-launch-1.0 udpsrc port="$port" caps="application/x-rtp, media=video, clock-rate=90000, encoding-name=JPEG, payload=26, framerate=60/1" ! rtpjpegdepay ! jpegdec ! videoconvert ! v4l2sink device="/dev/video$id" &
 done
 
 echo "pipelines started"

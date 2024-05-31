@@ -127,6 +127,7 @@ set(SOURCE_FILES
         sources/core/d_dummy_camera.cpp
         sources/core/pose_aux.cpp
         sources/core/epi_util.cpp
+        xmotion/core/algo/compose.h
 )
 
 if (UNIX AND NOT APPLE)

@@ -83,7 +83,10 @@ build
 
 cmake-build-debug
 /cmake-build-debug
-dev_mappings
+/mappings_dev
+mappings_dev
+mappings_stream
+/mappings_stream
 map_devices.sh
 /map_devices.sh
 example/rc_*
@@ -91,3 +94,5 @@ example/rc_*
 example/cam
 /example/cam
 *.xcam
+/map_streams.sh
+map_streams.sh

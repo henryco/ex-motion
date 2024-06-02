@@ -15,7 +15,13 @@ namespace xm {
     void FileBoot::update(float delta, float _, float fps) {
         window->setFps((int) fps);
 
-        logic->proceed(delta, camera->capture());
+        std::vector<cv::Mat> frames = camera->capture();
+        for (const auto &filter: filters) {
+            for (auto &frame: frames)
+                frame = filter->filter(frame);
+        }
+
+        logic->proceed(delta, frames);
         process_results();
 
         if (!bypass)

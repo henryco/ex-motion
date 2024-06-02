@@ -2,7 +2,7 @@
   "type": "calibration",
 
   "gui": {
-    "scale": 1.5,
+    "scale": 1.25,
     "frame": {
       "w": 720,
       "h": 1280
@@ -13,28 +13,48 @@
     "debug": true
   },
 
+  "filters": {
+    "background": {
+      "chroma": {
+        "key": "#6f5349",
+        "replace": "#ff00d0",
+        "range": {
+          "h": 0.2,
+          "s": 0.3,
+          "l": 0.4
+        }
+      }
+    }
+  },
+
   "camera": {
     "fast": false,
     "capture": [
       {
-        "id": "/dev/video102",
-        "name": "TSTC_2",
+        "id": "/dev/video104",
+        "name": "A4T",
         "width": 1920,
         "height": 1080,
-        "fps": 60,
+        "fps": 30,
         "codec": "MJPG",
         "buffer": 2,
         "rotate": true,
         "flip": {
-          "x": false,
-          "y": false
+          "x": true,
+          "y": true
+        },
+        "region": {
+          "x": 0,
+          "y": 0,
+          "w": 1920,
+          "h": 1080
         }
       }
     ]
   },
 
   "calibration": {
-    "name": "rc_vid102",
+    "name": "test",
     "total": 50,
     "delay": 5000,
 

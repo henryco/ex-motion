@@ -11,6 +11,7 @@
 #include "../core/camera/stereo_camera.h"
 #include "../core/boot/a_updated_boot.h"
 #include "../core/algo/i_logic.h"
+#include "../core/filter/a_filter.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -23,6 +24,8 @@ namespace xm {
                 spdlog::stdout_color_mt("file_boot");
 
     protected:
+        std::vector<std::unique_ptr<xm::Filter>> filters;
+
         std::unique_ptr<xm::CamParamsWindow> params_window;
         std::unique_ptr<xm::SimpleImageWindow> window;
         std::unique_ptr<xm::StereoCamera> camera;
@@ -47,6 +50,8 @@ namespace xm {
 
         void prepare_logic();
 
+        void prepare_filters();
+
         void load_device_params();
 
         void process_results();
@@ -58,6 +63,10 @@ namespace xm {
         void on_camera_save(const std::string &device_id);
 
         void on_camera_read(const std::string &device_id, const std::string &name);
+
+        void opt_filter_chroma();
+
+        void opt_filter_delta();
 
         void opt_single_calibration();
 

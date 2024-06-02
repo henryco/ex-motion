@@ -24,6 +24,7 @@ namespace xm {
                 argv,
                 "dev.tindersamurai.xmotion"
         );
+        prepare_filters();
         prepare_logic();
         prepare_cam();
         prepare_gui();

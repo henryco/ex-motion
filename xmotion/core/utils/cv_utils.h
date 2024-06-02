@@ -109,7 +109,22 @@ namespace xm::ocv {
      */
     cv::Scalar distinct_color(int index, int N);
 
-    std::string print_matrix(const cv::Mat &in);
+    /**
+     * Returns string representation for cv::Mat_<double>
+     */
+    std::string print_matrix(const cv::Mat_<double> &in);
+
+    int hex_to_int(const std::string &hex);
+
+    cv::Scalar parse_hex_to_bgr(const std::string &hex);
+
+    cv::Scalar bgr_to_hsv(const cv::Scalar &bgr);
+
+    cv::Scalar bgr_to_hls(const cv::Scalar &bgr);
+
+    cv::Scalar hsv_to_bgr(const cv::Scalar &hsv);
+
+    cv::Scalar hls_to_bgr(const cv::Scalar &hsv);
 }
 
 

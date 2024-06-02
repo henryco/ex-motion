@@ -197,7 +197,39 @@ namespace xm::data {
     } Misc;
 
     typedef struct {
+        float h;
+        float s;
+        float l;
+    } HSL;
+
+    typedef struct {
+        std::string key; // hex color
+        std::string replace; // hex color
+        HSL range;
+        int refine;
+        bool _present;
+    } Chroma;
+
+    typedef struct {
+        std::string replace; // hex color
+        int delay;
+        bool _present;
+    } Delta;
+
+    typedef struct {
+        Chroma chroma;
+        Delta delta;
+        bool _present;
+    } Background;
+
+    typedef struct {
+        Background background;
+        bool _present;
+    } Filters;
+
+    typedef struct {
         ConfigType type;
+        Filters filters;
         Misc misc;
         Gui gui;
         Pose pose;

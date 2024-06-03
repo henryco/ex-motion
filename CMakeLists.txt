@@ -91,6 +91,8 @@ set(SOURCE_FILES
         xmotion/core/algo/compose.h
         xmotion/core/filter/i_filter.h
         xmotion/core/filter/chroma_key.h
+        xmotion/core/ocl/kernel.h
+        xmotion/core/ocl/ocl_filters.h
 
         sources/core/velocity_filter.cpp
         sources/core/low_pass_filter.cpp
@@ -132,6 +134,8 @@ set(SOURCE_FILES
         sources/core/epi_util.cpp
         sources/core/chroma_key.cpp
         sources/fbgtk/file_boot_filters.cpp
+        sources/core/kernel.cpp
+        sources/core/ocl_filters.cpp
 )
 
 if (UNIX AND NOT APPLE)

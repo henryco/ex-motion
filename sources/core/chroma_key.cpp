@@ -4,6 +4,7 @@
 
 #include <opencv2/imgproc.hpp>
 #include "../../xmotion/core/filter/chroma_key.h"
+#include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../xmotion/core/utils/cv_utils.h"
 
 namespace xm::chroma {
@@ -93,7 +94,7 @@ namespace xm::chroma {
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (float) n_w / ratio;
-        cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_NEAREST);
+        cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_LINEAR);
 
         if (blur_kernel >= 3) {
             cv::GaussianBlur(img, img, cv::Size(blur_kernel, blur_kernel), 0, 0);
@@ -129,7 +130,7 @@ namespace xm::chroma {
         const auto t1 = std::chrono::system_clock::now();
         const auto d = duration_cast<std::chrono::milliseconds>((t1 - t0)).count();
 
-//        log->info("TG: {}", d);
+        log->info("TG: {}", d);
         return out;
     }
 

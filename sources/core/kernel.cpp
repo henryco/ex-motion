@@ -60,5 +60,15 @@ namespace eox::ocl {
         return pref_size.begin()->second;
     }
 
+    cv::ocl::Kernel &Kernel::get_kernel(int idx) {
+        int i = 0;
+        for (auto &pair: kernels) {
+            if (i == idx)
+                return pair.second;
+            i++;
+        }
+        throw std::out_of_range("IDX >= kernels.size()");
+    }
+
 
 } // eox

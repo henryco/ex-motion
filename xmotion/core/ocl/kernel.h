@@ -30,6 +30,8 @@ namespace eox::ocl {
 
         cv::ocl::Kernel &get_kernel(const std::string &name);
 
+        cv::ocl::Kernel &get_kernel(int idx);
+
         cv::ocl::Kernel &get_kernel();
 
         size_t get_pref_size(const std::string &name);

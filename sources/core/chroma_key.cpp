@@ -89,50 +89,48 @@ namespace xm::chroma {
             throw std::logic_error("Filter is not initialized");
         const auto t0 = std::chrono::system_clock::now();
 
-        cv::UMat out;
-        xm::ocl::blur(in, out, blur_kernel);
+        cv::UMat img;
 
-//        cv::UMat img;
-//
-//        const auto ratio = (float) in.cols / (float) in.rows;
-//        const auto n_w = mask_size;
-//        const auto n_h = (float) n_w / ratio;
-//        cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_LINEAR);
-//
-//        if (blur_kernel >= 3) {
-//            cv::GaussianBlur(img, img, cv::Size(blur_kernel, blur_kernel), 0, 0);
-//        }
-//
-//        auto hls_image = cv::UMat();
-//        cv::cvtColor(img, hls_image, cv::COLOR_BGR2HLS_FULL);
-//
-//        auto mask = cv::UMat();
-//        cv::inRange(hls_image, hls_key_lower, hls_key_upper, mask);
-//
-//        if (mask_iterations > 0) {
-//            cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
-//            cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
-//        }
-//
-//        auto mask_inv = cv::UMat();
-//        cv::bitwise_not(mask, mask_inv);
-//
-//        cv::resize(mask, mask, in.size());
-//        cv::resize(mask_inv, mask_inv, in.size());
-//
-//        auto bgr_front = cv::UMat();
-//        cv::bitwise_and(in, in, bgr_front, mask_inv);
-//
-//        auto bgr_back = cv::UMat();
-//        auto background = cv::Mat(in.size(), in.type(), bgr_bg_color);
-//        cv::bitwise_and(background, background, bgr_back, mask);
-//
-//        cv::UMat out;
-//        cv::add(bgr_front, bgr_back, out);
+        const auto ratio = (float) in.cols / (float) in.rows;
+        const auto n_w = mask_size;
+        const auto n_h = (float) n_w / ratio;
+        cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_LINEAR);
+
+        if (blur_kernel >= 3 && blur_kernel <= 31) {
+            xm::ocl::blur(img, img, blur_kernel);
+        }
+
+        auto hls_image = cv::UMat();
+        cv::cvtColor(img, hls_image, cv::COLOR_BGR2HLS_FULL);
+
+        auto mask = cv::UMat();
+        cv::inRange(hls_image, hls_key_lower, hls_key_upper, mask);
+
+        if (mask_iterations > 0) {
+            cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
+            cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
+        }
+
+        auto mask_inv = cv::UMat();
+        cv::bitwise_not(mask, mask_inv);
+
+        cv::resize(mask, mask, in.size());
+        cv::resize(mask_inv, mask_inv, in.size());
+
+        auto bgr_front = cv::UMat();
+        cv::bitwise_and(in, in, bgr_front, mask_inv);
+
+        auto bgr_back = cv::UMat();
+        cv::UMat background;
+        cv::Mat(in.size(), in.type(), bgr_bg_color).copyTo(background);
+
+        cv::bitwise_and(background, background, bgr_back, mask);
+
+        cv::UMat out;
+        cv::add(bgr_front, bgr_back, out);
 
         const auto t1 = std::chrono::system_clock::now();
-        const auto d = duration_cast<std::chrono::milliseconds>((t1 - t0)).count();
-
+        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
         log->info("TG: {}", d);
         return out;
     }

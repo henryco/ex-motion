@@ -38,7 +38,7 @@ namespace xm::chroma {
          * used to calculate gaussian blur kernel
          *
          * \code
-         * (CxC): C = 1 + (blur * 2)
+         * (CxC): C = (blur * 2) + 1
          * \endcode
          */
         int blur = 0;

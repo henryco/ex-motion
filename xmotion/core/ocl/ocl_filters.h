@@ -85,23 +85,29 @@ __kernel void gaussian_blur_vertical(
 
     class Kernels {
     public:
+        /* =================== KERNELS WRAPPERS =================== */
         eox::ocl::Kernel ocl_gaussian_blur;
+
+        /* ==================== OPENCL KERNELS ==================== */
+        cv::ocl::Kernel gaussian_blur_h;
+        cv::ocl::Kernel gaussian_blur_v;
 
         static Kernels& getInstance() {
             static Kernels instance;
             return instance;
         }
+
         Kernels(const Kernels &) = delete;
         Kernels(const Kernels &&) = delete;
         Kernels &operator=(const Kernels &) = delete;
+        [[nodiscard]] size_t get_pref_work_group_size() const;
 
     private:
+        size_t pref_work_group_size = 0;
         Kernels();
     };
 
     size_t optimal_work_group_size(int src, size_t size);
-
-    void create_gaussian_kernel(float *kernel, int kernel_size, float sigma);
 
     void blur(const cv::UMat &in, cv::UMat &out, int kernel_size = 5, float sigma = 0.f);
 }

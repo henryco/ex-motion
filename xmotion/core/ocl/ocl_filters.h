@@ -23,7 +23,7 @@ __kernel void gaussian_blur_horizontal(
     const int x = get_global_id(0);
     const int y = get_global_id(1);
 
-    if (x > width || y > height)
+    if (x >= width || y >= height)
         return;
 
     const int half_kernel_size = kernel_size / 2;
@@ -58,7 +58,7 @@ __kernel void gaussian_blur_vertical(
     const int x = get_global_id(0);
     const int y = get_global_id(1);
 
-    if (x > width || y > height)
+    if (x >= width || y >= height)
         return;
 
     const int half_kernel_size = kernel_size / 2;

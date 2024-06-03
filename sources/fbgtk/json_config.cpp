@@ -146,6 +146,7 @@ namespace xm::data::def {
             .replace = "#00FF00",
             .range = xm::data::def::hsl(),
             .blur = 0,
+            .power = 0,
             .refine = 0,
             ._present = false
         };
@@ -403,6 +404,7 @@ namespace xm::data {
         c.replace = j.value("replace", def.replace);
         c.range = j.value("range", def.range);
         c.blur = j.value("blur", def.blur);
+        c.power = j.value("power", def.power);
         c.refine = j.value("refine", def.refine);
         c._present = true;
     }

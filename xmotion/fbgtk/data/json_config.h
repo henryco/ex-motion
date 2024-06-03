@@ -207,6 +207,7 @@ namespace xm::data {
         std::string replace; // hex color
         HSL range;
         int blur;
+        int power;
         int refine;
         bool _present;
     } Chroma;

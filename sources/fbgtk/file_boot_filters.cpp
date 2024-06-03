@@ -28,7 +28,8 @@ namespace xm {
             .color = xm::ocv::parse_hex_to_bgr(conf.replace),
             .key = xm::ocv::parse_hex_to_bgr(conf.key),
             .refine = conf.refine,
-            .blur = conf.blur
+            .blur = conf.blur,
+            .power = conf.power,
         });
 
         filters.push_back(std::move(filter));

@@ -12,7 +12,7 @@
 
 namespace xm::chroma {
 
-    using Conf = struct {
+    using Conf = struct Conf {
         /**
          * Normalized [0-1] HSL range
          */
@@ -31,7 +31,7 @@ namespace xm::chroma {
         /**
          * Mask refinement iterations
          */
-        int refine;
+        int refine = 0;
 
         /**
          * Blur intensity,
@@ -41,7 +41,16 @@ namespace xm::chroma {
          * (CxC): C = 1 + (blur * 2)
          * \endcode
          */
-        int blur;
+        int blur = 0;
+
+        /**
+         * Mask size, multiple of 256
+         *
+         * \code
+         * (TxT): T = (1 + power) * 256
+         * \endcode
+         */
+        int power = 0;
     };
 
     class ChromaKey : public xm::Filter {
@@ -54,6 +63,7 @@ namespace xm::chroma {
         cv::Scalar bgr_bg_color;
 
         int mask_iterations = 0;
+        int mask_size = 0;
         int blur_kernel = 0;
         bool ready = false;
 

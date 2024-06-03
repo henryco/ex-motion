@@ -20,25 +20,31 @@ __kernel void gaussian_blur_horizontal(
         const unsigned int height,
         const unsigned int kernel_size
 ) {
-    int x = get_global_id(0);
-    int y = get_global_id(1);
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
 
     if (x > width || y > height)
         return;
 
-    int half_kernel_size = kernel_size / 2;
-
-    float sum = 0.0f;
-    float weight_sum = 0.0f;
+    const int half_kernel_size = kernel_size / 2;
+    float sum[3] = {0.f, 0.f, 0.f};
+    float weight_sum = 0.f;
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
-        int ix = clamp((int) x + k, (int) 0, (int) width - 1);
-        float weight = gaussian_kernel[k + half_kernel_size];
-        sum += input[y * width + ix] * weight;
+        const float weight = gaussian_kernel[k + half_kernel_size];
+        const int ix = clamp((int) x + k, (int) 0, (int) width - 1);
+        const int idx = (y * width + ix) * 3; // [(B G R),(B G R),(B G R)...]
+
+        sum[0] += input[idx + 0] * weight;
+        sum[1] += input[idx + 1] * weight;
+        sum[2] += input[idx + 2] * weight;
         weight_sum += weight;
     }
 
-    output[y * width + x] = sum / weight_sum;
+    const int idx = (y * width + x) * 3;
+    output[idx + 0] = sum[0] / weight_sum;
+    output[idx + 1] = sum[1] / weight_sum;
+    output[idx + 2] = sum[2] / weight_sum;
 }
 
 __kernel void gaussian_blur_vertical(
@@ -49,25 +55,31 @@ __kernel void gaussian_blur_vertical(
         const unsigned int height,
         const unsigned int kernel_size
 ) {
-    int x = get_global_id(0);
-    int y = get_global_id(1);
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
 
     if (x > width || y > height)
         return;
 
-    int half_kernel_size = kernel_size / 2;
-
-    float sum = 0.0f;
-    float weight_sum = 0.0f;
+    const int half_kernel_size = kernel_size / 2;
+    float sum[3] = {0.f, 0.f, 0.f};
+    float weight_sum = 0.f;
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
-        int iy = clamp((int) y + k, (int) 0, (int) height - 1);
-        float weight = gaussian_kernel[k + half_kernel_size];
-        sum += input[iy * width + x] * weight;
+        const float weight = gaussian_kernel[k + half_kernel_size];
+        const int iy = clamp((int) y + k, (int) 0, (int) height - 1);
+        const int idx = (iy * width + x) * 3; // [(B G R),(B G R),(B G R)...]
+
+        sum[0] += input[idx + 0] * weight;
+        sum[1] += input[idx + 1] * weight;
+        sum[2] += input[idx + 2] * weight;
         weight_sum += weight;
     }
 
-    output[y * width + x] = sum / weight_sum;
+    const int idx = (y * width + x) * 3;
+    output[idx + 0] = sum[0] / weight_sum;
+    output[idx + 1] = sum[1] / weight_sum;
+    output[idx + 2] = sum[2] / weight_sum;
 }
 )ocl";
 

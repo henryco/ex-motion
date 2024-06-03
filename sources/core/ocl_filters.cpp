@@ -33,16 +33,10 @@ namespace xm::ocl {
         if (sigma == 0)
             sigma = ((float) kernel_size - 1.f) / 6.f;
 
-//        auto *gaussian_kernel = new float[kernel_size * kernel_size];
-//        create_gaussian_kernel(gaussian_kernel, kernel_size, sigma);
-
         cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
         cv::UMat kernel_mat;
         cv::getGaussianKernel(kernel_size, sigma, CV_32F).copyTo(kernel_mat);
-
-//        cv::Mat temp(1, kernel_size * kernel_size, CV_32F, (void*)gaussian_kernel);
-//        temp.copyTo(kernel_mat);
 
         const size_t pref_size = xm::ocl::Kernels::getInstance().ocl_gaussian_blur.get_pref_size();
 
@@ -60,6 +54,7 @@ namespace xm::ocl {
             size_t g_size[2] = {optimal_work_group_size(in.cols, pref_size),
                                 optimal_work_group_size(in.rows, pref_size)};
             size_t l_size[2] = {pref_size, pref_size};
+
             const bool success = kernel_h.run(2, g_size, l_size, true);
             if (!success)
                 throw std::runtime_error("opencl kernel error");
@@ -84,7 +79,6 @@ namespace xm::ocl {
                 throw std::runtime_error("opencl kernel error");
         }
 
-//        delete[] gaussian_kernel;
         out = result;
     }
 

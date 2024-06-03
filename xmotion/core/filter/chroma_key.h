@@ -5,7 +5,7 @@
 #ifndef XMOTION_CHROMA_KEY_H
 #define XMOTION_CHROMA_KEY_H
 
-#include "a_filter.h"
+#include "i_filter.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -16,7 +16,7 @@ namespace xm::chroma {
         /**
          * Normalized [0-1] HSL range
          */
-        cv::Scalar range; // h, l, s
+        cv::Scalar range;
 
         /**
          * New background color (BGR)
@@ -32,6 +32,16 @@ namespace xm::chroma {
          * Mask refinement iterations
          */
         int refine;
+
+        /**
+         * Blur intensity,
+         * used to calculate gaussian blur kernel
+         *
+         * \code
+         * (CxC): C = 1 + (blur * 2)
+         * \endcode
+         */
+        int blur;
     };
 
     class ChromaKey : public xm::Filter {
@@ -40,19 +50,19 @@ namespace xm::chroma {
                 spdlog::stdout_color_mt("filter_chroma_key");
 
     private:
-        cv::_InputOutputArray background;
-
         cv::Scalar hls_key_lower, hls_key_upper;
         cv::Scalar bgr_bg_color;
 
         int mask_iterations = 0;
-        bool up_to_date = false;
+        int blur_kernel = 0;
         bool ready = false;
 
     public:
         void init(const Conf &conf);
 
-        void filter(cv::InputArray in, cv::OutputArray out) override;
+        cv::Mat filter(const cv::Mat &in) override;
+
+        cv::UMat filter(const cv::UMat &in) override;
 
     };
 

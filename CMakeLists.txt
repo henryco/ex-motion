@@ -89,7 +89,7 @@ set(SOURCE_FILES
         xmotion/core/algo/chain.h
         xmotion/core/utils/epi_util.h
         xmotion/core/algo/compose.h
-        xmotion/core/filter/a_filter.h
+        xmotion/core/filter/i_filter.h
         xmotion/core/filter/chroma_key.h
 
         sources/core/velocity_filter.cpp
@@ -130,7 +130,6 @@ set(SOURCE_FILES
         sources/core/d_dummy_camera.cpp
         sources/core/pose_aux.cpp
         sources/core/epi_util.cpp
-        sources/core/a_filter.cpp
         sources/core/chroma_key.cpp
         sources/fbgtk/file_boot_filters.cpp
 )

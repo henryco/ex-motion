@@ -4,8 +4,8 @@
   "gui": {
     "scale": 1.25,
     "frame": {
-      "w": 720,
-      "h": 1280
+      "w": 360,
+      "h": 640
     }
   },
 
@@ -16,12 +16,14 @@
   "filters": {
     "background": {
       "chroma": {
-        "key": "#6f5349",
-        "replace": "#ff00d0",
+        "key": "#8c5f67",
+        "replace": "#00FF00",
+        "refine": 2,
+        "blur": 7,
         "range": {
-          "h": 0.2,
-          "s": 0.3,
-          "l": 0.4
+          "h": 0.1,
+          "s": 0.05,
+          "l": 0.3
         }
       }
     }

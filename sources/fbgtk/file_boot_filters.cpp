@@ -27,7 +27,8 @@ namespace xm {
             .range = cv::Scalar(conf.range.h, conf.range.s, conf.range.l),
             .color = xm::ocv::parse_hex_to_bgr(conf.replace),
             .key = xm::ocv::parse_hex_to_bgr(conf.key),
-            .refine = conf.refine
+            .refine = conf.refine,
+            .blur = conf.blur
         });
 
         filters.push_back(std::move(filter));

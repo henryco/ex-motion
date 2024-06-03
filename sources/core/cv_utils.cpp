@@ -123,7 +123,7 @@ namespace xm::ocv {
         return value;
     }
 
-    cv::Scalar parse_hex_to_bgr(const std::string &hex) {
+    cv::Scalar_<int> parse_hex_to_bgr(const std::string &hex) {
         if (hex[0] != '#' || hex.length() != 7)
             throw std::invalid_argument("Invalid hex color format");
         const auto r = hex_to_int(hex.substr(1, 2));
@@ -132,36 +132,36 @@ namespace xm::ocv {
         return cv::Scalar(b, g, r); // NOLINT(*-return-braced-init-list)
     }
 
-    cv::Scalar bgr_to_hsv(const cv::Scalar &bgr) {
+    cv::Scalar_<int> bgr_to_hsv(const cv::Scalar &bgr) {
         cv::Mat tmp_in(1, 1, CV_8UC3, bgr);
         cv::Mat tmp_out;
         cv::cvtColor(tmp_in, tmp_out, cv::COLOR_BGR2HSV_FULL);
         cv::Vec3b pixel = tmp_out.at<cv::Vec3b>(0, 0);
-        return cv::Scalar(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
+        return cv::Scalar_<int>(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
-    cv::Scalar bgr_to_hls(const cv::Scalar &bgr) {
+    cv::Scalar_<int> bgr_to_hls(const cv::Scalar &bgr) {
         cv::Mat tmp_in(1, 1, CV_8UC3, bgr);
         cv::Mat tmp_out;
         cv::cvtColor(tmp_in, tmp_out, cv::COLOR_BGR2HLS_FULL);
         cv::Vec3b pixel = tmp_out.at<cv::Vec3b>(0, 0);
-        return cv::Scalar(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
+        return cv::Scalar_<int>(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
-    cv::Scalar hsv_to_bgr(const cv::Scalar &hsv) {
+    cv::Scalar_<int> hsv_to_bgr(const cv::Scalar &hsv) {
         cv::Mat tmp_in(1, 1, CV_8UC3, hsv);
         cv::Mat tmp_out;
         cv::cvtColor(tmp_in, tmp_out, cv::COLOR_HSV2BGR_FULL);
         cv::Vec3b pixel = tmp_out.at<cv::Vec3b>(0, 0);
-        return cv::Scalar(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
+        return cv::Scalar_<int>(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
-    cv::Scalar hls_to_bgr(const cv::Scalar &hsv) {
+    cv::Scalar_<int> hls_to_bgr(const cv::Scalar &hsv) {
         cv::Mat tmp_in(1, 1, CV_8UC3, hsv);
         cv::Mat tmp_out;
         cv::cvtColor(tmp_in, tmp_out, cv::COLOR_HLS2BGR_FULL);
         cv::Vec3b pixel = tmp_out.at<cv::Vec3b>(0, 0);
-        return cv::Scalar(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
+        return cv::Scalar_<int>(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
 }

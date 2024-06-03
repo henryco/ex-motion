@@ -145,6 +145,7 @@ namespace xm::data::def {
             .key = "#00FF00",
             .replace = "#00FF00",
             .range = xm::data::def::hsl(),
+            .blur = 0,
             .refine = 0,
             ._present = false
         };
@@ -393,7 +394,7 @@ namespace xm::data {
         const auto def = xm::data::def::hsl();
         h.h = j.value("h", def.h);
         h.s = j.value("s", def.s);
-        h.l = j.value("v", def.l);
+        h.l = j.value("l", def.l);
     }
 
     void from_json(const nlohmann::json &j, Chroma &c) {
@@ -401,6 +402,7 @@ namespace xm::data {
         c.key = j.value("key", def.key);
         c.replace = j.value("replace", def.replace);
         c.range = j.value("range", def.range);
+        c.blur = j.value("blur", def.blur);
         c.refine = j.value("refine", def.refine);
         c._present = true;
     }

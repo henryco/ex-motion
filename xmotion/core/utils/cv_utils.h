@@ -116,15 +116,15 @@ namespace xm::ocv {
 
     int hex_to_int(const std::string &hex);
 
-    cv::Scalar parse_hex_to_bgr(const std::string &hex);
+    cv::Scalar_<int> parse_hex_to_bgr(const std::string &hex);
 
-    cv::Scalar bgr_to_hsv(const cv::Scalar &bgr);
+    cv::Scalar_<int> bgr_to_hsv(const cv::Scalar &bgr);
 
-    cv::Scalar bgr_to_hls(const cv::Scalar &bgr);
+    cv::Scalar_<int> bgr_to_hls(const cv::Scalar &bgr);
 
-    cv::Scalar hsv_to_bgr(const cv::Scalar &hsv);
+    cv::Scalar_<int> hsv_to_bgr(const cv::Scalar &hsv);
 
-    cv::Scalar hls_to_bgr(const cv::Scalar &hsv);
+    cv::Scalar_<int> hls_to_bgr(const cv::Scalar &hsv);
 }
 
 

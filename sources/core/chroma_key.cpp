@@ -90,6 +90,7 @@ namespace xm::chroma {
         const auto t0 = std::chrono::system_clock::now();
 
         cv::UMat img;
+        cv::UMat out;
 
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
@@ -100,11 +101,8 @@ namespace xm::chroma {
             xm::ocl::blur(img, img, blur_kernel);
         }
 
-        auto hls_image = cv::UMat();
-        cv::cvtColor(img, hls_image, cv::COLOR_BGR2HLS_FULL);
-
         auto mask = cv::UMat();
-        cv::inRange(hls_image, hls_key_lower, hls_key_upper, mask);
+        xm::ocl::bgr_in_range_hls(hls_key_lower, hls_key_upper, img, mask);
 
         if (mask_iterations > 0) { // morph open (reduce speckles)
             cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
@@ -126,12 +124,13 @@ namespace xm::chroma {
 
         cv::bitwise_and(background, background, bgr_back, mask);
 
-        cv::UMat out;
         cv::add(bgr_front, bgr_back, out);
 
         const auto t1 = std::chrono::system_clock::now();
         const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
         log->info("TG: {}", d);
+
+//        cv::cvtColor(mask, out, cv::COLOR_GRAY2BGR);
         return out;
     }
 

@@ -86,14 +86,18 @@ namespace xm::ocl {
         out = result;
     }
 
-    void bgr_in_range_hls(const cv::UMat &hls_low, const cv::UMat &hls_up, const cv::UMat &in, cv::UMat &out) {
+    void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out) {
         cv::UMat result(in.rows, in.cols, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+        cv::UMat bot(1, 1, CV_8UC3, hls_low, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        cv::UMat top(1, 1, CV_8UC3, hls_up, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
         auto kernel = xm::ocl::Kernels::getInstance().in_range_hls;
         {
             int idx = 0;
             idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
-            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(hls_low));
-            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(hls_up));
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(bot));
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(top));
             idx = kernel.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result));
             idx = kernel.set(idx, (uint) in.cols);
             idx = kernel.set(idx, (uint) in.rows);

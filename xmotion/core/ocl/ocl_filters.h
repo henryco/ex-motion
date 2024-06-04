@@ -61,7 +61,7 @@ namespace xm::ocl {
      * @param in input image in BGR color space (3 channels uchar)
      * @param out output mask grayscale (1 channel uchar)
      */
-    void bgr_in_range_hls(const cv::UMat &hls_low, const cv::UMat &hls_up, const cv::UMat &in, cv::UMat &out);
+    void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out);
 
 }
 

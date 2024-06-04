@@ -40,9 +40,9 @@ __kernel void gaussian_blur_horizontal(
     }
 
     const int idx = (y * width + x) * 3;
-    output[idx + 0] = sum[0] / weight_sum;
-    output[idx + 1] = sum[1] / weight_sum;
-    output[idx + 2] = sum[2] / weight_sum;
+    output[idx + 0] = (unsigned char) (sum[0] / weight_sum);
+    output[idx + 1] = (unsigned char) (sum[1] / weight_sum);
+    output[idx + 2] = (unsigned char) (sum[2] / weight_sum);
 }
 
 __kernel void gaussian_blur_vertical(
@@ -75,9 +75,9 @@ __kernel void gaussian_blur_vertical(
     }
 
     const int idx = (y * width + x) * 3;
-    output[idx + 0] = sum[0] / weight_sum;
-    output[idx + 1] = sum[1] / weight_sum;
-    output[idx + 2] = sum[2] / weight_sum;
+    output[idx + 0] = (unsigned char) (sum[0] / weight_sum);
+    output[idx + 1] = (unsigned char) (sum[1] / weight_sum);
+    output[idx + 2] = (unsigned char) (sum[2] / weight_sum);
 }
 )C";
 
@@ -91,8 +91,8 @@ inline void bgr_to_hls(
     const float g = ((float) in_bgr[1]) / 255.f;
     const float r = ((float) in_bgr[2]) / 255.f;
 
-    const float c_max = max(b, max(g, r));
-    const float c_min = min(b, min(g, r));
+    const float c_max = fmax(b, fmax(g, r));
+    const float c_min = fmin(b, fmin(g, r));
     const float c_dif = c_max - c_min;
     const float c_sum = c_max + c_min;
     const float c_fac = 60.f / c_dif;
@@ -113,7 +113,7 @@ inline void bgr_to_hls(
     out_hls[2] = (unsigned char) ((L < 0.5f ? (c_dif / c_sum) : (c_dif / (2.f - c_sum))) * 255.f);
 }
 
-__kernel void in_range_hls (
+__kernel void in_range_hls(
         __global const unsigned char *input_bgr,
         __global const unsigned char *lower_hls,
         __global const unsigned char *upper_hls,
@@ -160,6 +160,59 @@ __kernel void in_range_hls (
 }
 
 )C";
+
+    inline const std::string DILATE_GRAY_KERNEL = R"C(
+__kernel void dilate_horizontal(
+        __global const unsigned char *input,
+        __global unsigned char *output,
+        const unsigned int kernel_size,
+        const unsigned int width,
+        const unsigned int height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int half_kernel_size = kernel_size / 2;
+    unsigned char max_val = 0;
+
+    for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
+        const int ix = x + k;
+        if (ix < 0 || ix > width)
+            continue;
+        max_val = max(max_val, input[y * width + ix]);
+    }
+    output[y * width + x] = max_val;
+}
+
+__kernel void dilate_vertical(
+        __global const unsigned char *input,
+        __global unsigned char *output,
+        const unsigned int kernel_size,
+        const unsigned int width,
+        const unsigned int height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int half_kernel_size = kernel_size / 2;
+    unsigned char max_val = 0;
+
+    for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
+        const int iy = y + k;
+        if (iy < 0 || iy > height)
+            continue;
+        max_val = max(max_val, input[iy * width + x]);
+    }
+    output[y * width + x] = max_val;
+}
+)C";
+
 
 }
 

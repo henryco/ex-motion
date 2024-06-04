@@ -16,11 +16,14 @@ namespace xm::ocl {
         /* =================== KERNELS WRAPPERS =================== */
         eox::ocl::Kernel ocl_gaussian_blur;
         eox::ocl::Kernel ocl_in_range_hls;
+        eox::ocl::Kernel ocl_dilate_gray;
 
         /* ==================== OPENCL KERNELS ==================== */
         cv::ocl::Kernel gaussian_blur_h;
         cv::ocl::Kernel gaussian_blur_v;
         cv::ocl::Kernel in_range_hls;
+        cv::ocl::Kernel dilate_gray_h;
+        cv::ocl::Kernel dilate_gray_v;
 
         static Kernels &getInstance() {
             static Kernels instance;
@@ -63,6 +66,7 @@ namespace xm::ocl {
      */
     void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out);
 
+    void dilate(const cv::UMat &in, cv::UMat &out, int kernel_size = 3);
 }
 
 #endif //XMOTION_OCL_FILTERS_H

@@ -17,6 +17,10 @@ namespace xm::ocl {
         ocl_in_range_hls.compile(xm::ocl::kernels::BGR_HLS_RANGE_KERNEL);
         in_range_hls = ocl_in_range_hls.procedure("in_range_hls");
 
+        ocl_dilate_gray.compile(xm::ocl::kernels::DILATE_GRAY_KERNEL);
+        dilate_gray_h = ocl_dilate_gray.procedure("dilate_horizontal");
+        dilate_gray_v = ocl_dilate_gray.procedure("dilate_vertical");
+
         pref_work_group_size = ocl_gaussian_blur.get_pref_size();
     }
 
@@ -45,7 +49,8 @@ namespace xm::ocl {
         if (sigma <= 0)
             sigma = ((float) kernel_size - 1.f) / 6.f;
 
-        cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        cv::UMat result_1(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        cv::UMat result_2(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
         cv::UMat kernel_mat;
         cv::getGaussianKernel(kernel_size, sigma, CV_32F).copyTo(kernel_mat);
@@ -60,11 +65,10 @@ namespace xm::ocl {
             int idx = 0;
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrReadOnly(kernel_mat));
-            idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result));
+            idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_1));
             idx = kernel_h.set(idx, (uint) in.cols);
             idx = kernel_h.set(idx, (uint) in.rows);
             kernel_h.set(idx, (uint) kernel_size);
-
             if (!kernel_h.run(2, g_size, l_size, true))
                 throw std::runtime_error("opencl kernel error");
         }
@@ -72,18 +76,17 @@ namespace xm::ocl {
         auto kernel_v = xm::ocl::Kernels::getInstance().gaussian_blur_v;
         {
             int idx = 0;
-            idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
+            idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(result_1));
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(kernel_mat));
-            idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result));
+            idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_2));
             idx = kernel_v.set(idx, (uint) in.cols);
             idx = kernel_v.set(idx, (uint) in.rows);
             kernel_v.set(idx, (uint) kernel_size);
-
-            if (!kernel_h.run(2, g_size, l_size, true))
+            if (!kernel_v.run(2, g_size, l_size, true))
                 throw std::runtime_error("opencl kernel error");
         }
 
-        out = result;
+        out = result_2;
     }
 
     void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out) {
@@ -104,6 +107,45 @@ namespace xm::ocl {
             run_kernel(kernel, in.cols, in.rows);
         }
         out = result;
+    }
+
+    void dilate(const cv::UMat &in, cv::UMat &out, int kernel_size) {
+        if (kernel_size < 3 || kernel_size % 2 == 0)
+            throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
+
+        cv::UMat result_1(in.rows, in.cols, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        cv::UMat result_2(in.rows, in.cols, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+        const size_t pref_size = xm::ocl::Kernels::getInstance().get_pref_work_group_size();
+        size_t g_size[2] = {optimal_work_group_size(in.cols, pref_size),
+                            optimal_work_group_size(in.rows, pref_size)};
+        size_t l_size[2] = {pref_size, pref_size};
+
+        auto kernel_h = xm::ocl::Kernels::getInstance().dilate_gray_h;
+        {
+            int idx = 0;
+            idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
+            idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_1));
+            idx = kernel_h.set(idx, (uint) kernel_size);
+            idx = kernel_h.set(idx, (uint) in.cols);
+            kernel_h.set(idx, (uint) in.rows);
+            if (!kernel_h.run(2, g_size, l_size, true))
+                throw std::runtime_error("opencl kernel error");
+        }
+
+        auto kernel_v = xm::ocl::Kernels::getInstance().dilate_gray_v;
+        {
+            int idx = 0;
+            idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(result_1));
+            idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_2));
+            idx = kernel_v.set(idx, (uint) kernel_size);
+            idx = kernel_v.set(idx, (uint) in.cols);
+            kernel_v.set(idx, (uint) in.rows);
+            if (!kernel_v.run(2, g_size, l_size, true))
+                throw std::runtime_error("opencl kernel error");
+        }
+
+        out = result_2;
     }
 
 }

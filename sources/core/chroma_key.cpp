@@ -120,8 +120,7 @@ namespace xm::chroma {
         cv::bitwise_and(in, in, bgr_front, mask_inv);
 
         auto bgr_back = cv::UMat();
-        cv::UMat background;
-        cv::Mat(in.size(), in.type(), bgr_bg_color).copyTo(background);
+        cv::UMat background(in.rows, in.cols, in.type(), bgr_bg_color, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
         cv::bitwise_and(background, background, bgr_back, mask);
 

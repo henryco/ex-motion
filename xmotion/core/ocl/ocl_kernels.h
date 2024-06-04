@@ -95,26 +95,22 @@ inline void bgr_to_hls(
     const float c_min = min(b, min(g, r));
     const float c_dif = c_max - c_min;
     const float c_sum = c_max + c_min;
-
+    const float c_fac = 60.f / c_dif;
     const float L = (c_sum / 2.f);
-
-    const float S = L < 0.5f
-            ? (c_dif / c_sum)
-            : (c_dif / (2.f - c_sum));
 
     float H = 0.f;
     if (c_max == r)
-        H = 60.f * (g - b) / c_dif;
+        H = c_fac * (g - b) ;
     else if (c_max == g)
-        H = 120.f + (60.f * (b - r) / c_dif);
+        H = 120.f + (c_fac * (b - r));
     else if (c_max == b)
-        H = 240.f + (60.f * (r - g) / c_dif);
+        H = 240.f + (c_fac * (r - g));
     if (H < 0)
         H += 360.f;
 
-    out_hls[0] = (unsigned char) (H * 255.f / 360.f);
+    out_hls[0] = (unsigned char) (H * 0.708333f); // 255 / 360
     out_hls[1] = (unsigned char) (L * 255.f);
-    out_hls[2] = (unsigned char) (S * 255.f);
+    out_hls[2] = (unsigned char) ((L < 0.5f ? (c_dif / c_sum) : (c_dif / (2.f - c_sum))) * 255.f);
 }
 
 __kernel void in_range_hls (
@@ -124,7 +120,7 @@ __kernel void in_range_hls (
         __global unsigned char *output_gray,
         const unsigned int width,
         const unsigned int height,
-        const unsigned int is_spin // TODO
+        const unsigned int wrapped // TODO
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);

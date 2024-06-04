@@ -11,7 +11,7 @@
 
 namespace xm::ocl {
 
-    inline const std::string GAUSSIAN_BLUR_KERNEL = R"ocl(
+    inline const std::string GAUSSIAN_BLUR_KERNEL = R"C(
 __kernel void gaussian_blur_horizontal(
         __global const unsigned char *input,
         __global const float *gaussian_kernel,
@@ -81,7 +81,7 @@ __kernel void gaussian_blur_vertical(
     output[idx + 1] = sum[1] / weight_sum;
     output[idx + 2] = sum[2] / weight_sum;
 }
-)ocl";
+)C";
 
     class Kernels {
     public:

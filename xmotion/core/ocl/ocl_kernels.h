@@ -213,6 +213,58 @@ __kernel void dilate_vertical(
 }
 )C";
 
+    inline const std::string ERODE_GRAY_KERNEL = R"C(
+__kernel void erode_horizontal(
+        __global const unsigned char *input,
+        __global unsigned char *output,
+        const unsigned int kernel_size,
+        const unsigned int width,
+        const unsigned int height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int half_kernel_size = kernel_size / 2;
+    unsigned char min_val = 0;
+
+    for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
+        const int ix = x + k;
+        if (ix < 0 || ix > width)
+            continue;
+        min_val = min(min_val, input[y * width + ix]);
+    }
+    output[y * width + x] = min_val;
+}
+
+__kernel void erode_vertical(
+        __global const unsigned char *input,
+        __global unsigned char *output,
+        const unsigned int kernel_size,
+        const unsigned int width,
+        const unsigned int height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int half_kernel_size = kernel_size / 2;
+    unsigned char min_val = 0;
+
+    for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
+        const int iy = y + k;
+        if (iy < 0 || iy > height)
+            continue;
+        min_val = min(min_val, input[iy * width + x]);
+    }
+    output[y * width + x] = min_val;
+}
+)C";
+
 
 }
 

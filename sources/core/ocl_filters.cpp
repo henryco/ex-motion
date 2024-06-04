@@ -21,6 +21,10 @@ namespace xm::ocl {
         dilate_gray_h = ocl_dilate_gray.procedure("dilate_horizontal");
         dilate_gray_v = ocl_dilate_gray.procedure("dilate_vertical");
 
+        ocl_erode_gray.compile(xm::ocl::kernels::ERODE_GRAY_KERNEL);
+        erode_gray_h = ocl_erode_gray.procedure("erode_horizontal");
+        erode_gray_v = ocl_erode_gray.procedure("erode_vertical");
+
         pref_work_group_size = ocl_gaussian_blur.get_pref_size();
     }
 
@@ -134,6 +138,45 @@ namespace xm::ocl {
         }
 
         auto kernel_v = xm::ocl::Kernels::getInstance().dilate_gray_v;
+        {
+            int idx = 0;
+            idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(result_1));
+            idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_2));
+            idx = kernel_v.set(idx, (uint) kernel_size);
+            idx = kernel_v.set(idx, (uint) in.cols);
+            kernel_v.set(idx, (uint) in.rows);
+            if (!kernel_v.run(2, g_size, l_size, true))
+                throw std::runtime_error("opencl kernel error");
+        }
+
+        out = result_2;
+    }
+
+    void erode(const cv::UMat &in, cv::UMat &out, int kernel_size) {
+        if (kernel_size < 3 || kernel_size % 2 == 0)
+            throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
+
+        cv::UMat result_1(in.rows, in.cols, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        cv::UMat result_2(in.rows, in.cols, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+        const size_t pref_size = xm::ocl::Kernels::getInstance().get_pref_work_group_size();
+        size_t g_size[2] = {optimal_work_group_size(in.cols, pref_size),
+                            optimal_work_group_size(in.rows, pref_size)};
+        size_t l_size[2] = {pref_size, pref_size};
+
+        auto kernel_h = xm::ocl::Kernels::getInstance().erode_gray_h;
+        {
+            int idx = 0;
+            idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
+            idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_1));
+            idx = kernel_h.set(idx, (uint) kernel_size);
+            idx = kernel_h.set(idx, (uint) in.cols);
+            kernel_h.set(idx, (uint) in.rows);
+            if (!kernel_h.run(2, g_size, l_size, true))
+                throw std::runtime_error("opencl kernel error");
+        }
+
+        auto kernel_v = xm::ocl::Kernels::getInstance().erode_gray_v;
         {
             int idx = 0;
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(result_1));

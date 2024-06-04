@@ -106,7 +106,7 @@ namespace xm::chroma {
 
         if (mask_iterations > 0) { // morph open (reduce speckles)
             cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
-            cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations + 1);
+            cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
         }
 
         auto mask_inv = cv::UMat();

@@ -25,6 +25,7 @@ namespace xm::chroma {
 
         mask_size = (conf.power + 1) * 256;
         blur_kernel = (conf.blur * 2) + 1;
+        fine_kernel = std::max(3, (conf.fine * 2) + 1);
         mask_iterations = conf.refine;
         bgr_bg_color = conf.color;
 
@@ -104,9 +105,9 @@ namespace xm::chroma {
         auto mask = cv::UMat();
         xm::ocl::bgr_in_range_hls(hls_key_lower, hls_key_upper, img, mask);
 
-        if (mask_iterations > 0) { // morph open (reduce speckles)
-            cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
-            cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), mask_iterations);
+        if (mask_iterations > 0 && fine_kernel >= 3) { // morph open (reduce speckles)
+            xm::ocl::erode(mask, mask, mask_iterations, fine_kernel);
+            xm::ocl::dilate(mask, mask, mask_iterations, fine_kernel);
         }
 
         auto mask_inv = cv::UMat();

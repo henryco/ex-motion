@@ -19,6 +19,7 @@
         "key": "#8c5f67",
         "replace": "#00FF00",
         "refine": 2,
+        "fine": 1,
         "blur": 3,
         "power": 0,
         "range": {

@@ -147,6 +147,7 @@ namespace xm::data::def {
             .range = xm::data::def::hsl(),
             .blur = 0,
             .power = 0,
+            .fine = 0,
             .refine = 0,
             ._present = false
         };
@@ -405,6 +406,7 @@ namespace xm::data {
         c.range = j.value("range", def.range);
         c.blur = j.value("blur", def.blur);
         c.power = j.value("power", def.power);
+        c.refine = j.value("fine", def.fine);
         c.refine = j.value("refine", def.refine);
         c._present = true;
     }

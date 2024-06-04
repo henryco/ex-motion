@@ -208,6 +208,7 @@ namespace xm::data {
         HSL range;
         int blur;
         int power;
+        int fine;
         int refine;
         bool _present;
     } Chroma;

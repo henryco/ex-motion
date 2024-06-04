@@ -72,9 +72,9 @@ namespace xm::ocl {
      */
     void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out);
 
-    void dilate(const cv::UMat &in, cv::UMat &out, int kernel_size = 3);
+    void dilate(const cv::UMat &in, cv::UMat &out, int iterations = 1, int kernel_size = 3);
 
-    void erode(const cv::UMat &in, cv::UMat &out, int kernel_size = 3);
+    void erode(const cv::UMat &in, cv::UMat &out, int iterations = 1, int kernel_size = 3);
 }
 
 #endif //XMOTION_OCL_FILTERS_H

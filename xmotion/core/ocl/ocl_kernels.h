@@ -180,7 +180,7 @@ __kernel void dilate_horizontal(
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
         const int ix = x + k;
-        if (ix < 0 || ix > width)
+        if (ix < 0 || ix >= width)
             continue;
         max_val = max(max_val, input[y * width + ix]);
     }
@@ -205,7 +205,7 @@ __kernel void dilate_vertical(
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
         const int iy = y + k;
-        if (iy < 0 || iy > height)
+        if (iy < 0 || iy >= height)
             continue;
         max_val = max(max_val, input[iy * width + x]);
     }
@@ -228,11 +228,11 @@ __kernel void erode_horizontal(
         return;
 
     const int half_kernel_size = kernel_size / 2;
-    unsigned char min_val = 0;
+    unsigned char min_val = 255;
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
         const int ix = x + k;
-        if (ix < 0 || ix > width)
+        if (ix < 0 || ix >= width)
             continue;
         min_val = min(min_val, input[y * width + ix]);
     }
@@ -253,11 +253,11 @@ __kernel void erode_vertical(
         return;
 
     const int half_kernel_size = kernel_size / 2;
-    unsigned char min_val = 0;
+    unsigned char min_val = 255;
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
         const int iy = y + k;
-        if (iy < 0 || iy > height)
+        if (iy < 0 || iy >= height)
             continue;
         min_val = min(min_val, input[iy * width + x]);
     }

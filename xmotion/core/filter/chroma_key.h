@@ -34,6 +34,15 @@ namespace xm::chroma {
         int refine = 0;
 
         /**
+         * Mask refinement kernel
+         *
+         * \code
+         * (CxC): C = max(3, (fine * 2) + 1)
+         * \endcode
+         */
+        int fine = 0;
+
+        /**
          * Blur intensity,
          * used to calculate gaussian blur kernel
          *
@@ -65,6 +74,7 @@ namespace xm::chroma {
         int mask_iterations = 0;
         int mask_size = 0;
         int blur_kernel = 0;
+        int fine_kernel = 0;
         bool ready = false;
 
     public:

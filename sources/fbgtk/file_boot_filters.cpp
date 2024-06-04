@@ -28,6 +28,7 @@ namespace xm {
             .color = xm::ocv::parse_hex_to_bgr(conf.replace),
             .key = xm::ocv::parse_hex_to_bgr(conf.key),
             .refine = conf.refine,
+            .fine = conf.fine,
             .blur = conf.blur,
             .power = conf.power,
         });

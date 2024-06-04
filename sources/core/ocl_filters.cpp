@@ -113,7 +113,7 @@ namespace xm::ocl {
         out = result;
     }
 
-    void dilate(const cv::UMat &in, cv::UMat &out, int kernel_size) {
+    void dilate(const cv::UMat &in, cv::UMat &out, int iterations, int kernel_size) {
         if (kernel_size < 3 || kernel_size % 2 == 0)
             throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
 
@@ -126,6 +126,8 @@ namespace xm::ocl {
         size_t l_size[2] = {pref_size, pref_size};
 
         auto kernel_h = xm::ocl::Kernels::getInstance().dilate_gray_h;
+        auto kernel_v = xm::ocl::Kernels::getInstance().dilate_gray_v;
+
         {
             int idx = 0;
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
@@ -133,11 +135,8 @@ namespace xm::ocl {
             idx = kernel_h.set(idx, (uint) kernel_size);
             idx = kernel_h.set(idx, (uint) in.cols);
             kernel_h.set(idx, (uint) in.rows);
-            if (!kernel_h.run(2, g_size, l_size, true))
-                throw std::runtime_error("opencl kernel error");
         }
 
-        auto kernel_v = xm::ocl::Kernels::getInstance().dilate_gray_v;
         {
             int idx = 0;
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(result_1));
@@ -145,14 +144,22 @@ namespace xm::ocl {
             idx = kernel_v.set(idx, (uint) kernel_size);
             idx = kernel_v.set(idx, (uint) in.cols);
             kernel_v.set(idx, (uint) in.rows);
+        }
+
+        for (int i = 0; i < iterations; i++) {
+            if (!kernel_h.run(2, g_size, l_size, true))
+                throw std::runtime_error("opencl kernel error");
             if (!kernel_v.run(2, g_size, l_size, true))
                 throw std::runtime_error("opencl kernel error");
+
+            if (i == 0 && iterations > 1)
+                kernel_h.set(0, cv::ocl::KernelArg::PtrReadOnly(result_2));
         }
 
         out = result_2;
     }
 
-    void erode(const cv::UMat &in, cv::UMat &out, int kernel_size) {
+    void erode(const cv::UMat &in, cv::UMat &out, int iterations, int kernel_size) {
         if (kernel_size < 3 || kernel_size % 2 == 0)
             throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
 
@@ -165,6 +172,8 @@ namespace xm::ocl {
         size_t l_size[2] = {pref_size, pref_size};
 
         auto kernel_h = xm::ocl::Kernels::getInstance().erode_gray_h;
+        auto kernel_v = xm::ocl::Kernels::getInstance().erode_gray_v;
+
         {
             int idx = 0;
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
@@ -172,11 +181,8 @@ namespace xm::ocl {
             idx = kernel_h.set(idx, (uint) kernel_size);
             idx = kernel_h.set(idx, (uint) in.cols);
             kernel_h.set(idx, (uint) in.rows);
-            if (!kernel_h.run(2, g_size, l_size, true))
-                throw std::runtime_error("opencl kernel error");
         }
 
-        auto kernel_v = xm::ocl::Kernels::getInstance().erode_gray_v;
         {
             int idx = 0;
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(result_1));
@@ -184,8 +190,16 @@ namespace xm::ocl {
             idx = kernel_v.set(idx, (uint) kernel_size);
             idx = kernel_v.set(idx, (uint) in.cols);
             kernel_v.set(idx, (uint) in.rows);
+        }
+
+        for (int i = 0; i < iterations; i++) {
+            if (!kernel_h.run(2, g_size, l_size, true))
+                throw std::runtime_error("opencl kernel error");
             if (!kernel_v.run(2, g_size, l_size, true))
                 throw std::runtime_error("opencl kernel error");
+
+            if (i == 0 && iterations > 1)
+                kernel_h.set(0, cv::ocl::KernelArg::PtrReadOnly(result_2));
         }
 
         out = result_2;

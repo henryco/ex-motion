@@ -119,8 +119,7 @@ __kernel void in_range_hls (
         __global const unsigned char *upper_hls,
         __global unsigned char *output_gray,
         const unsigned int width,
-        const unsigned int height,
-        const unsigned int wrapped // TODO
+        const unsigned int height
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -128,20 +127,35 @@ __kernel void in_range_hls (
     if (x >= width || y >= height)
         return;
 
+    const bool wrap = lower_hls[0] > upper_hls[0];
     const int idx = y * width + x;
 
     unsigned char hls[3];
     bgr_to_hls(&input_bgr[idx * 3], hls);
 
-    if (hls[0] >= lower_hls[0] &&
-        hls[1] >= lower_hls[1] &&
-        hls[2] >= lower_hls[2] &&
-        hls[0] <= upper_hls[0] &&
-        hls[1] <= upper_hls[1] &&
-        hls[2] <= upper_hls[2]) {
-        output_gray[idx] = 255;
-    } else {
-        output_gray[idx] = 0;
+    if (!wrap) {
+        if (hls[0] >= lower_hls[0] &&
+            hls[1] >= lower_hls[1] &&
+            hls[2] >= lower_hls[2] &&
+            hls[0] <= upper_hls[0] &&
+            hls[1] <= upper_hls[1] &&
+            hls[2] <= upper_hls[2]) {
+            output_gray[idx] = 255;
+        } else {
+            output_gray[idx] = 0;
+        }
+    }
+
+    else {
+        if ((hls[0] >= lower_hls[0] || hls[0] <= upper_hls[0]) &&
+            hls[1] >= lower_hls[1] &&
+            hls[2] >= lower_hls[2] &&
+            hls[1] <= upper_hls[1] &&
+            hls[2] <= upper_hls[2]) {
+            output_gray[idx] = 255;
+        } else {
+            output_gray[idx] = 0;
+        }
     }
 }
 

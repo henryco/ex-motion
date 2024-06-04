@@ -100,9 +100,7 @@ namespace xm::ocl {
             idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(top));
             idx = kernel.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result));
             idx = kernel.set(idx, (uint) in.cols);
-            idx = kernel.set(idx, (uint) in.rows);
-            kernel.set(idx, (uint) 0); // TODO
-
+            kernel.set(idx, (uint) in.rows);
             run_kernel(kernel, in.cols, in.rows);
         }
         out = result;

@@ -12,16 +12,16 @@ namespace xm::chroma {
     void ChromaKey::init(const Conf &conf) {
         const auto key_hls = xm::ocv::bgr_to_hls(conf.key);
 
-        const int bot_h = std::clamp(key_hls[0] - (int) (conf.range[0] * 255.), 0, 255);
-        const int bot_s = std::clamp(key_hls[2] - (int) (conf.range[1] * 255.), 0, 255);
-        const int bot_l = std::clamp(key_hls[1] - (int) (conf.range[2] * 255.), 0, 255);
+        const int bot_h = key_hls[0] - (int) (conf.range[0] * 255.f);
+        const int bot_s = std::clamp(key_hls[2] - (int) (conf.range[1] * 255.f), 0, 255);
+        const int bot_l = std::clamp(key_hls[1] - (int) (conf.range[2] * 255.f), 0, 255);
 
-        const int top_h = std::clamp(key_hls[0] + (int) (conf.range[0] * 255.), 0, 255);
-        const int top_s = std::clamp(key_hls[2] + (int) (conf.range[1] * 255.), 0, 255);
-        const int top_l = std::clamp(key_hls[1] + (int) (conf.range[2] * 255.), 0, 255);
+        const int top_h = key_hls[0] + (int) (conf.range[0] * 255.f);
+        const int top_s = std::clamp(key_hls[2] + (int) (conf.range[1] * 255.f), 0, 255);
+        const int top_l = std::clamp(key_hls[1] + (int) (conf.range[2] * 255.f), 0, 255);
 
-        hls_key_lower = cv::Scalar(bot_h, bot_l, bot_s);
-        hls_key_upper = cv::Scalar(top_h, top_l, top_s);
+        hls_key_lower = cv::Scalar(bot_h < 0 ? 255 + bot_h : bot_h, bot_l, bot_s);
+        hls_key_upper = cv::Scalar(top_h > 255 ? top_h - 255 : top_h, top_l, top_s);
 
         mask_size = (conf.power + 1) * 256;
         blur_kernel = (conf.blur * 2) + 1;

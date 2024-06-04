@@ -3,15 +3,20 @@
 //
 
 #include "../../xmotion/core/ocl/ocl_filters.h"
+#include "../../xmotion/core/ocl/ocl_kernels.h"
 #include <cmath>
 #include <opencv2/imgproc.hpp>
 
 namespace xm::ocl {
 
     Kernels::Kernels() {
-        ocl_gaussian_blur.compile(GAUSSIAN_BLUR_KERNEL);
+        ocl_gaussian_blur.compile(xm::ocl::kernels::GAUSSIAN_BLUR_KERNEL);
         gaussian_blur_h = ocl_gaussian_blur.procedure("gaussian_blur_horizontal");
         gaussian_blur_v = ocl_gaussian_blur.procedure("gaussian_blur_vertical");
+
+        ocl_in_range_hls.compile(xm::ocl::kernels::BGR_HLS_RANGE_KERNEL);
+        in_range_hls = ocl_in_range_hls.procedure("in_range_hls");
+
         pref_work_group_size = ocl_gaussian_blur.get_pref_size();
     }
 
@@ -19,7 +24,24 @@ namespace xm::ocl {
         return pref_work_group_size;
     }
 
+    size_t optimal_work_group_size(int src, size_t size) {
+        if (src % size == 0)
+            return src;
+        return src + size - (src % size);
+    }
+
+    void run_kernel(cv::ocl::Kernel &kernel, int w, int h) {
+        const size_t pref_size = xm::ocl::Kernels::getInstance().get_pref_work_group_size();
+        size_t g_size[2] = {optimal_work_group_size(w, pref_size), optimal_work_group_size(h, pref_size)};
+        size_t l_size[2] = {pref_size, pref_size};
+        if (!kernel.run(2, g_size, l_size, true))
+            throw std::runtime_error("opencl kernel error");
+    }
+
     void blur(const cv::UMat &in, cv::UMat &out, const int kernel_size, float sigma) {
+        if (kernel_size < 3 || kernel_size % 2 == 0)
+            throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
+
         if (sigma <= 0)
             sigma = ((float) kernel_size - 1.f) / 6.f;
 
@@ -64,10 +86,22 @@ namespace xm::ocl {
         out = result;
     }
 
-    size_t optimal_work_group_size(int src, size_t size) {
-        if (src % size == 0)
-            return src;
-        return src + size - (src % size);
+    void bgr_in_range_hls(const cv::UMat &hls_low, const cv::UMat &hls_up, const cv::UMat &in, cv::UMat &out) {
+        cv::UMat result(in.rows, in.cols, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        auto kernel = xm::ocl::Kernels::getInstance().in_range_hls;
+        {
+            int idx = 0;
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(hls_low));
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(hls_up));
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result));
+            idx = kernel.set(idx, (uint) in.cols);
+            idx = kernel.set(idx, (uint) in.rows);
+            kernel.set(idx, (uint) 0); // TODO
+
+            run_kernel(kernel, in.cols, in.rows);
+        }
+        out = result;
     }
 
 }

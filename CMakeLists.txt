@@ -136,6 +136,7 @@ set(SOURCE_FILES
         sources/fbgtk/file_boot_filters.cpp
         sources/core/kernel.cpp
         sources/core/ocl_filters.cpp
+        xmotion/core/ocl/ocl_kernels.h
 )
 
 if (UNIX AND NOT APPLE)

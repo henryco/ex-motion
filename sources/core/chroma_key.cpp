@@ -88,7 +88,7 @@ namespace xm::chroma {
     cv::UMat ChromaKey::filter(const cv::UMat &in) {
         if (!ready)
             throw std::logic_error("Filter is not initialized");
-        const auto t0 = std::chrono::system_clock::now();
+//        const auto t0 = std::chrono::system_clock::now();
 
         cv::UMat mask;
         cv::UMat img;
@@ -113,9 +113,9 @@ namespace xm::chroma {
 
         xm::ocl::apply_mask_with_color(bgr_bg_color, in, mask, out);
 
-        const auto t1 = std::chrono::system_clock::now();
-        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
-        log->info("TG: {}", d);
+//        const auto t1 = std::chrono::system_clock::now();
+//        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
+//        log->info("TG: {}", d);
 
         return out;
     }

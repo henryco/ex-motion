@@ -265,6 +265,43 @@ __kernel void erode_vertical(
 }
 )C";
 
+    inline const std::string MASK_APPLY_BG_FG = R"C(
+__kernel void apply_mask(
+        __global const unsigned char *mask_gray,
+        __global const unsigned char *front_bgr,
+        __global const unsigned char *color_bgr,
+        __global unsigned char *output_bgr,
+        const unsigned int mask_width,
+        const unsigned int mask_height,
+        const unsigned int width,
+        const unsigned int height,
+        const float scale_mask_w, // mask_width / width
+        const float scale_mask_h // mask_height / height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int m_x = x * scale_mask_w;
+    const int m_y = y * scale_mask_h;
+
+    const int idx = y * width + x;
+    const int mps = m_y * mask_height + m_x;
+    const int pix = idx * 3;
+
+    if (mask_gray[mps] > 0) {
+        output_bgr[pix + 0] = color_bgr[0];
+        output_bgr[pix + 1] = color_bgr[1];
+        output_bgr[pix + 2] = color_bgr[2];
+    } else {
+        output_bgr[pix + 0] = front_bgr[pix + 0];
+        output_bgr[pix + 1] = front_bgr[pix + 1];
+        output_bgr[pix + 2] = front_bgr[pix + 2];
+    }
+}
+)C";
 
 }
 

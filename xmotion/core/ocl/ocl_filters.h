@@ -18,6 +18,7 @@ namespace xm::ocl {
         eox::ocl::Kernel ocl_in_range_hls;
         eox::ocl::Kernel ocl_dilate_gray;
         eox::ocl::Kernel ocl_erode_gray;
+        eox::ocl::Kernel ocl_mask_color;
 
         /* ==================== OPENCL KERNELS ==================== */
         cv::ocl::Kernel gaussian_blur_h;
@@ -30,6 +31,8 @@ namespace xm::ocl {
 
         cv::ocl::Kernel erode_gray_h;
         cv::ocl::Kernel erode_gray_v;
+
+        cv::ocl::Kernel mask_color;
 
         static Kernels &getInstance() {
             static Kernels instance;
@@ -75,6 +78,8 @@ namespace xm::ocl {
     void dilate(const cv::UMat &in, cv::UMat &out, int iterations = 1, int kernel_size = 3);
 
     void erode(const cv::UMat &in, cv::UMat &out, int iterations = 1, int kernel_size = 3);
+
+    void apply_mask_with_color(const cv::Scalar &color, const cv::UMat &img, const cv::UMat &mask, cv::UMat &out);
 }
 
 #endif //XMOTION_OCL_FILTERS_H

@@ -25,6 +25,9 @@ namespace xm::ocl {
         erode_gray_h = ocl_erode_gray.procedure("erode_horizontal");
         erode_gray_v = ocl_erode_gray.procedure("erode_vertical");
 
+        ocl_mask_color.compile(xm::ocl::kernels::MASK_APPLY_BG_FG);
+        mask_color = ocl_mask_color.procedure("apply_mask");
+
         pref_work_group_size = ocl_gaussian_blur.get_pref_size();
     }
 
@@ -202,6 +205,29 @@ namespace xm::ocl {
         }
 
         out = result_2;
+    }
+
+    void apply_mask_with_color(const cv::Scalar &color, const cv::UMat &img, const cv::UMat &mask, cv::UMat &out) {
+        cv::UMat result(img.rows, img.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+        cv::UMat clr(1, 1, CV_8UC3, color, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+        auto kernel = xm::ocl::Kernels::getInstance().mask_color;
+        {
+            int idx = 0;
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(mask));
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(img));
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrReadOnly(clr));
+            idx = kernel.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result));
+            idx = kernel.set(idx, (uint) mask.cols);
+            idx = kernel.set(idx, (uint) mask.rows);
+            idx = kernel.set(idx, (uint) img.cols);
+            idx = kernel.set(idx, (uint) img.rows);
+            idx = kernel.set(idx, (float) mask.cols / (float) img.cols);
+            kernel.set(idx, (float) mask.rows / (float) img.rows);
+            run_kernel(kernel, img.cols, img.rows);
+        }
+
+        out = result;
     }
 
 }

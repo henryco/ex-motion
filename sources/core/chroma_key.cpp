@@ -90,19 +90,20 @@ namespace xm::chroma {
             throw std::logic_error("Filter is not initialized");
         const auto t0 = std::chrono::system_clock::now();
 
+        cv::UMat mask;
         cv::UMat img;
         cv::UMat out;
 
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (float) n_w / ratio;
-        cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_LINEAR);
+
+        cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_NEAREST);
 
         if (blur_kernel >= 3 && blur_kernel <= 31) {
             xm::ocl::blur(img, img, blur_kernel);
         }
 
-        auto mask = cv::UMat();
         xm::ocl::bgr_in_range_hls(hls_key_lower, hls_key_upper, img, mask);
 
         if (mask_iterations > 0 && fine_kernel >= 3) { // morph open (reduce speckles)
@@ -110,27 +111,12 @@ namespace xm::chroma {
             xm::ocl::dilate(mask, mask, mask_iterations, fine_kernel);
         }
 
-        auto mask_inv = cv::UMat();
-        cv::bitwise_not(mask, mask_inv);
-
-        cv::resize(mask, mask, in.size());
-        cv::resize(mask_inv, mask_inv, in.size());
-
-        auto bgr_front = cv::UMat();
-        cv::bitwise_and(in, in, bgr_front, mask_inv);
-
-        auto bgr_back = cv::UMat();
-        cv::UMat background(in.rows, in.cols, in.type(), bgr_bg_color, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-
-        cv::bitwise_and(background, background, bgr_back, mask);
-
-        cv::add(bgr_front, bgr_back, out);
+        xm::ocl::apply_mask_with_color(bgr_bg_color, in, mask, out);
 
         const auto t1 = std::chrono::system_clock::now();
         const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
         log->info("TG: {}", d);
 
-//        cv::cvtColor(mask, out, cv::COLOR_GRAY2BGR);
         return out;
     }
 

@@ -211,6 +211,9 @@ namespace xm::ocl {
         cv::UMat result(img.rows, img.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
         cv::UMat clr(1, 1, CV_8UC3, color, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
+        const float s_w = (float) mask.cols / (float) img.cols;
+        const float s_h = (float) mask.rows / (float) img.rows;
+
         auto kernel = xm::ocl::Kernels::getInstance().mask_color;
         {
             int idx = 0;
@@ -222,8 +225,8 @@ namespace xm::ocl {
             idx = kernel.set(idx, (uint) mask.rows);
             idx = kernel.set(idx, (uint) img.cols);
             idx = kernel.set(idx, (uint) img.rows);
-            idx = kernel.set(idx, (float) mask.cols / (float) img.cols);
-            kernel.set(idx, (float) mask.rows / (float) img.rows);
+            idx = kernel.set(idx, (float) s_w);
+            kernel.set(idx, (float) s_h);
             run_kernel(kernel, img.cols, img.rows);
         }
 

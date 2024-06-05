@@ -288,7 +288,7 @@ __kernel void apply_mask(
     const int m_y = y * scale_mask_h;
 
     const int idx = y * width + x;
-    const int mps = m_y * mask_height + m_x;
+    const int mps = m_y * mask_width + m_x;
     const int pix = idx * 3;
 
     if (mask_gray[mps] > 0) {

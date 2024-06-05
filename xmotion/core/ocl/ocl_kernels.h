@@ -86,7 +86,7 @@ inline void bgr_to_hls(
         const unsigned char *in_bgr,
         unsigned char *out_hls
 ) {
-    // https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html
+    // https://docs.opencv.org/4.9.0/de/d25/imgproc_color_conversions.html
     const float b = ((float) in_bgr[0]) / 255.f;
     const float g = ((float) in_bgr[1]) / 255.f;
     const float r = ((float) in_bgr[2]) / 255.f;

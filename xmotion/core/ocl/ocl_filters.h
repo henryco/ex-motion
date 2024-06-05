@@ -55,7 +55,23 @@ namespace xm::ocl {
 
     void run_kernel(cv::ocl::Kernel &kernel, int w, int h);
 
-    size_t optimal_work_group_size(int src, size_t size);
+    /**
+     * Computes optimal work group size for given problem dimension.
+     *
+     * \code
+size_t g_size[2] = {
+     optimal_work_group_size(img_w, 32),
+     optimal_work_group_size(img_h, 32)
+};
+size_t l_size[2] = {32, 32};
+kernel.run(2, g_size, l_size, true)
+     * \endcode
+     *
+     * @param src global dimension size, ie. image dimension - width or height
+     * @param pref_work_group_size preferred work group size for given GPU (often 32 or 64)
+     * @return optimal global size
+     */
+    size_t optimal_work_group_size(int src, size_t pref_work_group_size);
 
     /**
      * Gaussian blur with separate horizontal and vertical pass
@@ -67,7 +83,7 @@ namespace xm::ocl {
     void blur(const cv::UMat &in, cv::UMat &out, int kernel_size = 5, float sigma = 0.f);
 
     /**
-     * Returns mask that satisfies HLS range
+     * Returns mask that satisfies HLS range. This function supports HUE wrapping (!)
      * @param hls_low lowest value for pixel in HLS color space uchar
      * @param hls_up  highest value for pixel in HLS color space uchar
      * @param in input image in BGR color space (3 channels uchar)
@@ -75,10 +91,32 @@ namespace xm::ocl {
      */
     void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out);
 
+    /**
+     * Dilation filter (conv)
+     * @param in input image in grayscale (single channel uchar)
+     * @param out output image in grayscale (single channel uchar)
+     * @param iterations numbers of iterations to apply this filter
+     * @param kernel_size kernel size for filter
+     */
     void dilate(const cv::UMat &in, cv::UMat &out, int iterations = 1, int kernel_size = 3);
 
+    /**
+     * Erosion filter (conv)
+     * @param in input image in grayscale (single channel uchar)
+     * @param out output image in grayscale (single channel uchar)
+     * @param iterations numbers of iterations to apply this filter
+     * @param kernel_size kernel size for filter
+     */
     void erode(const cv::UMat &in, cv::UMat &out, int iterations = 1, int kernel_size = 3);
 
+    /**
+     * Apply mask to image, places for which mask value != 0 would be replaced with given color.
+     * @note Useful for chroma-keys
+     * @param color color which is used when mask value != 0
+     * @param img source image in BGR color space (3 channels uchar)
+     * @param mask grayscale mask (single channel uchar), can be smaller or larger than image (!)
+     * @param out output image in BGR color space (3 channels uchar)
+     */
     void apply_mask_with_color(const cv::Scalar &color, const cv::UMat &img, const cv::UMat &mask, cv::UMat &out);
 }
 

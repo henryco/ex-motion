@@ -51,7 +51,7 @@ void xm::Pose::init_undistort_maps() {
     }
 }
 
-xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::UMat> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
@@ -67,12 +67,12 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
         return *this;
     }
 
-    std::vector<cv::Mat> input_frames;
+    std::vector<cv::UMat> input_frames;
     input_frames.reserve(_frames.size());
     for (int i = 0; i < _frames.size(); i++)
         input_frames.push_back(undistorted(_frames.at(i), i));
 
-    std::vector<cv::Mat> output_frames;
+    std::vector<cv::UMat> output_frames;
     std::vector<std::future<eox::dnn::PosePipelineOutput>> features;
     enqueue_inference(features, input_frames, output_frames);
 
@@ -147,11 +147,11 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::Mat> &_frames) {
     return *this;
 }
 
-cv::Mat xm::Pose::undistorted(const cv::Mat &in, int index) const {
+cv::UMat xm::Pose::undistorted(const cv::UMat &in, int index) const {
     if (!config.devices.at(index).undistort_source)
         return in;
     const auto &maps = remap_maps.at(index);
-    cv::Mat undistorted;
+    cv::UMat undistorted;
     cv::remap(in, undistorted, maps.map1, maps.map2, cv::INTER_LINEAR);
     return std::move(undistorted);
 }
@@ -177,7 +177,7 @@ std::vector<cv::Point2f> xm::Pose::undistorted(const eox::dnn::Landmark *in, int
     return points;
 }
 
-void xm::Pose::points_from_epi_line(const cv::Mat &img, const cv::Vec3f &line, cv::Point2i &p1, cv::Point2i &p2) const {
+void xm::Pose::points_from_epi_line(const cv::UMat &img, const cv::Vec3f &line, cv::Point2i &p1, cv::Point2i &p2) const {
     const float a = line[0];
     const float b = line[1];
     const float c = line[2];

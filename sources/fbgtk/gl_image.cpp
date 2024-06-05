@@ -2,17 +2,21 @@
 // Created by henryco on 11/21/23.
 //
 
-#include <iostream>
+#include "../../xmotion/fbgtk/gtk/gl_image.h"
+#include "../../xmotion/core/dnn/net/dnn_cl_utils.h"
 #include <utility>
 #include <gtkmm/eventbox.h>
 #include <opencv2/imgproc.hpp>
-#include "../../xmotion/fbgtk/gtk/gl_image.h"
+#include <CL/cl.h>
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "ConstantFunctionResult"
 namespace eox::xgtk {
 
     GLImage::~GLImage() {
         textures.clear();
         glAreas.clear();
+        u_frames.clear();
         frames.clear();
     }
 
@@ -30,14 +34,30 @@ namespace eox::xgtk {
                 return false;
             }
 
-            if (frames.empty()) {
+            if (frames.empty() && u_frames.empty()) {
                 return true;
             }
 
             glClearColor(.0f, .0f, .0f, .0f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            texture->render(xogl::Image(frames[num].data, width, height, format));
+            if (!frames.empty()) {
+                texture->setImage(xogl::Image(frames[num].data, width, height, format));
+                texture->render();
+            }
+
+            else if (!u_frames.empty()) {
+
+                // TODO FIXME: TEMPORARY SOLUTION BECAUSE OpenCL <-> OpenGL interop on linux nvidia devices is GARBAGE!
+
+                cv::Mat temp;
+                u_frames[num].copyTo(temp);
+                texture->setImage(xogl::Image(temp.data, width, height, format));
+
+                // TODO FIXME: TEMPORARY SOLUTION BECAUSE OpenCL <-> OpenGL interop on linux nvidia devices is GARBAGE!
+
+                texture->render();
+            }
 
             return true;
         };
@@ -62,15 +82,20 @@ namespace eox::xgtk {
 
     void GLImage::setFrames(const std::vector<cv::Mat>& _frames) {
         frames.clear();
+        u_frames.clear();
         for (const auto& item: _frames) {
             // YES, we NEED TO FIT IT
             frames.push_back(fitSize(item));
         }
     }
 
-    void GLImage::update(const std::vector<cv::Mat>& _frames) {
-        setFrames(_frames);
-        update();
+    void GLImage::setFrames(const std::vector<cv::UMat> &_frames) {
+        frames.clear();
+        u_frames.clear();
+        for (const auto& item: _frames) {
+            // YES, we NEED TO FIT IT
+            u_frames.push_back(fitSize(item));
+        }
     }
 
     void GLImage::init(size_t number, int _width, int _height, std::vector<std::string> ids, GLenum _format) {
@@ -106,6 +131,9 @@ namespace eox::xgtk {
 
         frames.clear();
         frames.reserve(_number);
+
+        u_frames.clear();
+        u_frames.resize(_number);
 
         widgets.clear();
         for (const auto &item: this->get_children()) {
@@ -252,9 +280,7 @@ namespace eox::xgtk {
 
     cv::Mat GLImage::fitSize(const cv::Mat &in) const {
         if (in.cols == width && in.rows == height) {
-            cv::Mat out;
-            in.copyTo(out);
-            return out;
+            return in;
         }
 
         const float scale = std::min((float) width / (float) in.cols, (float) height / (float) in.rows);
@@ -265,9 +291,26 @@ namespace eox::xgtk {
 
         cv::Mat blob = cv::Mat::zeros(cv::Size(width, height), CV_8UC3);
         cv::Mat roi = blob(cv::Rect((int) s_x, (int) s_y, (int) n_w, (int) n_h));
-        cv::resize(in, roi, cv::Size((int) n_w, (int) n_h),
-                   0, 0, cv::INTER_NEAREST);
+        cv::resize(in, roi, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_NEAREST);
+        return blob;
+    }
+
+    cv::UMat GLImage::fitSize(const cv::UMat &in) const {
+        if (in.cols == width && in.rows == height) {
+            return in;
+        }
+
+        const float scale = std::min((float) width / (float) in.cols, (float) height / (float) in.rows);
+        const float n_w = (float) in.cols * scale;
+        const float n_h = (float) in.rows * scale;
+        const float s_x = ((float) width - n_w) / 2.f;
+        const float s_y = ((float) height - n_h) / 2.f;
+
+        cv::UMat blob = cv::UMat::zeros(cv::Size(width, height), CV_8UC3);
+        cv::UMat roi = blob(cv::Rect((int) s_x, (int) s_y, (int) n_w, (int) n_h));
+        cv::resize(in, roi, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_NEAREST);
         return blob;
     }
 
 } // xgtk
+#pragma clang diagnostic pop

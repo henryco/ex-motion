@@ -3,6 +3,7 @@
 //
 
 #include "../../xmotion/core/dnn/net/pose_detector.h"
+#include "../../xmotion/core/dnn/net/dnn_cl_utils.h"
 
 #include <filesystem>
 #include <opencv2/imgproc.hpp>
@@ -41,11 +42,23 @@ namespace eox::dnn {
         ));
     }
 
-    std::vector<eox::dnn::DetectedPose> PoseDetector::inference(cv::InputArray &frame) {
-        auto ref = frame.getMat();
-        view_w = ref.cols;
-        view_h = ref.rows;
-        cv::Mat blob = eox::dnn::convert_to_squared_blob(ref, get_in_w(), get_in_h(), true);
+    std::vector<DetectedPose> PoseDetector::inference(const cv::UMat &frame) {
+        view_w = frame.cols;
+        view_h = frame.rows;
+        cv::UMat blob = eox::dnn::convert_to_squared_blob(frame, get_in_w(), get_in_h(), true);
+
+        with_box = true;
+        init();
+        input_ocl(0, xm::dnn::ocl::getOpenCLBufferFromUMat(frame), get_in_w() * get_in_h() * 3 * 4);
+        const auto result = inference();
+        with_box = false;
+        return result;
+    }
+
+    std::vector<eox::dnn::DetectedPose> PoseDetector::inference(const cv::Mat &frame) {
+        view_w = frame.cols;
+        view_h = frame.rows;
+        cv::Mat blob = eox::dnn::convert_to_squared_blob(frame, get_in_w(), get_in_h(), true);
 
         with_box = true;
         const auto result = inference(blob.ptr<float>(0));
@@ -54,13 +67,17 @@ namespace eox::dnn {
     }
 
     std::vector<DetectedPose> PoseDetector::inference(const float *frame) {
+        init();
+        input(0, frame, get_in_w() * get_in_h() * 3 * 4);
+        return inference();
+    }
+
+    std::vector<DetectedPose> PoseDetector::inference() {
         if (!with_box) {
             view_w = get_in_w();
             view_h = get_in_h();
         }
 
-        init();
-        input(0, frame, get_in_w() * get_in_h() * 3 * 4);
         invoke();
 
         // detection output

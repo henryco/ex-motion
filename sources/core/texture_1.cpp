@@ -4,6 +4,9 @@
 
 #include "../../xmotion/core/ogl/texture_1.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "readability-make-member-function-const"
+
 namespace xogl {
 
     const std::string Texture1::vertexShaderSource = R"glsl(
@@ -56,10 +59,12 @@ namespace xogl {
                  height(height),
                  format(format) {}
 
-    void Texture1::render(Image image) {
-        setImage(image);
-        render();
-    }
+    Image::Image(GLsizei width,
+                 GLsizei height,
+                 GLenum format) :
+            width(width),
+            height(height),
+            format(format) {}
 
     void Texture1::init() {
 
@@ -121,7 +126,7 @@ namespace xogl {
         tex_loc = glGetUniformLocation(shader.getHandle(), "textureSampler");
     }
 
-    void Texture1::setImage(const Image &image) const {
+    void Texture1::setImage(const Image &image) {
         if (!image.getPointer()) {
             return;
         }
@@ -137,6 +142,21 @@ namespace xogl {
                      GL_UNSIGNED_BYTE,
                      image.getPointer());
         glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+    GLuint Texture1::createImage(const Image &image) {
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D,
+                     0,
+                     GL_RGB,
+                     image.getWidth(),
+                     image.getHeight(),
+                     0,
+                     image.getFormat(),
+                     GL_UNSIGNED_BYTE,
+                     NULL);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return texture;
     }
 
     void Texture1::render() {
@@ -172,4 +192,13 @@ namespace xogl {
     tex_loc(ref.tex_loc),
     shader(std::move(ref.shader)) {}
 
+    GLint Texture1::getTexLoc() const {
+        return tex_loc;
+    }
+
+    GLuint Texture1::getTexture() const {
+        return texture;
+    }
+
 } // xogl
+#pragma clang diagnostic pop

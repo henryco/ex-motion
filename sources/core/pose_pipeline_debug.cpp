@@ -6,7 +6,7 @@
 
 namespace eox::dnn {
 
-    void PosePipeline::drawJoints(const eox::dnn::Landmark landmarks[39], cv::Mat &output) const {
+    void PosePipeline::drawJoints(const eox::dnn::Landmark landmarks[39], cv::UMat &output) const {
         for (auto bone: eox::dnn::body_joints) {
             const auto &start = landmarks[bone[0]];
             const auto &end = landmarks[bone[1]];
@@ -19,7 +19,7 @@ namespace eox::dnn {
         }
     }
 
-    void PosePipeline::drawLandmarks(const eox::dnn::Landmark landmarks[39], const eox::dnn::Coord3d ws3d[39], cv::Mat &output) const {
+    void PosePipeline::drawLandmarks(const eox::dnn::Landmark landmarks[39], const eox::dnn::Coord3d ws3d[39], cv::UMat &output) const {
         for (int i = 38; i >= 0; i--) {
             const auto point = landmarks[i];
             const auto visibility = eox::dnn::sigmoid(point.v);
@@ -68,7 +68,7 @@ namespace eox::dnn {
         }
     }
 
-    void PosePipeline::drawRoi(cv::Mat &output) const {
+    void PosePipeline::drawRoi(cv::UMat &output) const {
         const auto p1 = cv::Point(roi.x, roi.y);
         const auto p2 = cv::Point(roi.x + roi.w, roi.y + roi.h);
         cv::Scalar color(255, 255, 255);
@@ -78,7 +78,7 @@ namespace eox::dnn {
         cv::line(output, p2, cv::Point(roi.x + roi.w, roi.y), color, 2);
     }
 
-    void PosePipeline::printMetadata(cv::Mat &output, PoseTimePoint t0, int rec_n) const {
+    void PosePipeline::printMetadata(cv::UMat &output, PoseTimePoint t0, int rec_n) const {
         const auto t1 = std::chrono::high_resolution_clock::now();
         const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
 

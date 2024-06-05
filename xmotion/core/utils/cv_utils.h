@@ -12,8 +12,8 @@ namespace xm::ocv {
 
     using Squares = struct {
         std::vector<cv::Point2f> corners;
-        cv::Mat original;
-        cv::Mat result;
+        cv::UMat original;
+        cv::UMat result;
         bool found;
     };
 
@@ -40,7 +40,7 @@ namespace xm::ocv {
      * \note The copy operation can consume a significant amount of memory if working with large images.
      */
     cv::Mat img_copy(const cv::Mat &image);
-
+    cv::UMat img_copy(const cv::UMat &image);
 
     /**
      * @brief Copies an image with an optional color space conversion.
@@ -56,6 +56,7 @@ namespace xm::ocv {
      * @return The copied image with color space conversion.
      */
     cv::Mat img_copy(const cv::Mat &image, int color_space_conv_type);
+    cv::UMat img_copy(const cv::UMat &image, int color_space_conv_type);
 
 
     /**
@@ -74,6 +75,10 @@ namespace xm::ocv {
      */
     cv::Mat img_copy(
             const cv::Mat &image,
+            int color_space_conv_type,
+            int matrix_data_type);
+    cv::UMat img_copy(
+            const cv::UMat &image,
             int color_space_conv_type,
             int matrix_data_type);
 
@@ -98,7 +103,7 @@ namespace xm::ocv {
      *         whether the corners were found successfully.
      */
     Squares find_squares(
-            const cv::Mat &image,
+            const cv::UMat &image,
             uint columns,
             uint rows,
             bool sb = false,

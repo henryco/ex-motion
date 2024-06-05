@@ -111,7 +111,7 @@ namespace xm {
 
     private:
         std::vector<std::vector<cv::Point2f>> image_points{};
-        std::vector<cv::Mat> images{};
+        std::vector<cv::UMat> images{};
         xm::calib::Result results{};
         xm::calib::Initial config;
         eox::utils::Timer timer{};
@@ -122,7 +122,7 @@ namespace xm {
     public:
         void init(const xm::calib::Initial &params);
 
-        Calibration &proceed(float delta, const std::vector<cv::Mat> &frames) override;
+        Calibration &proceed(float delta, const std::vector<cv::UMat> &frames) override;
 
         bool is_active() const override;
 
@@ -130,14 +130,14 @@ namespace xm {
 
         void stop() override;
 
-        const std::vector<cv::Mat> &frames() const override;
+        const std::vector<cv::UMat> &frames() const override;
 
         void debug(bool _debug) override;
 
         const xm::calib::Result &result() const;
 
     protected:
-        bool capture_squares(const cv::Mat &frame);
+        bool capture_squares(const cv::UMat &frame);
 
         void calibrate();
 

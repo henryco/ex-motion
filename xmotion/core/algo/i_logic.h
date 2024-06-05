@@ -18,9 +18,9 @@ namespace xm {
     public:
         virtual ~Logic() = default;
 
-        virtual Logic& proceed(float delta, const std::vector<cv::Mat> &frames) = 0;
+        virtual Logic& proceed(float delta, const std::vector<cv::UMat> &frames) = 0;
 
-        virtual const std::vector<cv::Mat> &frames() const = 0;
+        virtual const std::vector<cv::UMat> &frames() const = 0;
 
         virtual bool is_active() const = 0;
 

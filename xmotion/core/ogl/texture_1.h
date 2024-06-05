@@ -23,6 +23,7 @@ namespace xogl {
 
     public:
         Image(unsigned char* pointer, GLsizei width, GLsizei height, GLenum format = GL_RGB);
+        Image(GLsizei width, GLsizei height, GLenum format = GL_RGB);
         [[nodiscard]] unsigned char* getPointer() const;
         [[nodiscard]] GLsizei getWidth() const;
         [[nodiscard]] GLsizei getHeight() const;
@@ -56,10 +57,18 @@ namespace xogl {
         ~Texture1();
 
         void init();
+
         void render();
-        void render(Image image);
-        void setImage(const Image &image) const;
+
+        void setImage(const Image &image);
+
+        GLuint createImage(const Image &image);
+
         void cleanup();
+
+        [[nodiscard]] GLuint getTexture() const;
+
+        [[nodiscard]] GLint getTexLoc() const;
     };
 
 } // xogl

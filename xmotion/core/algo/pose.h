@@ -250,7 +250,7 @@ namespace xm {
 
     private:
         std::vector<xm::nview::ReMaps> remap_maps{};
-        std::vector<cv::Mat> images{};
+        std::vector<cv::UMat> images{};
         xm::nview::Result results{};
         xm::nview::Initial config{};
 
@@ -271,7 +271,7 @@ namespace xm {
 
         void init(const xm::nview::Initial &params);
 
-        Pose &proceed(float delta, const std::vector<cv::Mat> &frames) override;
+        Pose &proceed(float delta, const std::vector<cv::UMat> &frames) override;
 
         bool is_active() const override;
 
@@ -279,7 +279,7 @@ namespace xm {
 
         void stop() override;
 
-        const std::vector<cv::Mat> &frames() const override;
+        const std::vector<cv::UMat> &frames() const override;
 
         void debug(bool _debug) override;
 
@@ -289,20 +289,20 @@ namespace xm {
         void release();
 
         void enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &io_features,
-                               const std::vector<cv::Mat> & in_frames,
-                               std::vector<cv::Mat> & out_frames
+                               const std::vector<cv::UMat> & in_frames,
+                               std::vector<cv::UMat> & out_frames
         );
 
         static bool resolve_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &in_features,
                                       std::vector<eox::dnn::PosePipelineOutput> &out_results);
 
-        cv::Mat undistorted(const cv::Mat &in, int index) const;
+        cv::UMat undistorted(const cv::UMat &in, int index) const;
 
         std::vector<cv::Point2f> undistorted(const eox::dnn::Landmark *in, int num, int index) const;
 
         cv::Vec3f epi_line_from_point(const cv::Point2f &point, int idx_point, int idx_line) const;
 
-        void points_from_epi_line(const cv::Mat &img, const cv::Vec3f &line, cv::Point2i &p1, cv::Point2i &p2) const;
+        void points_from_epi_line(const cv::UMat &img, const cv::Vec3f &line, cv::Point2i &p1, cv::Point2i &p2) const;
 
         void init_undistort_maps();
 

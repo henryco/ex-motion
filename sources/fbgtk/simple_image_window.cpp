@@ -13,6 +13,11 @@ namespace xm {
         });
     }
 
+    void SimpleImageWindow::refresh(const std::vector<cv::UMat> &_frames) {
+        glImage.setFrames(_frames);
+        refresh(true);
+    }
+
     void SimpleImageWindow::refresh(const std::vector<cv::Mat>& _frames) {
         glImage.setFrames(_frames);
         refresh(true);

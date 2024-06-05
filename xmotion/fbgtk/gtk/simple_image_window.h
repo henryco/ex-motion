@@ -33,6 +33,8 @@ namespace xm {
 
         void refresh(const std::vector<cv::Mat>& _frames);
 
+        void refresh(const std::vector<cv::UMat>& _frames);
+
         void refresh(bool redraw = true);
 
         void init(int width, int height, const std::vector<std::string>& names, bool vertical = false);

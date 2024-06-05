@@ -15,26 +15,27 @@ void xm::DummyCamera::open(const xm::SCamProp &prop) {
     auto cpy = prop; // TODO: RECALL HOW COPY/REFERENCES work in c++
     properties.push_back(cpy);
 
-    auto image = cv::imread(std::filesystem::path("../media/pose2.png").string());
+    cv::UMat image;
+    cv::imread(std::filesystem::path("../media/pose2.png").string()).copyTo(image);
     cv::resize(image, image, cv::Size(prop.width, prop.height));
     src = image;
 }
 
-std::map<std::string, cv::Mat> xm::DummyCamera::captureWithName() {
-    std::map<std::string, cv::Mat> map;
+std::map<std::string, cv::UMat> xm::DummyCamera::captureWithName() {
+    std::map<std::string, cv::UMat> map;
     for (auto & prop : properties) {
-        cv::Mat cpy;
+        cv::UMat cpy;
         src.copyTo(cpy);
         map[prop.name] = cpy;
     }
     return map;
 }
 
-std::vector<cv::Mat> xm::DummyCamera::capture() {
-    std::vector<cv::Mat> images;
+std::vector<cv::UMat> xm::DummyCamera::capture() {
+    std::vector<cv::UMat> images;
     images.reserve(properties.size());
     for (int i = 0; i < properties.size(); i++) {
-        cv::Mat cpy;
+        cv::UMat cpy;
         src.copyTo(cpy);
         images.push_back(cpy);
     }

@@ -53,7 +53,7 @@ namespace xm {
         captures[prop.device_id] = cv::VideoCapture(idx, api, params);
     }
 
-    std::map<std::string, cv::Mat> StereoCamera::captureWithName() {
+    std::map<std::string, cv::UMat> StereoCamera::captureWithName() {
         if (captures.empty()) {
             log->warn("StereoCamera is not initialized");
             return {};
@@ -87,18 +87,18 @@ namespace xm {
             }
         }
 
-        std::vector<std::future<std::pair<std::string, cv::Mat>>> results;
+        std::vector<std::future<std::pair<std::string, cv::UMat>>> results;
         results.reserve(captures.size());
         for (auto &capture: captures) {
-            results.push_back(executor->execute<std::pair<std::string, cv::Mat>>(
-                    [&capture]() mutable -> std::pair<std::string, cv::Mat> {
-                        cv::Mat frame;
+            results.push_back(executor->execute<std::pair<std::string, cv::UMat>>(
+                    [&capture]() mutable -> std::pair<std::string, cv::UMat> {
+                        cv::UMat frame;
                         capture.second.retrieve(frame);
                         return {capture.first, frame};
                     }));
         }
 
-        std::map<std::string, cv::Mat> frames;
+        std::map<std::string, cv::UMat> frames;
         for (auto &future: results) {
             auto pair = future.get();
             if (pair.second.empty()) {
@@ -109,10 +109,10 @@ namespace xm {
         }
 
         // CROPPING AND FLIPPING
-        std::map<std::string, cv::Mat> images;
+        std::map<std::string, cv::UMat> images;
         for (const auto &property: properties) {
             const auto &src = frames.at(property.device_id);
-            cv::Mat dst;
+            cv::UMat dst;
 
             // whole frame
             if (property.x == 0 && property.y == 0 && property.w == property.width && property.h == property.height)
@@ -123,26 +123,26 @@ namespace xm {
 
             // flip x and y
             if (property.flip_x && property.flip_y) {
-                cv::Mat tmp;
+                cv::UMat tmp;
                 cv::flip(dst, tmp, -1);
                 tmp.copyTo(dst);
             }
             // flip x
             else if (property.flip_x && !property.flip_y) {
-                cv::Mat tmp;
+                cv::UMat tmp;
                 cv::flip(dst, dst, 1);
                 tmp.copyTo(dst);
             }
             // flip y
             else if (property.flip_y && !property.flip_x) {
-                cv::Mat tmp;
+                cv::UMat tmp;
                 cv::flip(dst, dst, 0);
                 tmp.copyTo(dst);
             }
 
             // Rotate 90* clockwise
             if (property.rotate) {
-                cv::Mat tmp;
+                cv::UMat tmp;
                 cv::rotate(dst, tmp, cv::ROTATE_90_CLOCKWISE);
                 tmp.copyTo(dst);
             }
@@ -153,9 +153,9 @@ namespace xm {
         return images;
     }
 
-    std::vector<cv::Mat> StereoCamera::capture() {
+    std::vector<cv::UMat> StereoCamera::capture() {
         const auto results = captureWithName();
-        std::vector<cv::Mat> vec;
+        std::vector<cv::UMat> vec;
         vec.reserve(properties.size());
         for (const auto &prop: properties)
             vec.push_back(results.at(prop.name));

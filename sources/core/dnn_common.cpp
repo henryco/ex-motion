@@ -17,6 +17,45 @@ namespace eox::dnn {
         return convert_to_squared_blob(in, size, size, keep_aspect_ratio);
     }
 
+    cv::UMat convert_to_squared_blob(const cv::UMat &in, int size, bool keep_aspect_ratio) {
+        return convert_to_squared_blob(in, size, size, keep_aspect_ratio);
+    }
+
+    cv::UMat convert_to_squared_blob(const cv::UMat &in, int width, int height, bool keep_aspect_ratio) {
+        cv::UMat blob;
+
+        if (in.cols != width || in.rows != height) {
+
+            if (keep_aspect_ratio) {
+                // letterbox, preserving aspect ratio
+
+                const float scale = std::min((float) width / (float) in.cols, (float) height / (float) in.rows);
+                const float n_w = (float) in.cols * scale;
+                const float n_h = (float) in.rows * scale;
+
+                const float s_x = ((float) width - n_w) / 2.f;
+                const float s_y = ((float) height - n_h) / 2.f;
+
+                blob = cv::UMat::zeros(cv::Size(width, height), CV_8UC3);
+                cv::UMat roi = blob(cv::Rect((int) s_x, (int) s_y, (int) n_w, (int) n_h));
+                cv::resize(in, roi, cv::Size((int) n_w, (int) n_h),
+                           0, 0, cv::INTER_CUBIC);
+            } else {
+                // resize without preserving aspect ratio
+                cv::resize(in, blob, cv::Size(width, height),
+                           0, 0, cv::INTER_CUBIC);
+            }
+
+        } else {
+            in.copyTo(blob);
+        }
+
+        cv::cvtColor(blob, blob, cv::COLOR_BGR2RGB);
+        blob.convertTo(blob, CV_32FC3, 1.0 / 255.);
+
+        return blob;
+    }
+
     cv::Mat convert_to_squared_blob(const cv::Mat &in, int width, int height, bool keep_aspect_ratio) {
         cv::Mat blob;
 
@@ -70,6 +109,18 @@ namespace eox::dnn {
                 .top = (float) s_y,
                 .bottom = (float) s_y,
         };
+    }
+
+    cv::UMat remove_paddings(const cv::UMat &in, int width, int height) {
+        const auto paddings = get_letterbox_paddings(
+                width, height, in.cols, in.rows
+        );
+        return in(cv::Rect(
+                (int) paddings.left,
+                (int) paddings.top,
+                (int) ((float) width - (paddings.left + paddings.right)),
+                (int) ((float) height - (paddings.top + paddings.bottom))
+        ));
     }
 
     cv::Mat remove_paddings(const cv::Mat &in, int width, int height) {

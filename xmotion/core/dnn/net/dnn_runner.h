@@ -12,6 +12,9 @@
 #include "tensorflow/lite/delegates/gpu/delegate_options.h"
 #include "tensorflow/lite/delegates/gpu/delegate.h"
 
+#include <CL/cl.h>
+#include <opencv2/core/ocl.hpp>
+
 namespace eox::dnn {
 
     template <typename T>
@@ -30,6 +33,11 @@ namespace eox::dnn {
             std::memcpy(input, frame_ptr, size); // 256*256*3*4 = 786432
         }
 
+        void input_ocl(int index, cl_mem ptr, size_t size) {
+            interpreter->input_tensor(index)->data.data = reinterpret_cast<float*>(ptr);
+            interpreter->input_tensor(index)->bytes = size;
+        }
+
         void invoke() {
             if (interpreter->Invoke() != kTfLiteOk)
                 throw std::runtime_error("Failed to invoke interpreter");
@@ -38,6 +46,11 @@ namespace eox::dnn {
         virtual void initialize() {
 
         }
+
+        /**
+         * @param frame pointer to row-oriented 1D array representation of RGB image
+         */
+        virtual T inference() = 0;
 
     public:
 
@@ -55,11 +68,6 @@ namespace eox::dnn {
             ref.gpu_delegate = nullptr;
             ref.initialized = false;
         }
-
-        /**
-         * @param frame pointer to row-oriented 1D array representation of RGB image
-         */
-        virtual T inference(const float *frame) = 0;
 
         virtual ~DnnRunner() {
             if (gpu_delegate) {
@@ -97,6 +105,7 @@ namespace eox::dnn {
             }
 
             TfLiteGpuDelegateOptionsV2 options = TfLiteGpuDelegateOptionsV2Default();
+            options.inference_preference = TFLITE_GPU_INFERENCE_PREFERENCE_SUSTAINED_SPEED;
             gpu_delegate = TfLiteGpuDelegateV2Create(&options);
 
             if (interpreter->ModifyGraphWithDelegate(gpu_delegate) != kTfLiteOk) {

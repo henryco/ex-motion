@@ -70,9 +70,9 @@ namespace xm {
 
         virtual void open(const SCamProp &prop);
 
-        virtual std::map<std::string, cv::Mat> captureWithName();
+        virtual std::map<std::string, cv::UMat> captureWithName();
 
-        virtual std::vector<cv::Mat> capture();
+        virtual std::vector<cv::UMat> capture();
 
         virtual void setControl(const std::string &device_id, uint prop_id, int value);
 

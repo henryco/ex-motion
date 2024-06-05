@@ -7,8 +7,8 @@
 
 
 void xm::Pose::enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &io_features,
-                                 const std::vector<cv::Mat> &in_frames,
-                                 std::vector<cv::Mat> &out_frames) {
+                                 const std::vector<cv::UMat> &in_frames,
+                                 std::vector<cv::UMat> &out_frames) {
     io_features.reserve(config.devices.size());
     out_frames.reserve(config.devices.size());
 
@@ -25,7 +25,7 @@ void xm::Pose::enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineO
             io_features.push_back(
                     workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
                             [i, frame, &pose, &out_frames]() -> eox::dnn::PosePipelineOutput {
-                                cv::Mat segmented;
+                                cv::UMat segmented;
                                 return pose->pass(frame, segmented, out_frames.at(i));
                             }));
         } else {
@@ -33,7 +33,7 @@ void xm::Pose::enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineO
             io_features.push_back(
                     workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
                             [i, frame, &pose]() -> eox::dnn::PosePipelineOutput {
-                                cv::Mat segmented;
+                                cv::UMat segmented;
                                 return pose->pass(frame, segmented);
                             }));
         }
@@ -109,7 +109,7 @@ bool xm::Pose::is_active() const {
     return active;
 }
 
-const std::vector<cv::Mat> &xm::Pose::frames() const {
+const std::vector<cv::UMat> &xm::Pose::frames() const {
     return images;
 }
 

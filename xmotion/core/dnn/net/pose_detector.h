@@ -100,12 +100,16 @@ namespace eox::dnn {
     protected:
         void initialize() override;
 
+        std::vector<DetectedPose> inference() override;
+
     public:
         std::string get_model_file() override;
 
-        std::vector<DetectedPose> inference(const float *frame) override;
+        std::vector<DetectedPose> inference(const float *frame);
 
-        std::vector<DetectedPose> inference(cv::InputArray &frame);
+        std::vector<DetectedPose> inference(const cv::Mat &frame);
+
+        std::vector<DetectedPose> inference(const cv::UMat &frame);
 
         void setRoiScale(float scale);
 

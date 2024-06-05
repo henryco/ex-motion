@@ -33,9 +33,27 @@ namespace xm::ocv {
         return std::move(output);
     }
 
-    Squares find_squares(const cv::Mat &image, uint columns, uint rows, bool sb, int flag) {
-        cv::Mat gray = img_copy(image, cv::COLOR_BGR2GRAY);
-        cv::Mat copy = img_copy(image);
+    cv::UMat img_copy(const cv::UMat &image) {
+        cv::UMat output;
+        image.copyTo(output);
+        return output;
+    }
+
+    cv::UMat img_copy(const cv::UMat &image, int color_space_conv_type) {
+        cv::UMat output;
+        cv::cvtColor(image, output, color_space_conv_type);
+        return std::move(output);
+    }
+
+    cv::UMat img_copy(const cv::UMat &image, int color_space_conv_type, int matrix_data_type) {
+        cv::UMat output;
+        image.convertTo(output, matrix_data_type);
+        return img_copy(output, color_space_conv_type);
+    }
+
+    Squares find_squares(const cv::UMat &image, uint columns, uint rows, bool sb, int flag) {
+        cv::UMat gray = img_copy(image, cv::COLOR_BGR2GRAY);
+        cv::UMat copy = img_copy(image);
 
         const auto size = cv::Size((int) columns - 1, (int) rows - 1);
 

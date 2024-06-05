@@ -17,7 +17,7 @@ void xm::ChainCalibration::init(const xm::chain::Initial &params) {
     image_points.reserve(total_pairs);
 }
 
-xm::ChainCalibration &xm::ChainCalibration::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+xm::ChainCalibration &xm::ChainCalibration::proceed(float delta, const std::vector<cv::UMat> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
@@ -37,7 +37,7 @@ xm::ChainCalibration &xm::ChainCalibration::proceed(float delta, const std::vect
     return *this;
 }
 
-bool xm::ChainCalibration::capture_squares(const std::vector<cv::Mat> &_frames) {
+bool xm::ChainCalibration::capture_squares(const std::vector<cv::UMat> &_frames) {
 
     if (current_pair >= total_pairs) {
         results.current = 0;
@@ -58,7 +58,7 @@ bool xm::ChainCalibration::capture_squares(const std::vector<cv::Mat> &_frames) 
 
         {
             // graying-out inactive frames
-            cv::Mat gray;
+            cv::UMat gray;
             cv::cvtColor(_frames[i], gray, cv::COLOR_BGR2GRAY);
             cv::cvtColor(gray, gray, cv::COLOR_GRAY2BGR);
             images.push_back(gray);
@@ -284,7 +284,7 @@ bool xm::ChainCalibration::is_active() const {
     return active;
 }
 
-const std::vector<cv::Mat> &xm::ChainCalibration::frames() const {
+const std::vector<cv::UMat> &xm::ChainCalibration::frames() const {
     return images;
 }
 

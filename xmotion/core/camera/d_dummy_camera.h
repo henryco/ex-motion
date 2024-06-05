@@ -11,7 +11,7 @@ namespace xm {
     class DummyCamera : public xm::StereoCamera {
 
     protected:
-        cv::Mat src;
+        cv::UMat src;
 
     public:
         void release() override;
@@ -20,9 +20,9 @@ namespace xm {
 
         void open(const SCamProp &prop) override;
 
-        std::map<std::string, cv::Mat> captureWithName() override;
+        std::map<std::string, cv::UMat> captureWithName() override;
 
-        std::vector<cv::Mat> capture() override;
+        std::vector<cv::UMat> capture() override;
 
         void setControl(const std::string &device_id, uint prop_id, int value) override;
 

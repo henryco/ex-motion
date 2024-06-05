@@ -167,11 +167,11 @@ namespace eox::dnn {
     public:
         void init();
 
-        PosePipelineOutput pass(const cv::Mat &frame);
+        PosePipelineOutput pass(const cv::UMat &frame);
 
-        PosePipelineOutput pass(const cv::Mat &frame, cv::Mat &segmented);
+        PosePipelineOutput pass(const cv::UMat &frame, cv::UMat &segmented);
 
-        PosePipelineOutput pass(const cv::Mat &frame, cv::Mat &segmented, cv::Mat &debug);
+        PosePipelineOutput pass(const cv::UMat &frame, cv::UMat &segmented, cv::UMat &debug);
 
         void setBodyModel(eox::dnn::pose::Model model);
 
@@ -243,21 +243,21 @@ namespace eox::dnn {
 
     protected:
         [[nodiscard]] PosePipelineOutput inference(
-                const cv::Mat &frame,
-                cv::Mat &segmented,
-                cv::Mat *debug,
+                const cv::UMat &frame,
+                cv::UMat &segmented,
+                cv::UMat *debug,
                 PoseTimePoint t0,
                 int rec_n);
 
-        void performSegmentation(float segmentation_array[128 * 128], const cv::Mat &frame, cv::Mat &out) const;
+        void performSegmentation(float segmentation_array[128 * 128], const cv::UMat &frame, cv::UMat &out) const;
 
-        void drawJoints(const eox::dnn::Landmark landmarks[39], cv::Mat &output) const;
+        void drawJoints(const eox::dnn::Landmark landmarks[39], cv::UMat &output) const;
 
-        void drawLandmarks(const eox::dnn::Landmark landmarks[39], const eox::dnn::Coord3d ws3d[39], cv::Mat &output) const;
+        void drawLandmarks(const eox::dnn::Landmark landmarks[39], const eox::dnn::Coord3d ws3d[39], cv::UMat &output) const;
 
-        void drawRoi(cv::Mat &output) const;
+        void drawRoi(cv::UMat &output) const;
 
-        void printMetadata(cv::Mat &output, PoseTimePoint t0, int rec_n) const;
+        void printMetadata(cv::UMat &output, PoseTimePoint t0, int rec_n) const;
 
         [[nodiscard]] std::chrono::nanoseconds timestamp() const;
     };

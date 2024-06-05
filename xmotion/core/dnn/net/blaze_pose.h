@@ -89,18 +89,25 @@ namespace eox::dnn {
     protected:
         std::string get_model_file() override;
 
+        PoseOutput inference() override;
+
     public:
         bool SEGMENTATION = true;
 
         /**
          * @param frame BGR image (ie. cv::Mat of CV_8UC3)
          */
-        PoseOutput inference(cv::InputArray &frame);
+        PoseOutput inference(const cv::Mat &frame);
+
+        /**
+         * @param frame BGR image (ie. cv::Mat of CV_8UC3)
+         */
+        PoseOutput inference(const cv::UMat &frame);
 
         /**
          * @param frame pointer to 256x256 row-oriented 1D array representation of 256x256x3 RGB image
          */
-        PoseOutput inference(const float *frame) override;
+        PoseOutput inference(const float *frame);
 
         void set_segmentation(bool segmentation);
 

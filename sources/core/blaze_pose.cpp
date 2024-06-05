@@ -3,6 +3,7 @@
 //
 
 #include "../../xmotion/core/dnn/net/blaze_pose.h"
+#include "../../xmotion/core/dnn/net/dnn_cl_utils.h"
 #include <filesystem>
 
 namespace eox::dnn {
@@ -35,13 +36,27 @@ namespace eox::dnn {
 //            "Identity_1:0", // 603 | 4: [1, 1]             pose flag (score)
 //    };
 
-    PoseOutput BlazePose::inference(cv::InputArray &frame) {
-        auto ref = frame.getMat();
-        view_w = ref.cols;
-        view_h = ref.rows;
+    PoseOutput BlazePose::inference(const cv::UMat &frame) {
+        view_w = frame.cols;
+        view_h = frame.rows;
 
         // [1, 3, 256, 256] or [1, 3, 128, 128]
-        cv::Mat blob = eox::dnn::convert_to_squared_blob(ref, get_in_w(), get_in_h(), true);
+        cv::UMat blob = eox::dnn::convert_to_squared_blob(frame, get_in_w(), get_in_h(), true);
+
+        with_box = true;
+        init();
+        input_ocl(0, xm::dnn::ocl::getOpenCLBufferFromUMat(frame), get_in_w() * get_in_h() * 3 * 4);
+        const auto result = inference();
+        with_box = false;
+        return result;
+    }
+
+    PoseOutput BlazePose::inference(const cv::Mat &frame) {
+        view_w = frame.cols;
+        view_h = frame.rows;
+
+        // [1, 3, 256, 256] or [1, 3, 128, 128]
+        cv::Mat blob = eox::dnn::convert_to_squared_blob(frame, get_in_w(), get_in_h(), true);
 
         with_box = true;
         const auto result = inference(blob.ptr<float>(0));
@@ -51,15 +66,18 @@ namespace eox::dnn {
     }
 
     PoseOutput BlazePose::inference(const float *frame) {
+        init();
+        input(0, frame, get_in_w() * get_in_h() * 3 * 4);
+        return inference();
+    }
+
+    PoseOutput BlazePose::inference() {
         if (!with_box) {
             view_w = get_in_w();
             view_h = get_in_h();
         }
 
-        init();
-        input(0, frame, get_in_w() * get_in_h() * 3 * 4);
         invoke();
-
         PoseOutput output;
 
         const auto presence = *pose_flag_1x1(*interpreter, model_type);

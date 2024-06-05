@@ -11,8 +11,10 @@ namespace xm {
     void UpdatedBoot::print_ocv_ocl_stats() {
         std::cout << "OpenCV version: " << CV_VERSION << '\n';
 
-        if (!cv::ocl::useOpenCL())
+        if (!cv::ocl::useOpenCL()) {
             std::cerr << "OpenCL is not available..." << '\n';
+            std::exit(1);
+        }
 
         else {
             cv::ocl::Context context;

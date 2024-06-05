@@ -93,6 +93,8 @@ set(SOURCE_FILES
         xmotion/core/filter/chroma_key.h
         xmotion/core/ocl/kernel.h
         xmotion/core/ocl/ocl_filters.h
+        xmotion/core/ocl/ocl_kernels.h
+        xmotion/core/dnn/net/dnn_cl_utils.h
 
         sources/core/velocity_filter.cpp
         sources/core/low_pass_filter.cpp
@@ -136,7 +138,7 @@ set(SOURCE_FILES
         sources/fbgtk/file_boot_filters.cpp
         sources/core/kernel.cpp
         sources/core/ocl_filters.cpp
-        xmotion/core/ocl/ocl_kernels.h
+        sources/core/dnn_cl_utils.cpp
 )
 
 if (UNIX AND NOT APPLE)
@@ -168,6 +170,7 @@ if (WIN32)
     target_link_libraries(${PROJECT_NAME}
             mfplat mf mfreadwrite
             PRIVATE ${OpenCV_LIBS}
+            PRIVATE ${OpenCL_LIBRARIES}
             PRIVATE ${GTKMM_LIBRARIES}
             PRIVATE OpenGL::GL
             PRIVATE spdlog::spdlog
@@ -192,6 +195,7 @@ elseif (UNIX AND NOT APPLE)
             PRIVATE ${OpenCV_LIBS}
             PRIVATE ${GTKMM_LIBRARIES}
             PRIVATE OpenGL::GL
+            PRIVATE ${OpenCL_LIBRARIES}
             PRIVATE spdlog::spdlog
             PRIVATE ${V4L2_LIBRARIES}
             PRIVATE nlohmann_json::nlohmann_json

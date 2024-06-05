@@ -12,7 +12,7 @@ void xm::Calibration::init(const xm::calib::Initial &params) {
     config = params;
 }
 
-bool xm::Calibration::capture_squares(const cv::Mat &frame) {
+bool xm::Calibration::capture_squares(const cv::UMat &frame) {
     const auto squares = xm::ocv::find_squares(
             frame,
             config.columns,
@@ -171,7 +171,7 @@ void xm::Calibration::calibrate() {
     results.remains_cap = 0;
 }
 
-xm::Calibration &xm::Calibration::proceed(float delta, const std::vector<cv::Mat> &_frames) {
+xm::Calibration &xm::Calibration::proceed(float delta, const std::vector<cv::UMat> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
@@ -239,7 +239,7 @@ bool xm::Calibration::is_active() const {
     return active;
 }
 
-const std::vector<cv::Mat> &xm::Calibration::frames() const {
+const std::vector<cv::UMat> &xm::Calibration::frames() const {
     return images;
 }
 

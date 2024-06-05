@@ -17,21 +17,21 @@ namespace eox::dnn {
         prediction = false;
     }
 
-    PosePipelineOutput PosePipeline::pass(const cv::Mat &frame) {
-        cv::Mat segmentation;
+    PosePipelineOutput PosePipeline::pass(const cv::UMat &frame) {
+        cv::UMat segmentation;
         return pass(frame, segmentation);
     }
 
-    PosePipelineOutput PosePipeline::pass(const cv::Mat &frame, cv::Mat &segmented) {
+    PosePipelineOutput PosePipeline::pass(const cv::UMat &frame, cv::UMat &segmented) {
         return inference(frame, segmented, nullptr, std::chrono::system_clock::now(), 1);
     }
 
-    PosePipelineOutput PosePipeline::pass(const cv::Mat &frame, cv::Mat &segmented, cv::Mat &debug) {
+    PosePipelineOutput PosePipeline::pass(const cv::UMat &frame, cv::UMat &segmented, cv::UMat &debug) {
         const auto n = std::chrono::high_resolution_clock::now();
         return inference(frame, segmented, &debug, std::chrono::system_clock::now(), 1);
     }
 
-    PosePipelineOutput PosePipeline::inference(const cv::Mat &frame, cv::Mat &segmented, cv::Mat *debug, PoseTimePoint t0, int rec_n) {
+    PosePipelineOutput PosePipeline::inference(const cv::UMat &frame, cv::UMat &segmented, cv::UMat *debug, PoseTimePoint t0, int rec_n) {
         const bool first_run = !initialized;
 
         if (!initialized) {
@@ -45,7 +45,7 @@ namespace eox::dnn {
         PosePipelineOutput output;
         output.present = false;
         output.score = 0.f;
-        cv::Mat source;
+        cv::UMat source;
 
         if (prediction) {
             _pose_score = 0;
@@ -131,7 +131,7 @@ namespace eox::dnn {
         }
 
         // Looking for body landmarks
-        auto result = pose.inference(source);
+        auto result = pose.inference(source); // TODO
         const auto now = timestamp();
 
         // for debug purpose
@@ -360,7 +360,7 @@ namespace eox::dnn {
         return output;
     }
 
-    void PosePipeline::performSegmentation(float *segmentation_array, const cv::Mat &frame, cv::Mat &out) const {
+    void PosePipeline::performSegmentation(float *segmentation_array, const cv::UMat &frame, cv::UMat &out) const {
         if (!segmentation()) {
             out = frame;
             return;
@@ -376,7 +376,7 @@ namespace eox::dnn {
         segmentation_mask.convertTo(segmentation_mask, CV_8UC1);
 
         cv::Mat segmentation_frame = cv::Mat::zeros(frame.rows, frame.cols, CV_8UC1);
-        segmentation_mask.copyTo(segmentation_frame(cv::Rect(roi.x, roi.y, roi.w, roi.h)));
+        segmentation_mask.copyTo(segmentation_frame(cv::Rect(roi.x, roi.y, roi.w, roi.h))); // TODO
 
         cv::bitwise_and(frame, frame, out, segmentation_frame);
     }

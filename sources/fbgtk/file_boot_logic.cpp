@@ -15,21 +15,11 @@ namespace xm {
     void FileBoot::update(float delta, float _, float fps) {
         window->setFps((int) fps);
 
-        std::vector<cv::Mat> frames = camera->capture();
+        std::vector<cv::UMat> frames = camera->capture();
         for (auto &frame: frames) {
-            cv::UMat u_frame;
-            frame.copyTo(u_frame);
-            for (const auto &filter: filters) {
-                u_frame = filter->filter(u_frame);
-            }
-            u_frame.copyTo(frame);
+            for (const auto &filter: filters)
+                frame = filter->filter(frame);
         }
-
-//        std::vector<cv::Mat> frames = camera->capture();
-//        for (auto &frame: frames) {
-//            for (const auto &filter: filters)
-//                frame = filter->filter(frame);
-//        }
 
         logic->proceed(delta, frames);
         process_results();

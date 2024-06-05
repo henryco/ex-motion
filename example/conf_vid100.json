@@ -2,7 +2,11 @@
   "type": "calibration",
 
   "gui": {
-    "scale": 0.85
+    "scale": 1.5,
+    "frame": {
+      "w": 360,
+      "h": 640
+    }
   },
 
   "misc": {

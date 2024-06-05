@@ -86,7 +86,14 @@ namespace xm {
         params_window = std::make_unique<xm::CamParamsWindow>();
         params_window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
         params_window->set_visible(false);
-        params_window->set_size_request(-1, (int) (gui.scale * (float) cam.capture[0].region.h));
+
+        const auto a1 = (int) (gui.scale * (float) cam.capture[0].region.h);
+        const auto a2 = window->get_screen()->get_height();
+        const auto a3 = window->get_screen()->get_width();
+        const auto a4 = std::min(a2, a3);
+        const auto a5 = std::min(a1, a4);
+
+        params_window->set_size_request(-1, std::min(a5, 500));
 
         params_window->onUpdate([this](const std::string &device_id, uint id, int value) -> int {
             return on_camera_update(device_id, id, value);

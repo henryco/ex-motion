@@ -16,7 +16,7 @@ __kernel void gaussian_blur_horizontal(
         __global unsigned char *output,
         const unsigned int width,
         const unsigned int height,
-        const unsigned int kernel_size
+        const int half_kernel_size
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -24,7 +24,6 @@ __kernel void gaussian_blur_horizontal(
     if (x >= width || y >= height)
         return;
 
-    const int half_kernel_size = kernel_size / 2;
     float sum[3] = {0.f, 0.f, 0.f};
     float weight_sum = 0.f;
 
@@ -51,7 +50,7 @@ __kernel void gaussian_blur_vertical(
         __global unsigned char *output,
         const unsigned int width,
         const unsigned int height,
-        const unsigned int kernel_size
+        const int half_kernel_size
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -59,7 +58,6 @@ __kernel void gaussian_blur_vertical(
     if (x >= width || y >= height)
         return;
 
-    const int half_kernel_size = kernel_size / 2;
     float sum[3] = {0.f, 0.f, 0.f};
     float weight_sum = 0.f;
 
@@ -165,7 +163,7 @@ __kernel void in_range_hls(
 __kernel void dilate_horizontal(
         __global const unsigned char *input,
         __global unsigned char *output,
-        const unsigned int kernel_size,
+        const int half_kernel_size,
         const unsigned int width,
         const unsigned int height
 ) {
@@ -175,7 +173,6 @@ __kernel void dilate_horizontal(
     if (x >= width || y >= height)
         return;
 
-    const int half_kernel_size = kernel_size / 2;
     unsigned char max_val = 0;
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
@@ -190,7 +187,7 @@ __kernel void dilate_horizontal(
 __kernel void dilate_vertical(
         __global const unsigned char *input,
         __global unsigned char *output,
-        const unsigned int kernel_size,
+        const int half_kernel_size,
         const unsigned int width,
         const unsigned int height
 ) {
@@ -200,7 +197,6 @@ __kernel void dilate_vertical(
     if (x >= width || y >= height)
         return;
 
-    const int half_kernel_size = kernel_size / 2;
     unsigned char max_val = 0;
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
@@ -217,7 +213,7 @@ __kernel void dilate_vertical(
 __kernel void erode_horizontal(
         __global const unsigned char *input,
         __global unsigned char *output,
-        const unsigned int kernel_size,
+        const int half_kernel_size,
         const unsigned int width,
         const unsigned int height
 ) {
@@ -227,7 +223,6 @@ __kernel void erode_horizontal(
     if (x >= width || y >= height)
         return;
 
-    const int half_kernel_size = kernel_size / 2;
     unsigned char min_val = 255;
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
@@ -242,7 +237,7 @@ __kernel void erode_horizontal(
 __kernel void erode_vertical(
         __global const unsigned char *input,
         __global unsigned char *output,
-        const unsigned int kernel_size,
+        const int half_kernel_size,
         const unsigned int width,
         const unsigned int height
 ) {
@@ -252,7 +247,6 @@ __kernel void erode_vertical(
     if (x >= width || y >= height)
         return;
 
-    const int half_kernel_size = kernel_size / 2;
     unsigned char min_val = 255;
 
     for (int k = -half_kernel_size; k <= half_kernel_size; k++) {
@@ -275,8 +269,8 @@ __kernel void apply_mask(
         const unsigned int mask_height,
         const unsigned int width,
         const unsigned int height,
-        const float scale_mask_w, // mask_width / width
-        const float scale_mask_h // mask_height / height
+        const float scale_mask_w,
+        const float scale_mask_h
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);

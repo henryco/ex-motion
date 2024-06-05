@@ -75,7 +75,7 @@ namespace xm::ocl {
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_1));
             idx = kernel_h.set(idx, (uint) in.cols);
             idx = kernel_h.set(idx, (uint) in.rows);
-            kernel_h.set(idx, (uint) kernel_size);
+            kernel_h.set(idx, (int) (kernel_size / 2));
             if (!kernel_h.run(2, g_size, l_size, true))
                 throw std::runtime_error("opencl kernel error");
         }
@@ -88,7 +88,7 @@ namespace xm::ocl {
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_2));
             idx = kernel_v.set(idx, (uint) in.cols);
             idx = kernel_v.set(idx, (uint) in.rows);
-            kernel_v.set(idx, (uint) kernel_size);
+            kernel_v.set(idx, (int) (kernel_size / 2));
             if (!kernel_v.run(2, g_size, l_size, true))
                 throw std::runtime_error("opencl kernel error");
         }
@@ -134,7 +134,7 @@ namespace xm::ocl {
             int idx = 0;
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_1));
-            idx = kernel_h.set(idx, (uint) kernel_size);
+            idx = kernel_h.set(idx, (int) (kernel_size / 2));
             idx = kernel_h.set(idx, (uint) in.cols);
             kernel_h.set(idx, (uint) in.rows);
         }
@@ -143,7 +143,7 @@ namespace xm::ocl {
             int idx = 0;
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(result_1));
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_2));
-            idx = kernel_v.set(idx, (uint) kernel_size);
+            idx = kernel_v.set(idx, (int) (kernel_size / 2));
             idx = kernel_v.set(idx, (uint) in.cols);
             kernel_v.set(idx, (uint) in.rows);
         }
@@ -180,7 +180,7 @@ namespace xm::ocl {
             int idx = 0;
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrReadOnly(in));
             idx = kernel_h.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_1));
-            idx = kernel_h.set(idx, (uint) kernel_size);
+            idx = kernel_h.set(idx, (int) (kernel_size / 2));
             idx = kernel_h.set(idx, (uint) in.cols);
             kernel_h.set(idx, (uint) in.rows);
         }
@@ -189,7 +189,7 @@ namespace xm::ocl {
             int idx = 0;
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrReadOnly(result_1));
             idx = kernel_v.set(idx, cv::ocl::KernelArg::PtrWriteOnly(result_2));
-            idx = kernel_v.set(idx, (uint) kernel_size);
+            idx = kernel_v.set(idx, (int) (kernel_size / 2));
             idx = kernel_v.set(idx, (uint) in.cols);
             kernel_v.set(idx, (uint) in.rows);
         }

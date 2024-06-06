@@ -7,11 +7,7 @@
 namespace eox::ocl {
 
     void Kernel::compile(const std::string& _kernel, const std::string& flags) {
-        cv::ocl::Context context;
-        if (!context.create(cv::ocl::Device::TYPE_GPU)) {
-            log->error("Failed to create OpenCL context.");
-            throw std::runtime_error("Failed to create OpenCL context.");
-        }
+//        auto context = cv::ocl::Context::getDefault(true);
 
         std::string err_msg;
         source = std::make_unique<cv::ocl::ProgramSource>(_kernel);

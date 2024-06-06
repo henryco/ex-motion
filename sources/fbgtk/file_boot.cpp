@@ -24,11 +24,18 @@ namespace xm {
                 argv,
                 "dev.tindersamurai.xmotion"
         );
+
         prepare_filters();
         prepare_logic();
         prepare_cam();
         prepare_gui();
-        start_loop(300);
+
+        thread_pool = std::make_shared<eox::util::ThreadPool>();
+//        thread_pool->start(config.camera.capture.size());
+        thread_pool->start(10);
+        camera->setThreadPool(thread_pool);
+
+        start_loop(999);
         return app->run(*window);
     }
 

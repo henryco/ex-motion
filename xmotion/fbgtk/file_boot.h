@@ -24,6 +24,7 @@ namespace xm {
                 spdlog::stdout_color_mt("file_boot");
 
     protected:
+        std::shared_ptr<eox::util::ThreadPool> thread_pool;
         std::vector<std::unique_ptr<xm::Filter>> filters;
 
         std::unique_ptr<xm::CamParamsWindow> params_window;
@@ -44,6 +45,8 @@ namespace xm {
         void open_project(const char *argv) override;
 
     private:
+        void filter_frames(std::vector<cv::UMat> &frames_in_out);
+
         void prepare_gui();
 
         void prepare_cam();

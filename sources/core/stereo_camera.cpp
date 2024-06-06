@@ -130,13 +130,13 @@ namespace xm {
             // flip x
             else if (property.flip_x && !property.flip_y) {
                 cv::UMat tmp;
-                cv::flip(dst, dst, 1);
+                cv::flip(dst, tmp, 1);
                 tmp.copyTo(dst);
             }
             // flip y
             else if (property.flip_y && !property.flip_x) {
                 cv::UMat tmp;
-                cv::flip(dst, dst, 0);
+                cv::flip(dst, tmp, 0);
                 tmp.copyTo(dst);
             }
 

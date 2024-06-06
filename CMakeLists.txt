@@ -139,6 +139,8 @@ set(SOURCE_FILES
         sources/core/kernel.cpp
         sources/core/ocl_filters.cpp
         sources/core/dnn_cl_utils.cpp
+        xmotion/core/ocl/cl_kernel.h
+        sources/core/cl_kernel.cpp
 )
 
 if (UNIX AND NOT APPLE)

@@ -38,7 +38,7 @@ namespace xm::chroma {
     cv::Mat ChromaKey::filter(const cv::Mat &in) {
         if (!ready)
             throw std::logic_error("Filter is not initialized");
-        const auto t0 = std::chrono::system_clock::now();
+//        const auto t0 = std::chrono::system_clock::now();
 
         cv::Mat img;
 
@@ -78,8 +78,8 @@ namespace xm::chroma {
         cv::Mat out;
         cv::add(bgr_front, bgr_back, out);
 
-        const auto t1 = std::chrono::system_clock::now();
-        const auto d = duration_cast<std::chrono::milliseconds>((t1 - t0)).count();
+//        const auto t1 = std::chrono::system_clock::now();
+//        const auto d = duration_cast<std::chrono::milliseconds>((t1 - t0)).count();
 
 //        log->info("TC: {}", d);
         return out;

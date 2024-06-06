@@ -7,37 +7,60 @@
 
 #include <opencv2/core/mat.hpp>
 #include <string>
+#include <spdlog/logger.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <CL/cl.h>
+
 #include "kernel.h"
 
 namespace xm::ocl {
 
+    namespace aux {
+        extern std::mutex GLOBAL_MUTEX;
+        inline static bool DEBUG = false;
+    }
+
     class Kernels {
+        static inline const auto log =
+                spdlog::stdout_color_mt("ocl_filters");
     public:
-        /* =================== KERNELS WRAPPERS =================== */
-        eox::ocl::Kernel ocl_gaussian_blur;
-        eox::ocl::Kernel ocl_in_range_hls;
-        eox::ocl::Kernel ocl_dilate_gray;
-        eox::ocl::Kernel ocl_erode_gray;
-        eox::ocl::Kernel ocl_mask_color;
+        std::string thread_id;
+
+        bool svm_supported;
+        cl_device_id device_id;
+        cl_context ocl_context;
+        cl_command_queue ocl_command_queue;
 
         /* ==================== OPENCL KERNELS ==================== */
-        cv::ocl::Kernel gaussian_blur_h;
-        cv::ocl::Kernel gaussian_blur_v;
+        cl_program program_blur;
+        cl_kernel kernel_blur_h;
+        cl_kernel kernel_blur_v;
+        size_t blur_local_size;
 
-        cv::ocl::Kernel in_range_hls;
+        cl_program program_dilate;
+        cl_kernel kernel_dilate_h;
+        cl_kernel kernel_dilate_v;
+        size_t dilate_local_size;
 
-        cv::ocl::Kernel dilate_gray_h;
-        cv::ocl::Kernel dilate_gray_v;
+        cl_program program_erode;
+        cl_kernel kernel_erode_h;
+        cl_kernel kernel_erode_v;
+        size_t erode_local_size;
 
-        cv::ocl::Kernel erode_gray_h;
-        cv::ocl::Kernel erode_gray_v;
+        cl_program program_range_hls;
+        cl_kernel kernel_range_hls;
+        size_t range_hls_local_size;
 
-        cv::ocl::Kernel mask_color;
+        cl_program program_mask_apply;
+        cl_kernel kernel_mask_apply;
+        size_t mask_apply_local_size;
 
-        static Kernels &getInstance() {
-            static Kernels instance;
-            return instance;
+        static Kernels &instance() {
+            static thread_local Kernels obj;
+            return obj;
         }
+
+        void print_time(cl_ulong time, const std::string &name) const;
 
         Kernels(const Kernels &) = delete;
 
@@ -45,33 +68,11 @@ namespace xm::ocl {
 
         Kernels &operator=(const Kernels &) = delete;
 
-        [[nodiscard]] size_t get_pref_work_group_size() const;
+        ~Kernels();
 
     private:
-        size_t pref_work_group_size = 0;
-
         Kernels();
     };
-
-    void run_kernel(cv::ocl::Kernel &kernel, int w, int h);
-
-    /**
-     * Computes optimal work group size for given problem dimension.
-     *
-     * \code
-size_t g_size[2] = {
-     optimal_work_group_size(img_w, 32),
-     optimal_work_group_size(img_h, 32)
-};
-size_t l_size[2] = {32, 32};
-kernel.run(2, g_size, l_size, true)
-     * \endcode
-     *
-     * @param src global dimension size, ie. image dimension - width or height
-     * @param pref_work_group_size preferred work group size for given GPU (often 32 or 64)
-     * @return optimal global size
-     */
-    size_t optimal_work_group_size(int src, size_t pref_work_group_size);
 
     /**
      * Gaussian blur with separate horizontal and vertical pass

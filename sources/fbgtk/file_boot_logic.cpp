@@ -16,10 +16,7 @@ namespace xm {
         window->setFps((int) fps);
 
         std::vector<cv::UMat> frames = camera->capture();
-        for (auto &frame: frames) {
-            for (const auto &filter: filters)
-                frame = filter->filter(frame);
-        }
+        filter_frames(frames);
 
         logic->proceed(delta, frames);
         process_results();

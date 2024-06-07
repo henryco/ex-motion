@@ -12,6 +12,7 @@
 #include <CL/cl.h>
 
 #include "kernel.h"
+#include "cl_kernel.h"
 
 namespace xm::ocl {
 
@@ -55,12 +56,15 @@ namespace xm::ocl {
         cl_kernel kernel_mask_apply;
         size_t mask_apply_local_size;
 
+        /* ==================== CACHE KERNELS ==================== */
+        cv::UMat blur_kernels[(31 - 1) / 2];
+
         static Kernels &instance() {
             static thread_local Kernels obj;
             return obj;
         }
 
-        void print_time(cl_ulong time, const std::string &name) const;
+        void print_time(cl_ulong time, const std::string &name, bool force = false) const;
 
         Kernels(const Kernels &) = delete;
 
@@ -79,9 +83,8 @@ namespace xm::ocl {
      * @param in input image in BGR color space (3 channels uchar)
      * @param out output image in BGR color space (3 channels uchar)
      * @param kernel_size should be odd: 3, 5, 7, 9 ... etc
-     * @param sigma if 0 calculated from kernel
      */
-    void blur(const cv::UMat &in, cv::UMat &out, int kernel_size = 5, float sigma = 0.f);
+    void blur(const cv::UMat &in, cv::UMat &out, int kernel_size = 5);
 
     /**
      * Returns mask that satisfies HLS range. This function supports HUE wrapping (!)

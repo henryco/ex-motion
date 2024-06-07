@@ -117,7 +117,7 @@ namespace xm::chroma {
 //        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
 //        log->info("TG: {}", d);
 
-        return out;
+        return std::move(out);
     }
 
 } // xm

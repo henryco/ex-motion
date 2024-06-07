@@ -113,11 +113,15 @@ inline void bgr_to_hls(
 
 __kernel void in_range_hls(
         __global const unsigned char *input_bgr,
-        __global const unsigned char *lower_hls,
-        __global const unsigned char *upper_hls,
         __global unsigned char *output_gray,
         const unsigned int width,
-        const unsigned int height
+        const unsigned int height,
+        const unsigned char lower_h,
+        const unsigned char lower_l,
+        const unsigned char lower_s,
+        const unsigned char upper_h,
+        const unsigned char upper_l,
+        const unsigned char upper_s
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -125,19 +129,19 @@ __kernel void in_range_hls(
     if (x >= width || y >= height)
         return;
 
-    const bool wrap = lower_hls[0] > upper_hls[0];
+    const bool wrap = lower_h > upper_h;
     const int idx = y * width + x;
 
     unsigned char hls[3];
     bgr_to_hls(&input_bgr[idx * 3], hls);
 
     if (!wrap) {
-        if (hls[0] >= lower_hls[0] &&
-            hls[1] >= lower_hls[1] &&
-            hls[2] >= lower_hls[2] &&
-            hls[0] <= upper_hls[0] &&
-            hls[1] <= upper_hls[1] &&
-            hls[2] <= upper_hls[2]) {
+        if (hls[0] >= lower_h &&
+            hls[1] >= lower_l &&
+            hls[2] >= lower_s &&
+            hls[0] <= upper_h &&
+            hls[1] <= upper_l &&
+            hls[2] <= upper_s) {
             output_gray[idx] = 255;
         } else {
             output_gray[idx] = 0;
@@ -145,11 +149,11 @@ __kernel void in_range_hls(
     }
 
     else {
-        if ((hls[0] >= lower_hls[0] || hls[0] <= upper_hls[0]) &&
-            hls[1] >= lower_hls[1] &&
-            hls[2] >= lower_hls[2] &&
-            hls[1] <= upper_hls[1] &&
-            hls[2] <= upper_hls[2]) {
+        if ((hls[0] >= lower_h || hls[0] <= upper_h) &&
+            hls[1] >= lower_l &&
+            hls[2] >= lower_s &&
+            hls[1] <= upper_l &&
+            hls[2] <= upper_s) {
             output_gray[idx] = 255;
         } else {
             output_gray[idx] = 0;
@@ -263,14 +267,16 @@ __kernel void erode_vertical(
 __kernel void apply_mask(
         __global const unsigned char *mask_gray,
         __global const unsigned char *front_bgr,
-        __global const unsigned char *color_bgr,
         __global unsigned char *output_bgr,
         const unsigned int mask_width,
         const unsigned int mask_height,
         const unsigned int width,
         const unsigned int height,
         const float scale_mask_w,
-        const float scale_mask_h
+        const float scale_mask_h,
+        const unsigned char color_b,
+        const unsigned char color_g,
+        const unsigned char color_r
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -286,9 +292,9 @@ __kernel void apply_mask(
     const int pix = idx * 3;
 
     if (mask_gray[mps] > 0) {
-        output_bgr[pix + 0] = color_bgr[0];
-        output_bgr[pix + 1] = color_bgr[1];
-        output_bgr[pix + 2] = color_bgr[2];
+        output_bgr[pix + 0] = color_b;
+        output_bgr[pix + 1] = color_g;
+        output_bgr[pix + 2] = color_r;
     } else {
         output_bgr[pix + 0] = front_bgr[pix + 0];
         output_bgr[pix + 1] = front_bgr[pix + 1];

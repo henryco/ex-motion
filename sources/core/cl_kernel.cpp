@@ -4,6 +4,7 @@
 
 #include "../../xmotion/core/ocl/cl_kernel.h"
 #include <stdexcept>
+#include <chrono>
 
 namespace xm::ocl {
 
@@ -41,7 +42,10 @@ namespace xm::ocl {
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot query gpu device id: " + std::to_string(err));
 
-        return devices[0];
+        auto dev = devices[0];
+        delete[] platforms;
+        delete[] devices;
+        return dev;
     }
 
     size_t optimal_global_size(int dim, size_t local_size) {
@@ -86,7 +90,7 @@ namespace xm::ocl {
         cl_int err;
         cl_program program = clCreateProgramWithSource(context, 1, &s, nullptr, &err);
         if (err != CL_SUCCESS)
-            throw std::runtime_error("Cannot create cl_program from source: " + std::to_string(err));
+            throw std::runtime_error("Cannot create cl_program from source: " + std::to_string(err) + " \n" + kernel_source);
 
         err = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
         if (err != CL_SUCCESS) {
@@ -99,7 +103,7 @@ namespace xm::ocl {
                     sizeof(buffer),
                     buffer,
                     &len);
-            throw std::runtime_error("Cannot build cl_program: " + std::string(buffer, len));
+            throw std::runtime_error("Cannot build cl_program: " + std::string(buffer, len) + " \n" + kernel_source);
         }
 
         return program;
@@ -188,7 +192,7 @@ namespace xm::ocl {
         if (profile)
             time = xm::ocl::measure_exec_time(kernel_event);
         clReleaseEvent(kernel_event);
-        clFinish(command_queue);
+//        clFinish(command_queue);
         return time;
     }
 

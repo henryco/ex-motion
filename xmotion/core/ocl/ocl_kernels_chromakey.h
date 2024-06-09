@@ -187,10 +187,10 @@ __kernel void power_mask(
 
         // SCALING
         const unsigned char linear, // aka BOOL
-        const unsigned int input_w,
-        const unsigned int input_h,
-        const unsigned int mask_w,
-        const unsigned int mask_h,
+        const int input_w,
+        const int input_h,
+        const int mask_w,
+        const int mask_h,
         const float scale_w,
         const float scale_h,
 
@@ -264,21 +264,18 @@ __kernel void power_chromakey(
     if (x >= mask_w || y >= mask_h)
         return;
 
-//    const unsigned char mask = scale_blur_hls_threshold(
-//            input,
-//            gaussian_kernel,
-//            half_kernel_size,
-//            blur > 0,
-//            linear > 0,
-//            input_w, input_h,
-//            mask_w, mask_h,
-//            scale_x, scale_y,
-//            lower_h, lower_l, lower_s,
-//            upper_h, upper_l, upper_s,
-//            x, y);
-// TODO FIXME
-
-    const unsigned char mask = 0;
+    const unsigned char mask = scale_blur_hls_threshold(
+            input,
+            gaussian_kernel,
+            half_kernel_size,
+            blur > 0,
+            linear > 0,
+            input_w, input_h,
+            mask_w, mask_h,
+            scale_x, scale_y,
+            lower_h, lower_l, lower_s,
+            upper_h, upper_l, upper_s,
+            x, y);
 
     const float ox = x * scale_x;
     const float oy = y * scale_y;

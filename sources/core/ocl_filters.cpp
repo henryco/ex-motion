@@ -639,24 +639,16 @@ namespace xm::ocl {
         }
 
         // ======= RELEASE HEAP DATA !
-        if (blur_h_event != nullptr)
-            clReleaseEvent(blur_h_event);
-        if (blur_v_event != nullptr)
-            clReleaseEvent(blur_v_event);
-        if (range_hls_even != nullptr)
-            clReleaseEvent(range_hls_even);
-        if (maks_apply_event != nullptr)
-            clReleaseEvent(maks_apply_event);
+        xm::ocl::release_event(blur_h_event);
+        xm::ocl::release_event(blur_v_event);
+        xm::ocl::release_event(range_hls_even);
+        xm::ocl::release_event(maks_apply_event);
 
         for (int i = 0; i < refine; i++) {
-            if (erode_h_events[i] != nullptr)
-                clReleaseEvent(erode_h_events[i]);
-            if (erode_v_events[i] != nullptr)
-                clReleaseEvent(erode_v_events[i]);
-            if (dilate_h_events[i] != nullptr)
-                clReleaseEvent(dilate_h_events[i]);
-            if (dilate_v_events[i] != nullptr)
-                clReleaseEvent(dilate_v_events[i]);
+            xm::ocl::release_event(erode_h_events[i]);
+            xm::ocl::release_event(erode_v_events[i]);
+            xm::ocl::release_event(dilate_h_events[i]);
+            xm::ocl::release_event(dilate_v_events[i]);
         }
 
         delete[] erode_h_events;
@@ -669,15 +661,13 @@ namespace xm::ocl {
     }
 
     void chroma_key_single_pass(const cv::UMat &in, cv::UMat &out, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                const cv::Scalar &color, int mask_size, int blur, int fine, int refine) {
+                                const cv::Scalar &color, int mask_size, int blur) {
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (int) ((float) n_w / ratio);
-
-//        cv::UMat result(n_w, n_h, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
 
         //        const auto context = Kernels::instance().ocl_context;
@@ -695,7 +685,6 @@ namespace xm::ocl {
 
         auto kernel_chroma = Kernels::instance().kernel_power_chroma;
 
-//        auto morph_kern_half_size = (int) (fine / 2);
         auto blur_kern_half_size = (int) (blur / 2);
         auto mask_height = (int) n_h;
         auto mask_width = (int) n_w;

@@ -261,4 +261,9 @@ namespace xm::ocl {
             throw std::runtime_error("Cannot query for device svm capabilities: " + std::to_string(err));
         return (svmCapabilities & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER);
     }
+
+    void release_event(cl_event event) {
+        if (event != nullptr)
+            clReleaseEvent(event);
+    }
 }

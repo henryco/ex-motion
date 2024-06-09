@@ -88,12 +88,7 @@ namespace xm::chroma {
     cv::UMat ChromaKey::filter(const cv::UMat &in) {
         if (!ready)
             throw std::logic_error("Filter is not initialized");
-//        const auto t0 = std::chrono::system_clock::now();
-
-//        cv::UMat mask;
-//        cv::UMat img;
         cv::UMat out;
-
 //        xm::ocl::chroma_key(in, out,
 //                            hls_key_lower,
 //                            hls_key_upper,
@@ -108,32 +103,7 @@ namespace xm::chroma {
                             hls_key_upper,
                             bgr_bg_color,
                             mask_size,
-                            blur_kernel,
-                            fine_kernel,
-                            mask_iterations);
-
-//        const auto ratio = (float) in.cols / (float) in.rows;
-//        const auto n_w = mask_size;
-//        const auto n_h = (float) n_w / ratio;
-//
-//        cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_NEAREST);
-//
-//        if (blur_kernel >= 3 && blur_kernel <= 31) {
-//            xm::ocl::blur(img, img, blur_kernel);
-//        }
-//
-//        xm::ocl::bgr_in_range_hls(hls_key_lower, hls_key_upper, img, mask);
-//
-//        if (mask_iterations > 0 && fine_kernel >= 3) { // morph open (reduce speckles)
-//            xm::ocl::erode(mask, mask, mask_iterations, fine_kernel);
-//            xm::ocl::dilate(mask, mask, mask_iterations, fine_kernel);
-//        }
-//
-//        xm::ocl::apply_mask_with_color(bgr_bg_color, in, mask, out);
-
-//        const auto t1 = std::chrono::system_clock::now();
-//        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
-//        log->info("TG: {}", d);
+                            blur_kernel);
 
         return std::move(out);
     }

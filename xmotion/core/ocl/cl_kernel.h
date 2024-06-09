@@ -47,8 +47,6 @@ kernel.run(2, g_size, l_size, true)
 
     cl_kernel build_kernel(cl_program program, const std::string &name);
 
-    cl_command_queue create_queue(cl_context context, cl_device_id device, bool profile = false);
-
     cl_command_queue create_queue_device(cl_context context, cl_device_id device, bool profile);
 
     cl_ulong measure_exec_time(cl_event event);
@@ -98,6 +96,8 @@ idx = set_kernel_arg(kernel, idx, sizeof(int), &height);
             const size_t *global_work_size,
             const size_t *local_work_size,
             bool profile = false);
+
+    void release_event(cl_event event);
 
     void finish_queue(cl_command_queue queue);
 

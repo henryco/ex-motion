@@ -396,6 +396,7 @@ namespace xm::ocl {
                     const cv::Scalar &hls_low,
                     const cv::Scalar &hls_up,
                     const cv::Scalar &color,
+                    bool linear,
                     int mask_size,
                     int blur,
                     int fine,
@@ -455,7 +456,7 @@ namespace xm::ocl {
         auto color_b = (uchar) color[0];
         auto color_g = (uchar) color[1];
         auto color_r = (uchar) color[2];
-        auto is_linear = (uchar) true ? 1 : 0;
+        auto is_linear = (uchar) linear ? 1 : 0;
         auto is_blur = (uchar) (blur >= 3);
         auto dx = (uint) std::ceil(scale_w);
         auto dy = (uint) std::ceil(scale_h);

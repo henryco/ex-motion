@@ -61,6 +61,7 @@ namespace xm::ocl {
 
         program_power_chroma = xm::ocl::build_program(ocl_context, device_id, kernels::CHROMA_KEY_COMPLEX);
         kernel_power_chroma = xm::ocl::build_kernel(program_power_chroma, "power_chromakey");
+        kernel_power_apply = xm::ocl::build_kernel(program_power_chroma, "power_apply");
         kernel_power_mask = xm::ocl::build_kernel(program_power_chroma, "power_mask");
         power_chroma_local_size = xm::ocl::optimal_local_size(device_id, kernel_power_chroma);
 
@@ -402,54 +403,49 @@ namespace xm::ocl {
 
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-        cv::UMat img;
-        // resize for further masking etc
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
-        const auto n_h = (float) n_w / ratio;
-        cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_NEAREST);
-        // TODO FIXME: ^^^ REWRITE RESIZING TO CUSTOM KERNELS? ^^^
+        const auto n_h = (int) ((float) n_w / ratio);
 
-
-        // resize -> (blur_h -> blur_v) -> range_hls -> (erode_h -> erode_v) -> (dilate_h -> dilate_v) -> mask_apply
+        // power_mask -> (erode_h -> erode_v) -> (dilate_h -> dilate_v) -> mask_apply
 
         cl_int err;
 
         const auto context = Kernels::instance().ocl_context;
         const auto queue = Kernels::instance().ocl_command_queue;
-        const auto inter_size = img.rows * img.cols * 3;
+        const auto inter_size = n_w * n_h * 3;
         const auto pref_size = Kernels::instance().mask_apply_local_size;
         size_t l_size[2] = {pref_size, pref_size};
-        size_t g_size[2] = {xm::ocl::optimal_global_size(in.cols, pref_size),
-                            xm::ocl::optimal_global_size(in.rows, pref_size)};
+        size_t g_size[2] = {xm::ocl::optimal_global_size(n_w, pref_size),
+                            xm::ocl::optimal_global_size(n_h, pref_size)};
+
 
         // ======= BUFFERS ALLOCATION !
         cl_mem buffer_in = (cl_mem) in.handle(cv::ACCESS_READ);
-        cl_mem buffer_img = (cl_mem) img.handle(cv::ACCESS_READ);
         cl_mem buffer_blur = (cl_mem) kernel_blur_buffer.handle(cv::ACCESS_READ);
         cl_mem buffer_io_1 = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
         cl_mem buffer_io_2 = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
         cl_mem buffer_out = (cl_mem) result.handle(cv::ACCESS_WRITE);
 
+
         // ======= KERNELS ALLOCATION !
-        auto kernel_blur_h = Kernels::instance().kernel_blur_h;
-        auto kernel_blur_v = Kernels::instance().kernel_blur_v;
-        auto kernel_range_hls = Kernels::instance().kernel_range_hls;
+        auto kernel_power_mask = Kernels::instance().kernel_power_mask;
         auto kernel_erode_h = Kernels::instance().kernel_erode_h;
         auto kernel_erode_v = Kernels::instance().kernel_erode_v;
         auto kernel_dilate_h = Kernels::instance().kernel_dilate_h;
         auto kernel_dilate_v = Kernels::instance().kernel_dilate_v;
-        auto kernel_mask_apply = Kernels::instance().kernel_mask_apply;
+        auto kernel_power_apply = Kernels::instance().kernel_power_apply;
+
 
         // ======= KERNEL PARAMETERS !
         auto morph_kern_half_size = (int) (fine / 2);
         auto blur_kern_half_size = (int) (blur / 2);
-        auto mask_height = (uint) img.rows;
-        auto mask_width = (uint) img.cols;
+        auto mask_height = (uint) n_h;
+        auto mask_width = (uint) n_w;
         auto out_height = (uint) in.rows;
         auto out_width = (uint) in.cols;
-        auto scale_w = (float) img.cols / (float) in.cols;
-        auto scale_h = (float) img.rows / (float) in.rows;
+        auto scale_h = (float) in.rows / (float) n_h;
+        auto scale_w = (float) in.cols / (float) n_w;
         auto lower_h = (uchar) hls_low[0];
         auto lower_l = (uchar) hls_low[1];
         auto lower_s = (uchar) hls_low[2];
@@ -459,112 +455,91 @@ namespace xm::ocl {
         auto color_b = (uchar) color[0];
         auto color_g = (uchar) color[1];
         auto color_r = (uchar) color[2];
+        auto is_linear = (uchar) true ? 1 : 0;
+        auto is_blur = (uchar) (blur >= 3);
+        auto dx = (uint) std::ceil(scale_w);
+        auto dy = (uint) std::ceil(scale_h);
+
 
         // ======= KERNEL ARGUMENTS !
-        cl_mem buffer_init = buffer_img;
-        if (blur >= 3) {
-            xm::ocl::set_kernel_arg(kernel_blur_h, 0, sizeof(cl_mem), &buffer_init);
-            xm::ocl::set_kernel_arg(kernel_blur_h, 1, sizeof(cl_mem), &buffer_blur);
-            xm::ocl::set_kernel_arg(kernel_blur_h, 2, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel_blur_h, 3, sizeof(uint), &mask_width);
-            xm::ocl::set_kernel_arg(kernel_blur_h, 4, sizeof(uint), &mask_height);
-            xm::ocl::set_kernel_arg(kernel_blur_h, 5, sizeof(int), &blur_kern_half_size);
-
-            xm::ocl::set_kernel_arg(kernel_blur_v, 0, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel_blur_v, 1, sizeof(cl_mem), &buffer_blur);
-            xm::ocl::set_kernel_arg(kernel_blur_v, 2, sizeof(cl_mem), &buffer_io_2);
-            xm::ocl::set_kernel_arg(kernel_blur_v, 3, sizeof(uint), &mask_width);
-            xm::ocl::set_kernel_arg(kernel_blur_v, 4, sizeof(uint), &mask_height);
-            xm::ocl::set_kernel_arg(kernel_blur_v, 5, sizeof(int), &blur_kern_half_size);
-
-            buffer_init = buffer_io_2;
-        }
-
         {
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 0, sizeof(cl_mem), &buffer_init);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 1, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 2, sizeof(uint), &mask_width);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 3, sizeof(uint), &mask_height);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 4, sizeof(uchar), &lower_h);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 5, sizeof(uchar), &lower_l);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 6, sizeof(uchar), &lower_s);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 7, sizeof(uchar), &upper_h);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 8, sizeof(uchar), &upper_l);
-            xm::ocl::set_kernel_arg(kernel_range_hls, (cl_uint) 9, sizeof(uchar), &upper_s);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 0, sizeof(cl_mem), &buffer_in);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 1, sizeof(cl_mem), &buffer_io_1);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 2, sizeof(cl_mem), &buffer_blur);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 3, sizeof(int), &blur_kern_half_size);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 4, sizeof(uchar), &is_blur);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 5, sizeof(uchar), &is_linear);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 6, sizeof(uint), &out_width);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 7, sizeof(uint), &out_height);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 8, sizeof(uint), &mask_width);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 9, sizeof(uint), &mask_height);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 10, sizeof(float), &scale_w);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 11, sizeof(float), &scale_h);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 12, sizeof(uchar), &lower_h);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 13, sizeof(uchar), &lower_l);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 14, sizeof(uchar), &lower_s);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 15, sizeof(uchar), &upper_h);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 16, sizeof(uchar), &upper_l);
+            xm::ocl::set_kernel_arg(kernel_power_mask, 17, sizeof(uchar), &upper_s);
         }
 
         if (fine >= 3 && refine > 0) {
-            xm::ocl::set_kernel_arg(kernel_erode_h, (cl_uint) 0, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel_erode_h, (cl_uint) 1, sizeof(cl_mem), &buffer_io_2);
-            xm::ocl::set_kernel_arg(kernel_erode_h, (cl_uint) 2, sizeof(int), &morph_kern_half_size);
-            xm::ocl::set_kernel_arg(kernel_erode_h, (cl_uint) 3, sizeof(uint), &mask_width);
-            xm::ocl::set_kernel_arg(kernel_erode_h, (cl_uint) 4, sizeof(uint), &mask_height);
+            xm::ocl::set_kernel_arg(kernel_erode_h, 0, sizeof(cl_mem), &buffer_io_1);
+            xm::ocl::set_kernel_arg(kernel_erode_h, 1, sizeof(cl_mem), &buffer_io_2);
+            xm::ocl::set_kernel_arg(kernel_erode_h, 2, sizeof(int), &morph_kern_half_size);
+            xm::ocl::set_kernel_arg(kernel_erode_h, 3, sizeof(uint), &mask_width);
+            xm::ocl::set_kernel_arg(kernel_erode_h, 4, sizeof(uint), &mask_height);
 
-            xm::ocl::set_kernel_arg(kernel_erode_v, (cl_uint) 0, sizeof(cl_mem), &buffer_io_2);
-            xm::ocl::set_kernel_arg(kernel_erode_v, (cl_uint) 1, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel_erode_v, (cl_uint) 2, sizeof(int), &morph_kern_half_size);
-            xm::ocl::set_kernel_arg(kernel_erode_v, (cl_uint) 3, sizeof(uint), &mask_width);
-            xm::ocl::set_kernel_arg(kernel_erode_v, (cl_uint) 4, sizeof(uint), &mask_height);
+            xm::ocl::set_kernel_arg(kernel_erode_v, 0, sizeof(cl_mem), &buffer_io_2);
+            xm::ocl::set_kernel_arg(kernel_erode_v, 1, sizeof(cl_mem), &buffer_io_1);
+            xm::ocl::set_kernel_arg(kernel_erode_v, 2, sizeof(int), &morph_kern_half_size);
+            xm::ocl::set_kernel_arg(kernel_erode_v, 3, sizeof(uint), &mask_width);
+            xm::ocl::set_kernel_arg(kernel_erode_v, 4, sizeof(uint), &mask_height);
 
-            xm::ocl::set_kernel_arg(kernel_dilate_h, (cl_uint) 0, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel_dilate_h, (cl_uint) 1, sizeof(cl_mem), &buffer_io_2);
-            xm::ocl::set_kernel_arg(kernel_dilate_h, (cl_uint) 2, sizeof(int), &morph_kern_half_size);
-            xm::ocl::set_kernel_arg(kernel_dilate_h, (cl_uint) 3, sizeof(uint), &mask_width);
-            xm::ocl::set_kernel_arg(kernel_dilate_h, (cl_uint) 4, sizeof(uint), &mask_height);
+            xm::ocl::set_kernel_arg(kernel_dilate_h, 0, sizeof(cl_mem), &buffer_io_1);
+            xm::ocl::set_kernel_arg(kernel_dilate_h, 1, sizeof(cl_mem), &buffer_io_2);
+            xm::ocl::set_kernel_arg(kernel_dilate_h, 2, sizeof(int), &morph_kern_half_size);
+            xm::ocl::set_kernel_arg(kernel_dilate_h, 3, sizeof(uint), &mask_width);
+            xm::ocl::set_kernel_arg(kernel_dilate_h, 4, sizeof(uint), &mask_height);
 
-            xm::ocl::set_kernel_arg(kernel_dilate_v, (cl_uint) 0, sizeof(cl_mem), &buffer_io_2);
-            xm::ocl::set_kernel_arg(kernel_dilate_v, (cl_uint) 1, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel_dilate_v, (cl_uint) 2, sizeof(int), &morph_kern_half_size);
-            xm::ocl::set_kernel_arg(kernel_dilate_v, (cl_uint) 3, sizeof(uint), &mask_width);
-            xm::ocl::set_kernel_arg(kernel_dilate_v, (cl_uint) 4, sizeof(uint), &mask_height);
+            xm::ocl::set_kernel_arg(kernel_dilate_v, 0, sizeof(cl_mem), &buffer_io_2);
+            xm::ocl::set_kernel_arg(kernel_dilate_v, 1, sizeof(cl_mem), &buffer_io_1);
+            xm::ocl::set_kernel_arg(kernel_dilate_v, 2, sizeof(int), &morph_kern_half_size);
+            xm::ocl::set_kernel_arg(kernel_dilate_v, 3, sizeof(uint), &mask_width);
+            xm::ocl::set_kernel_arg(kernel_dilate_v, 4, sizeof(uint), &mask_height);
         }
 
         {
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 0, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 1, sizeof(cl_mem), &buffer_in);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 2, sizeof(cl_mem), &buffer_out);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 3, sizeof(uint), &mask_width);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 4, sizeof(uint), &mask_height);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 5, sizeof(uint), &out_width);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 6, sizeof(uint), &out_height);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 7, sizeof(cl_float), &scale_w);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 8, sizeof(cl_float), &scale_h);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 9, sizeof(uchar), &color_b);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 10, sizeof(uchar), &color_g);
-            xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 11, sizeof(uchar), &color_r);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 0, sizeof(cl_mem), &buffer_in);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 1, sizeof(cl_mem), &buffer_io_1);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 2, sizeof(cl_mem), &buffer_out);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 3, sizeof(uint), &mask_width);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 4, sizeof(uint), &mask_height);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 5, sizeof(uint), &out_width);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 6, sizeof(uint), &out_height);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 7, sizeof(cl_float), &scale_w);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 8, sizeof(cl_float), &scale_h);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 9, sizeof(uint), &dx);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 10, sizeof(uint), &dy);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 11, sizeof(uchar), &color_b);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 12, sizeof(uchar), &color_g);
+            xm::ocl::set_kernel_arg(kernel_power_apply, 13, sizeof(uchar), &color_r);
         }
 
+
         // ======= KERNEL EVENTS !
-        cl_event blur_h_event = nullptr;
-        cl_event blur_v_event = nullptr;
         cl_event *erode_h_events = new cl_event[std::max(0, refine)];
         cl_event *erode_v_events = new cl_event[std::max(0, refine)];
         cl_event *dilate_h_events = new cl_event[std::max(0, refine)];
         cl_event *dilate_v_events = new cl_event[std::max(0, refine)];
+        cl_event maks_range_event;
         cl_event maks_apply_event;
-        cl_event range_hls_even;
+
 
         // ======= KERNEL ENQUEUE !
-        if (blur >= 3) {
-            blur_h_event = xm::ocl::enqueue_kernel_fast(
-                    queue,
-                    kernel_blur_h,
-                    2,
-                    g_size,
-                    l_size,
-                    aux::DEBUG);
-            blur_v_event = xm::ocl::enqueue_kernel_fast(
-                    queue,
-                    kernel_blur_v,
-                    2,
-                    g_size,
-                    l_size,
-                    aux::DEBUG);
-        }
-
-        range_hls_even = xm::ocl::enqueue_kernel_fast(
+        maks_range_event = xm::ocl::enqueue_kernel_fast(
                 queue,
-                kernel_range_hls,
+                kernel_power_mask,
                 2,
                 g_size,
                 l_size,
@@ -606,23 +581,21 @@ namespace xm::ocl {
 
         maks_apply_event = xm::ocl::enqueue_kernel_fast(
                 queue,
-                kernel_mask_apply,
+                kernel_power_apply,
                 2,
                 g_size,
                 l_size,
                 aux::DEBUG);
 
+
         // ======= KERNEL QUEUE FINALIZATION !
         xm::ocl::finish_queue(queue);
 
+
         // ======= KERNEL EXECUTION TIME MEASURING !
         if (aux::DEBUG) {
-            if (blur_h_event != nullptr)
-                Kernels::instance().print_time(xm::ocl::measure_exec_time(blur_h_event), "blur_h");
-            if (blur_v_event != nullptr)
-                Kernels::instance().print_time(xm::ocl::measure_exec_time(blur_v_event), "blur_v");
-            if (range_hls_even != nullptr)
-                Kernels::instance().print_time(xm::ocl::measure_exec_time(range_hls_even), "range_hls");
+            if (maks_range_event != nullptr)
+                Kernels::instance().print_time(xm::ocl::measure_exec_time(maks_range_event), "power_mask");
             for (int i = 0; i < refine; i++) {
                 if (erode_h_events[i] != nullptr)
                     Kernels::instance().print_time(xm::ocl::measure_exec_time(erode_h_events[i]), "erode_h");
@@ -636,13 +609,11 @@ namespace xm::ocl {
                     Kernels::instance().print_time(xm::ocl::measure_exec_time(dilate_v_events[i]), "dilate_v");
             }
             if (maks_apply_event != nullptr)
-                Kernels::instance().print_time(xm::ocl::measure_exec_time(maks_apply_event), "mask_apply");
+                Kernels::instance().print_time(xm::ocl::measure_exec_time(maks_apply_event), "power_apply");
         }
 
         // ======= RELEASE HEAP DATA !
-        xm::ocl::release_event(blur_h_event);
-        xm::ocl::release_event(blur_v_event);
-        xm::ocl::release_event(range_hls_even);
+        xm::ocl::release_event(maks_range_event);
         xm::ocl::release_event(maks_apply_event);
 
         for (int i = 0; i < refine; i++) {
@@ -687,10 +658,10 @@ namespace xm::ocl {
         auto kernel_chroma = Kernels::instance().kernel_power_chroma;
 
         auto blur_kern_half_size = (int) (blur / 2);
-        auto mask_height = (int) n_h;
-        auto mask_width = (int) n_w;
-        auto out_height = (int) in.rows;
-        auto out_width = (int) in.cols;
+        auto mask_height = (uint) n_h;
+        auto mask_width = (uint) n_w;
+        auto out_height = (uint) in.rows;
+        auto out_width = (uint) in.cols;
         auto scale_h = (float) in.rows / (float) n_h;
         auto scale_w = (float) in.cols / (float) n_w;
         auto lower_h = (uchar) hls_low[0];
@@ -716,10 +687,10 @@ namespace xm::ocl {
         xm::ocl::set_kernel_arg(kernel_chroma, 4, sizeof(uchar), &is_blur);
 
         xm::ocl::set_kernel_arg(kernel_chroma, 5, sizeof(uchar), &is_linear);
-        xm::ocl::set_kernel_arg(kernel_chroma, 6, sizeof(int), &out_width);
-        xm::ocl::set_kernel_arg(kernel_chroma, 7, sizeof(int), &out_height);
-        xm::ocl::set_kernel_arg(kernel_chroma, 8, sizeof(int), &mask_width);
-        xm::ocl::set_kernel_arg(kernel_chroma, 9, sizeof(int), &mask_height);
+        xm::ocl::set_kernel_arg(kernel_chroma, 6, sizeof(uint), &out_width);
+        xm::ocl::set_kernel_arg(kernel_chroma, 7, sizeof(uint), &out_height);
+        xm::ocl::set_kernel_arg(kernel_chroma, 8, sizeof(uint), &mask_width);
+        xm::ocl::set_kernel_arg(kernel_chroma, 9, sizeof(uint), &mask_height);
         xm::ocl::set_kernel_arg(kernel_chroma, 10, sizeof(float), &scale_w);
         xm::ocl::set_kernel_arg(kernel_chroma, 11, sizeof(float), &scale_h);
 
@@ -753,6 +724,7 @@ namespace xm::ocl {
 
         if (chroma_event != nullptr)
             Kernels::instance().print_time(xm::ocl::measure_exec_time(chroma_event), "power_chroma");
+        xm::ocl::release_event(chroma_event);
 
         out = std::move(result);
     }

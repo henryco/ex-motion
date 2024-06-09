@@ -59,6 +59,7 @@ namespace xm::ocl {
 
         cl_program program_power_chroma;
         cl_kernel kernel_power_chroma;
+        cl_kernel kernel_power_apply;
         cl_kernel kernel_power_mask;
         size_t power_chroma_local_size;
 

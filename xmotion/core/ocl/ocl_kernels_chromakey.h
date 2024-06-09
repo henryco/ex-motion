@@ -89,7 +89,7 @@ inline void bgr_to_hls(
     out_hls[2] = (unsigned char) ((L < 0.5f ? (c_dif / c_sum) : (c_dif / (2.f - c_sum))) * 255.f);
 }
 
-inline unsigned char scale_blur_hls_threshold(
+inline unsigned char downscale_blur_hls_threshold(
         const unsigned char *input,
         const float *gaussian_kernel,
         const int half_kernel_size,
@@ -175,6 +175,43 @@ inline unsigned char scale_blur_hls_threshold(
     }
 }
 
+inline void upscale_apply(
+        const unsigned char *input,
+        unsigned char *output,
+        const unsigned int output_w,
+        const unsigned int output_h,
+        const float scale_x,
+        const float scale_y,
+        const unsigned char color_b,
+        const unsigned char color_g,
+        const unsigned char color_r,
+        const unsigned char mask,
+        const unsigned int d_x,
+        const unsigned int d_y,
+        const int x,
+        const int y
+) {
+    const float ox = x * scale_x;
+    const float oy = y * scale_y;
+
+    for (int ky = 0; ky < d_y; ky++) {
+        for (int kx = 0; kx < d_x; kx++) {
+            const int ix = clamp((int) (ox + kx), (int) 0, (int) (output_w - 1));
+            const int iy = clamp((int) (oy + ky), (int) 0, (int) (output_h - 1));
+            const int idx = (iy * output_w + ix) * 3;
+            if (mask > 0) {
+                output[idx + 0] = color_b;
+                output[idx + 1] = color_g;
+                output[idx + 2] = color_r;
+            } else {
+                output[idx + 0] = input[idx + 0];
+                output[idx + 1] = input[idx + 1];
+                output[idx + 2] = input[idx + 2];
+            }
+        }
+    }
+}
+
 __kernel void power_mask(
         // IMAGES
         __global const unsigned char *input,
@@ -187,10 +224,10 @@ __kernel void power_mask(
 
         // SCALING
         const unsigned char linear, // aka BOOL
-        const int input_w,
-        const int input_h,
-        const int mask_w,
-        const int mask_h,
+        const unsigned int input_w,
+        const unsigned int input_h,
+        const unsigned int mask_w,
+        const unsigned int mask_h,
         const float scale_w,
         const float scale_h,
 
@@ -208,7 +245,7 @@ __kernel void power_mask(
     if (x >= mask_w || y >= mask_h)
         return;
 
-    output[y * mask_w + x] = scale_blur_hls_threshold(
+    output[y * mask_w + x] = downscale_blur_hls_threshold(
             input,
             gaussian_kernel,
             half_kernel_size,
@@ -219,6 +256,45 @@ __kernel void power_mask(
             scale_w, scale_h,
             lower_h, lower_l, lower_s,
             upper_h, upper_l, upper_s,
+            x, y);
+}
+
+__kernel void power_apply(
+        // IMAGES
+        __global const unsigned char *input,
+        __global const unsigned char *mask,
+        __global unsigned char *output,
+
+        // SCALING
+        const unsigned int mask_w,
+        const unsigned int mask_h,
+        const unsigned int output_w,
+        const unsigned int output_h,
+        const float scale_x,
+        const float scale_y,
+        const unsigned int d_x,
+        const unsigned int d_y,
+
+        // KEY
+        const unsigned char color_b,
+        const unsigned char color_g,
+        const unsigned char color_r
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= mask_w || y >= mask_h)
+        return;
+
+    upscale_apply(
+            input, output,
+            output_w, output_h,
+            scale_x, scale_y,
+            color_b,
+            color_g,
+            color_r,
+            mask[y * mask_w + x],
+            d_x, d_y,
             x, y);
 }
 
@@ -234,10 +310,10 @@ __kernel void power_chromakey(
 
         // SCALING
         const unsigned char linear, // aka BOOL
-        const int input_w,
-        const int input_h,
-        const int mask_w,
-        const int mask_h,
+        const unsigned int input_w,
+        const unsigned int input_h,
+        const unsigned int mask_w,
+        const unsigned int mask_h,
         const float scale_x,
         const float scale_y,
 
@@ -264,7 +340,7 @@ __kernel void power_chromakey(
     if (x >= mask_w || y >= mask_h)
         return;
 
-    const unsigned char mask = scale_blur_hls_threshold(
+    const unsigned char mask = downscale_blur_hls_threshold(
             input,
             gaussian_kernel,
             half_kernel_size,
@@ -277,25 +353,16 @@ __kernel void power_chromakey(
             upper_h, upper_l, upper_s,
             x, y);
 
-    const float ox = x * scale_x;
-    const float oy = y * scale_y;
-
-    for (int ky = 0; ky < d_y; ky++) {
-        for (int kx = 0; kx < d_x; kx++) {
-            const int ix = clamp((int) (ox + kx), (int) 0, (int) (input_w - 1));
-            const int iy = clamp((int) (oy + ky), (int) 0, (int) (input_h - 1));
-            const int idx = (iy * input_w + ix) * 3;
-            if (mask > 0) {
-                output[idx + 0] = color_b;
-                output[idx + 1] = color_g;
-                output[idx + 2] = color_r;
-            } else {
-                output[idx + 0] = input[idx + 0];
-                output[idx + 1] = input[idx + 1];
-                output[idx + 2] = input[idx + 2];
-            }
-        }
-    }
+    upscale_apply(
+            input, output,
+            input_w, input_h,
+            scale_x, scale_y,
+            color_b,
+            color_g,
+            color_r,
+            mask,
+            d_x, d_y,
+            x, y);
 })cl";
 
 }

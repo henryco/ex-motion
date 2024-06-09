@@ -401,10 +401,7 @@ namespace xm::ocl {
         const auto n_w = mask_size;
         const auto n_h = (float) n_w / ratio;
         cv::resize(in, img, cv::Size((int) n_w, (int) n_h), 0, 0, cv::INTER_NEAREST);
-
-
-
-
+        // TODO FIXME: ^^^ REWRITE RESIZING TO CUSTOM KERNELS? ^^^
 
 
         // resize -> (blur_h -> blur_v) -> range_hls -> (erode_h -> erode_v) -> (dilate_h -> dilate_v) -> mask_apply
@@ -456,7 +453,7 @@ namespace xm::ocl {
         auto color_g = (uchar) color[1];
         auto color_r = (uchar) color[2];
 
-
+        // ======= KERNEL ARGUMENTS !
         cl_mem buffer_init = buffer_img;
         if (blur >= 3) {
             xm::ocl::set_kernel_arg(kernel_blur_h, 0, sizeof(cl_mem), &buffer_init);
@@ -530,6 +527,7 @@ namespace xm::ocl {
             xm::ocl::set_kernel_arg(kernel_mask_apply, (cl_uint) 11, sizeof(uchar), &color_r);
         }
 
+        // ======= KERNEL EVENTS !
         cl_event blur_h_event = nullptr;
         cl_event blur_v_event = nullptr;
         cl_event *erode_h_events = new cl_event[std::max(0, refine)];
@@ -539,6 +537,7 @@ namespace xm::ocl {
         cl_event maks_apply_event;
         cl_event range_hls_even;
 
+        // ======= KERNEL ENQUEUE !
         if (blur >= 3) {
             blur_h_event = xm::ocl::enqueue_kernel_fast(
                     queue,
@@ -606,8 +605,10 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
+        // ======= KERNEL QUEUE FINALIZATION !
         xm::ocl::finish_queue(queue);
 
+        // ======= KERNEL EXECUTION TIME MEASURING !
         if (aux::DEBUG) {
             if (blur_h_event != nullptr)
                 Kernels::instance().print_time(xm::ocl::measure_exec_time(blur_h_event), "blur_h");
@@ -631,6 +632,7 @@ namespace xm::ocl {
                 Kernels::instance().print_time(xm::ocl::measure_exec_time(maks_apply_event), "mask_apply");
         }
 
+        // ======= RELEASE HEAP DATA !
         if (blur_h_event != nullptr)
             clReleaseEvent(blur_h_event);
         if (blur_v_event != nullptr)
@@ -656,6 +658,7 @@ namespace xm::ocl {
         delete[] dilate_h_events;
         delete[] dilate_v_events;
 
+        // ======= RESULT !
         out = std::move(result);
     }
 

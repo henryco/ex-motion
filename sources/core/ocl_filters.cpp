@@ -582,7 +582,7 @@ namespace xm::ocl {
         {
             auto kernel = Kernels::instance().kernel_mask_apply;
             xm::ocl::set_kernel_arg(kernel, (cl_uint) 0, sizeof(cl_mem), &buffer_io_1);
-            xm::ocl::set_kernel_arg(kernel, (cl_uint) 1, sizeof(cl_mem), &buffer_img);
+            xm::ocl::set_kernel_arg(kernel, (cl_uint) 1, sizeof(cl_mem), &buffer_in);
             xm::ocl::set_kernel_arg(kernel, (cl_uint) 2, sizeof(cl_mem), &buffer_out);
             xm::ocl::set_kernel_arg(kernel, (cl_uint) 3, sizeof(uint), &mask_width);
             xm::ocl::set_kernel_arg(kernel, (cl_uint) 4, sizeof(uint), &mask_height);

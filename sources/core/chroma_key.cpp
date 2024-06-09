@@ -102,6 +102,7 @@ namespace xm::chroma {
                             hls_key_lower,
                             hls_key_upper,
                             bgr_bg_color,
+                            true,
                             mask_size,
                             blur_kernel);
 

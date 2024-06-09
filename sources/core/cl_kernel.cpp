@@ -129,7 +129,7 @@ namespace xm::ocl {
         return queue;
     }
 
-    cl_command_queue create_queue_device(cl_context context, cl_device_id device, bool profile) {
+    cl_command_queue create_queue_device(cl_context context, cl_device_id device, bool order, bool profile) {
         cl_int err;
 
         cl_command_queue_properties device_queue_properties;
@@ -143,8 +143,9 @@ namespace xm::ocl {
 
         cl_command_queue_properties dev_queue = (device_queue_properties & CL_QUEUE_ON_DEVICE) ? CL_QUEUE_ON_DEVICE : 0;
         cl_command_queue_properties profiling = profile ? CL_QUEUE_PROFILING_ENABLE : 0;
+        cl_command_queue_properties concurrent = (!order) ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
         cl_command_queue_properties properties[] = {
-                CL_QUEUE_PROPERTIES, profiling | dev_queue,
+                CL_QUEUE_PROPERTIES, profiling | dev_queue | concurrent,
                 0};
         cl_command_queue queue = clCreateCommandQueueWithProperties(context, device, properties, &err);
         if (err != CL_SUCCESS)

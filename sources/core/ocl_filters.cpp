@@ -33,7 +33,8 @@ namespace xm::ocl {
         ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
         svm_supported = check_svm_cap(device_id);
 
-        ocl_command_queue = xm::ocl::create_queue_device(ocl_context, device_id, aux::DEBUG);
+        ocl_command_queue = xm::ocl::create_queue_device(ocl_context, device_id, true, aux::DEBUG);
+        ocl_command_queue_ooo = xm::ocl::create_queue_device(ocl_context, device_id, false, aux::DEBUG);
 
         program_blur = xm::ocl::build_program(ocl_context, device_id, kernels::GAUSSIAN_BLUR_KERNEL);
         kernel_blur_h = xm::ocl::build_kernel(program_blur, "gaussian_blur_horizontal");
@@ -661,7 +662,7 @@ namespace xm::ocl {
     }
 
     void chroma_key_single_pass(const cv::UMat &in, cv::UMat &out, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                const cv::Scalar &color, int mask_size, int blur) {
+                                const cv::Scalar &color, bool linear, int mask_size, int blur) {
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
@@ -701,7 +702,7 @@ namespace xm::ocl {
         auto color_b = (uchar) color[0];
         auto color_g = (uchar) color[1];
         auto color_r = (uchar) color[2];
-        auto is_linear = (uchar) 0;
+        auto is_linear = (uchar) linear ? 1 : 0;
         auto is_blur = (uchar) (blur >= 3);
         auto dx = (uint) std::ceil(scale_w);
         auto dy = (uint) std::ceil(scale_h);
@@ -735,6 +736,8 @@ namespace xm::ocl {
 
         xm::ocl::set_kernel_arg(kernel_chroma, 21, sizeof(uint), &dx);
         xm::ocl::set_kernel_arg(kernel_chroma, 22, sizeof(uint), &dy);
+
+        xm::ocl::finish_queue(queue);
 
         cl_event chroma_event;
 

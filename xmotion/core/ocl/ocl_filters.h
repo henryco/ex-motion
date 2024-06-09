@@ -31,6 +31,7 @@ namespace xm::ocl {
         cl_device_id device_id;
         cl_context ocl_context;
         cl_command_queue ocl_command_queue;
+        cl_command_queue ocl_command_queue_ooo; // out of order
 
         /* ==================== OPENCL KERNELS ==================== */
         cl_program program_blur;
@@ -143,6 +144,7 @@ namespace xm::ocl {
             const cv::Scalar &hls_low,
             const cv::Scalar &hls_up,
             const cv::Scalar &color,
+            bool linear = false,
             int mask_size = 256, // 256, 512, ...
             int blur = 0 // 3, 5, 7, 9, 11, ...
     );

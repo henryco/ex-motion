@@ -60,6 +60,12 @@ namespace xm::chroma {
          * \endcode
          */
         int power = 0;
+
+        /**
+         * Should use linear interpolation
+         * (mask is slower but smoother)
+         */
+        bool linear;
     };
 
     class ChromaKey : public xm::Filter {
@@ -71,6 +77,7 @@ namespace xm::chroma {
         cv::Scalar hls_key_lower, hls_key_upper;
         cv::Scalar bgr_bg_color;
 
+        bool linear_interpolation = false;
         int mask_iterations = 0;
         int mask_size = 0;
         int blur_kernel = 0;

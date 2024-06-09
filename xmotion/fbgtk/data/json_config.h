@@ -210,6 +210,7 @@ namespace xm::data {
         int power;
         int fine;
         int refine;
+        bool linear;
         bool _present;
     } Chroma;
 

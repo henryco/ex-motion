@@ -23,6 +23,7 @@ namespace xm::chroma {
         hls_key_lower = cv::Scalar(bot_h < 0 ? 255 + bot_h : bot_h, bot_l, bot_s);
         hls_key_upper = cv::Scalar(top_h > 255 ? top_h - 255 : top_h, top_l, top_s);
 
+        linear_interpolation = conf.linear;
         mask_size = (conf.power + 1) * 256;
         blur_kernel = (conf.blur * 2) + 1;
         fine_kernel = std::max(3, (conf.fine * 2) + 1);
@@ -89,22 +90,30 @@ namespace xm::chroma {
         if (!ready)
             throw std::logic_error("Filter is not initialized");
         cv::UMat out;
-//        xm::ocl::chroma_key(in, out,
-//                            hls_key_lower,
-//                            hls_key_upper,
-//                            bgr_bg_color,
-//                            mask_size,
-//                            blur_kernel,
-//                            fine_kernel,
-//                            mask_iterations);
 
-        xm::ocl::chroma_key_single_pass(in, out,
-                            hls_key_lower,
-                            hls_key_upper,
-                            bgr_bg_color,
-                            true,
-                            mask_size,
-                            blur_kernel);
+        if (mask_iterations > 0 && fine_kernel >= 3) {
+            // slower, higher mask quality
+            xm::ocl::chroma_key(
+                    in, out,
+                    hls_key_lower,
+                    hls_key_upper,
+                    bgr_bg_color,
+                    linear_interpolation,
+                    mask_size,
+                    blur_kernel,
+                    fine_kernel,
+                    mask_iterations);
+        } else {
+            // faster, lower mask quality
+            xm::ocl::chroma_key_single_pass(
+                    in, out,
+                    hls_key_lower,
+                    hls_key_upper,
+                    bgr_bg_color,
+                    linear_interpolation,
+                    mask_size,
+                    blur_kernel);
+        }
 
         return std::move(out);
     }

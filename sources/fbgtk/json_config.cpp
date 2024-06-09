@@ -149,6 +149,7 @@ namespace xm::data::def {
             .power = 0,
             .fine = 0,
             .refine = 0,
+            .linear = false,
             ._present = false
         };
     }
@@ -408,6 +409,7 @@ namespace xm::data {
         c.power = j.value("power", def.power);
         c.refine = j.value("fine", def.fine);
         c.refine = j.value("refine", def.refine);
+        c.linear = j.value("linear", def.linear);
         c._present = true;
     }
 

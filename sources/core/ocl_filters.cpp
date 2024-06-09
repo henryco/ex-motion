@@ -2,6 +2,9 @@
 // Created by henryco on 6/3/24.
 //
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "bugprone-easily-swappable-parameters"
+
 #include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../xmotion/core/ocl/ocl_kernels.h"
 #include "../../xmotion/core/ocl/ocl_kernels_chromakey.h"
@@ -536,6 +539,7 @@ namespace xm::ocl {
         cl_event maks_range_event;
         cl_event maks_apply_event;
 
+        xm::ocl::finish_queue(queue);
 
         // ======= KERNEL ENQUEUE !
         maks_range_event = xm::ocl::enqueue_kernel_fast(
@@ -731,3 +735,4 @@ namespace xm::ocl {
     }
 
 }
+#pragma clang diagnostic pop

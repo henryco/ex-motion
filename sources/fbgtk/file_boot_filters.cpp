@@ -50,6 +50,7 @@ namespace xm {
             .fine = conf.fine,
             .blur = conf.blur,
             .power = conf.power,
+            .linear = conf.linear
         });
 
         filters.push_back(std::move(filter));

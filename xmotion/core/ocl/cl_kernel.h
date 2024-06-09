@@ -49,6 +49,8 @@ kernel.run(2, g_size, l_size, true)
 
     cl_command_queue create_queue(cl_context context, cl_device_id device, bool profile = false);
 
+    cl_command_queue create_queue_device(cl_context context, cl_device_id device, bool profile);
+
     cl_ulong measure_exec_time(cl_event event);
 
     /**

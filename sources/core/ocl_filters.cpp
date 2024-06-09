@@ -32,7 +32,7 @@ namespace xm::ocl {
         ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
         svm_supported = check_svm_cap(device_id);
 
-        ocl_command_queue = xm::ocl::create_queue(ocl_context, device_id, aux::DEBUG);
+        ocl_command_queue = xm::ocl::create_queue_device(ocl_context, device_id, aux::DEBUG);
 
         program_blur = xm::ocl::build_program(ocl_context, device_id, kernels::GAUSSIAN_BLUR_KERNEL);
         kernel_blur_h = xm::ocl::build_kernel(program_blur, "gaussian_blur_horizontal");

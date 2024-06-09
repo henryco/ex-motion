@@ -127,6 +127,29 @@ namespace xm::ocl {
         return queue;
     }
 
+    cl_command_queue create_queue_device(cl_context context, cl_device_id device, bool profile) {
+        cl_int err;
+
+        cl_command_queue_properties device_queue_properties;
+        err = clGetDeviceInfo(device,
+                              CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES,
+                              sizeof(device_queue_properties),
+                              &device_queue_properties,
+                              nullptr);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot query device for command queue properties: " + std::to_string(err));
+
+        cl_command_queue_properties dev_queue = (device_queue_properties & CL_QUEUE_ON_DEVICE) ? CL_QUEUE_ON_DEVICE : 0;
+        cl_command_queue_properties profiling = profile ? CL_QUEUE_PROFILING_ENABLE : 0;
+        cl_command_queue_properties properties[] = {
+                CL_QUEUE_PROPERTIES, profiling | dev_queue,
+                0};
+        cl_command_queue queue = clCreateCommandQueueWithProperties(context, device, properties, &err);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot create cl_command_queue: " + std::to_string(err));
+        return queue;
+    }
+
     cl_ulong measure_exec_time(cl_event kernel_event) {
         cl_ulong start_time, end_time;
         clGetEventProfilingInfo(

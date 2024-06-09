@@ -90,20 +90,22 @@ namespace xm::ocl {
         cl_int err;
         cl_program program = clCreateProgramWithSource(context, 1, &s, nullptr, &err);
         if (err != CL_SUCCESS)
-            throw std::runtime_error("Cannot create cl_program from source: " + std::to_string(err) + " \n" + kernel_source);
+            throw std::runtime_error("Cannot create cl_program from source: " + std::to_string(err));
 
         err = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
         if (err != CL_SUCCESS) {
-            size_t len;
-            char buffer[2048];
-            clGetProgramBuildInfo(
-                    program,
-                    device,
-                    CL_PROGRAM_BUILD_LOG,
-                    sizeof(buffer),
-                    buffer,
-                    &len);
-            throw std::runtime_error("Cannot build cl_program: " + std::string(buffer, len) + " \n" + kernel_source);
+            size_t log_size;
+            err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+            if (err != CL_SUCCESS)
+                throw std::runtime_error("Error getting build log size");
+
+            auto log = new char[log_size];
+            err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log, NULL);
+            if (err != CL_SUCCESS) {
+                delete[] log;
+                throw std::runtime_error("Error getting error build log");
+            }
+            throw std::runtime_error("Cannot build cl_program: " + std::string(log, log_size));
         }
 
         return program;

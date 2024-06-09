@@ -56,6 +56,11 @@ namespace xm::ocl {
         cl_kernel kernel_mask_apply;
         size_t mask_apply_local_size;
 
+        cl_program program_power_chroma;
+        cl_kernel kernel_power_chroma;
+        cl_kernel kernel_power_mask;
+        size_t power_chroma_local_size;
+
         /* ==================== CACHE KERNELS ==================== */
         cv::UMat blur_kernels[(31 - 1) / 2];
 
@@ -131,6 +136,17 @@ namespace xm::ocl {
                     int blur = 0, // 3, 5, 7, 9, 11, ...
                     int fine = 0, // 3, 5, 7, 9, 11, ...
                     int refine = 0 // 0, 1, 2, ...
+    );
+
+    void chroma_key_single_pass(
+            const cv::UMat &in, cv::UMat &out,
+            const cv::Scalar &hls_low,
+            const cv::Scalar &hls_up,
+            const cv::Scalar &color,
+            int mask_size = 256, // 256, 512, ...
+            int blur = 0, // 3, 5, 7, 9, 11, ...
+            int fine = 0, // 3, 5, 7, 9, 11, ...
+            int refine = 0 // 0, 1, 2, ...
     );
 }
 

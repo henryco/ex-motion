@@ -94,7 +94,16 @@ namespace xm::chroma {
 //        cv::UMat img;
         cv::UMat out;
 
-        xm::ocl::chroma_key(in, out,
+//        xm::ocl::chroma_key(in, out,
+//                            hls_key_lower,
+//                            hls_key_upper,
+//                            bgr_bg_color,
+//                            mask_size,
+//                            blur_kernel,
+//                            fine_kernel,
+//                            mask_iterations);
+
+        xm::ocl::chroma_key_single_pass(in, out,
                             hls_key_lower,
                             hls_key_upper,
                             bgr_bg_color,

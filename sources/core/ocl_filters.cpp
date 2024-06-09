@@ -4,6 +4,7 @@
 
 #include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../xmotion/core/ocl/ocl_kernels.h"
+#include "../../xmotion/core/ocl/ocl_kernels_chromakey.h"
 #include <CL/cl.h>
 #include <opencv2/imgproc.hpp>
 #include <cmath>
@@ -672,18 +673,21 @@ namespace xm::ocl {
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
-//        const auto context = Kernels::instance().ocl_context;
-        const auto queue = Kernels::instance().ocl_command_queue;
-        const auto pref_size = Kernels::instance().mask_apply_local_size;
-        size_t l_size[2] = {pref_size, pref_size};
-        size_t g_size[2] = {xm::ocl::optimal_global_size(in.cols, pref_size),
-                            xm::ocl::optimal_global_size(in.rows, pref_size)};
-
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (int) ((float) n_w / ratio);
 
-        // resize -> (blur_h -> blur_v) -> range_hls -> (erode_h -> erode_v) -> (dilate_h -> dilate_v) -> mask_apply
+//        cv::UMat result(n_w, n_h, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+
+
+        //        const auto context = Kernels::instance().ocl_context;
+        const auto queue = Kernels::instance().ocl_command_queue;
+        const auto pref_size = Kernels::instance().power_chroma_local_size;
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size(n_w, pref_size),
+                            xm::ocl::optimal_global_size(n_h, pref_size)};
+
+        // resize -> (blur_h -> blur_v) -> range_hls -> mask_apply
 
         cl_mem buffer_in = (cl_mem) in.handle(cv::ACCESS_READ);
         cl_mem buffer_blur = (cl_mem) kernel_blur_buffer.handle(cv::ACCESS_READ);
@@ -693,10 +697,10 @@ namespace xm::ocl {
 
 //        auto morph_kern_half_size = (int) (fine / 2);
         auto blur_kern_half_size = (int) (blur / 2);
-        auto mask_height = (uint) n_w;
-        auto mask_width = (uint) n_h;
-        auto out_height = (uint) in.rows;
-        auto out_width = (uint) in.cols;
+        auto mask_height = (int) n_h;
+        auto mask_width = (int) n_w;
+        auto out_height = (int) in.rows;
+        auto out_width = (int) in.cols;
         auto scale_h = (float) in.rows / (float) n_h;
         auto scale_w = (float) in.cols / (float) n_w;
         auto lower_h = (uchar) hls_low[0];
@@ -722,10 +726,10 @@ namespace xm::ocl {
         xm::ocl::set_kernel_arg(kernel_chroma, 4, sizeof(uchar), &is_blur);
 
         xm::ocl::set_kernel_arg(kernel_chroma, 5, sizeof(uchar), &is_linear);
-        xm::ocl::set_kernel_arg(kernel_chroma, 6, sizeof(uint), &out_width);
-        xm::ocl::set_kernel_arg(kernel_chroma, 7, sizeof(uint), &out_height);
-        xm::ocl::set_kernel_arg(kernel_chroma, 8, sizeof(uint), &mask_width);
-        xm::ocl::set_kernel_arg(kernel_chroma, 9, sizeof(uint), &mask_height);
+        xm::ocl::set_kernel_arg(kernel_chroma, 6, sizeof(int), &out_width);
+        xm::ocl::set_kernel_arg(kernel_chroma, 7, sizeof(int), &out_height);
+        xm::ocl::set_kernel_arg(kernel_chroma, 8, sizeof(int), &mask_width);
+        xm::ocl::set_kernel_arg(kernel_chroma, 9, sizeof(int), &mask_height);
         xm::ocl::set_kernel_arg(kernel_chroma, 10, sizeof(float), &scale_w);
         xm::ocl::set_kernel_arg(kernel_chroma, 11, sizeof(float), &scale_h);
 
@@ -757,7 +761,7 @@ namespace xm::ocl {
 
         if (chroma_event != nullptr)
             Kernels::instance().print_time(xm::ocl::measure_exec_time(chroma_event), "power_chroma");
-        
+
         out = std::move(result);
     }
 

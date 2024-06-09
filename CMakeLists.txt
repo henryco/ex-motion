@@ -154,6 +154,7 @@ set(SOURCE_FILES
         sources/core/dnn_cl_utils.cpp
         xmotion/core/ocl/cl_kernel.h
         sources/core/cl_kernel.cpp
+        xmotion/core/ocl/ocl_kernels_chromakey.h
 )
 
 if (UNIX AND NOT APPLE)

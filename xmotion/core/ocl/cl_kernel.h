@@ -88,6 +88,19 @@ idx = set_kernel_arg(kernel, idx, sizeof(int), &height);
             const size_t *local_work_size,
             bool profile = false);
 
+    /**
+     * @return Enqueued kernel event
+     */
+    cl_event enqueue_kernel_fast(
+            cl_command_queue command_queue,
+            cl_kernel kernel,
+            cl_uint work_dim,
+            const size_t *global_work_size,
+            const size_t *local_work_size,
+            bool profile = false);
+
+    void finish_queue(cl_command_queue queue);
+
     bool check_svm_cap(cl_device_id device);
 }
 

@@ -219,6 +219,39 @@ namespace xm::ocl {
         return time;
     }
 
+    cl_event enqueue_kernel_fast(
+            cl_command_queue command_queue,
+            cl_kernel kernel,
+            cl_uint work_dim,
+            const size_t *global_work_size,
+            const size_t *local_work_size,
+            bool profile) {
+        cl_event kernel_event;
+
+        cl_int err;
+        err = clEnqueueNDRangeKernel(
+                command_queue,
+                kernel,
+                work_dim,
+                nullptr,
+                global_work_size,
+                local_work_size,
+                0,
+                nullptr,
+                profile ? &kernel_event : nullptr);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot enqueue kernel: " + std::to_string(err));
+
+        return profile ? kernel_event : nullptr;
+    }
+
+    void finish_queue(cl_command_queue queue) {
+        cl_int err;
+        err = clFinish(queue);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
+    }
+
     bool check_svm_cap(cl_device_id device) {
         cl_device_svm_capabilities svmCapabilities;
         cl_int err = clGetDeviceInfo(device, CL_DEVICE_SVM_CAPABILITIES, sizeof(svmCapabilities), &svmCapabilities, nullptr);

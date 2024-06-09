@@ -122,6 +122,16 @@ namespace xm::ocl {
      * @param out output image in BGR color space (3 channels uchar)
      */
     void apply_mask_with_color(const cv::Scalar &color, const cv::UMat &img, const cv::UMat &mask, cv::UMat &out);
+
+    void chroma_key(const cv::UMat &in, cv::UMat &out,
+                    const cv::Scalar &hls_low,
+                    const cv::Scalar &hls_up,
+                    const cv::Scalar &color,
+                    int mask_size = 256, // 256, 512, ...
+                    int blur = 0, // 3, 5, 7, 9, 11, ...
+                    int fine = 0, // 3, 5, 7, 9, 11, ...
+                    int refine = 0 // 0, 1, 2, ...
+    );
 }
 
 #endif //XMOTION_OCL_FILTERS_H

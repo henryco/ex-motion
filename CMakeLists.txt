@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.27)
-project(xmotion VERSION 0.1 LANGUAGES CXX)
+project(xmotion VERSION 0.2 LANGUAGES CXX)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
@@ -10,15 +10,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(TFLITE_ENABLE_GPU ON CACHE BOOL "Enable TFLite GPU support")
 set(ABSL_PROPAGATE_CXX_STD ON)
 set(JSON_BuildTests OFF CACHE INTERNAL "")
+
+# This may cause compatibility issues ====
+set(CL_HPP_TARGET_OPENCL_VERSION 300)
 set(CL_TARGET_OPENCL_VERSION 300)
+# ========================================
 
 add_subdirectory(external/tensorflow/tensorflow/lite)
 add_subdirectory(external/argparse)
 add_subdirectory(external/json)
 add_subdirectory(external/glm)
 
-set(CMAKE_C_COMPILER "clang-16")
-set(CMAKE_CXX_COMPILER "clang++-16")
+set(CMAKE_C_COMPILER "clang-18")
+set(CMAKE_CXX_COMPILER "clang++-18")
 
 # Creates the compile_commands.json used by editors for code completion
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -26,9 +30,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Must use GNUInstallDirs to install libraries into correct locations on all platforms:
 include(GNUInstallDirs)
 
-# Find OpenCL
-find_package(OpenCL REQUIRED)
-include_directories(${OpenCL_INCLUDE_DIRS})
+# Find OpenCL 3.0
+find_package(OpenCL 3.0 REQUIRED)
+if (OpenCL_FOUND)
+    add_definitions("-DCL_HPP_TARGET_OPENCL_VERSION=300")
+    add_definitions("-DCL_TARGET_OPENCL_VERSION=300")
+endif ()
+
+# Find OpenCL headers
+find_package(OpenCLHeaders REQUIRED)
 
 # Find OpenCV package
 find_package(OpenCV REQUIRED)
@@ -175,7 +185,8 @@ if (WIN32)
     target_link_libraries(${PROJECT_NAME}
             mfplat mf mfreadwrite
             PRIVATE ${OpenCV_LIBS}
-            PRIVATE ${OpenCL_LIBRARIES}
+            PRIVATE OpenCL::OpenCL
+            PRIVATE OpenCL::Headers
             PRIVATE ${GTKMM_LIBRARIES}
             PRIVATE OpenGL::GL
             PRIVATE spdlog::spdlog
@@ -200,7 +211,8 @@ elseif (UNIX AND NOT APPLE)
             PRIVATE ${OpenCV_LIBS}
             PRIVATE ${GTKMM_LIBRARIES}
             PRIVATE OpenGL::GL
-            PRIVATE ${OpenCL_LIBRARIES}
+            PRIVATE OpenCL::OpenCL
+            PRIVATE OpenCL::Headers
             PRIVATE spdlog::spdlog
             PRIVATE ${V4L2_LIBRARIES}
             PRIVATE nlohmann_json::nlohmann_json
@@ -213,3 +225,9 @@ elseif (UNIX AND NOT APPLE)
             PRIVATE ${V4L2_CFLAGS_OTHER})
 
 endif ()
+
+# This may cause compatibility issues ============
+target_compile_definitions(${PROJECT_NAME}
+        PRIVATE CL_TARGET_OPENCL_VERSION=300
+        PRIVATE CL_HPP_TARGET_OPENCL_VERSION=300)
+# ================================================

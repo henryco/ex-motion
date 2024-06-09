@@ -6,6 +6,7 @@
 #define STEREOX_LINUX_VIDEO_H
 
 #include <linux/videodev2.h>
+#include <cstdint>
 #include <vector>
 #include <ostream>
 #include <map>
@@ -17,7 +18,7 @@ namespace eox::v4l2 {
     };
 
     typedef struct {
-        uint32_t id;
+        std::uint32_t id;
         int32_t value;
     } serial_v4l2_control;
 

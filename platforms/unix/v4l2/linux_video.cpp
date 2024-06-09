@@ -2,6 +2,7 @@
 // Created by henryco on 11/25/23.
 //
 
+#include <algorithm>
 #include "linux_video.h"
 #include <linux/videodev2.h>
 #include <fcntl.h>

@@ -74,7 +74,7 @@ namespace xm {
 
     void FileBoot::on_camera_reset(const std::string &device_id) {
         camera->resetControls(device_id);
-        log->debug("reset camera settings for: {} | {}", device_id);
+        log->debug("reset camera settings for: {}", device_id);
     }
 
 }

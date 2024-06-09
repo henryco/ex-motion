@@ -6,6 +6,8 @@
 #include "xmotion/imgui/imgui_boot.h"
 #include "xmotion/fbgtk/file_boot.h"
 
+#define CL_TARGET_OPENCL_VERSION 300
+
 namespace xm::error {
 
 #ifdef _WIN32

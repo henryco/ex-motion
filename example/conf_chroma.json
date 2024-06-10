@@ -18,9 +18,9 @@
       "chroma": {
         "key": "#CC3733",
         "replace": "#00FF00",
-        "refine": 1,
-        "fine": 2,
-        "blur": 3,
+        "refine": 2,
+        "fine": 1,
+        "blur": 1,
         "power": 0,
         "range": {
           "h": 0.02,

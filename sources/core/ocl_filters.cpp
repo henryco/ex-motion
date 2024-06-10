@@ -618,6 +618,9 @@ namespace xm::ocl {
         }
 
         // ======= RELEASE HEAP DATA !
+        clReleaseMemObject(buffer_io_1);
+        clReleaseMemObject(buffer_io_2);
+
         xm::ocl::release_event(maks_range_event);
         xm::ocl::release_event(maks_apply_event);
 

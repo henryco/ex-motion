@@ -9,13 +9,12 @@
 namespace xm {
 
     void FileBoot::filter_frames(std::vector<cv::UMat> &frames) {
-//        const auto t0 = std::chrono::system_clock::now();
+        const auto t0 = std::chrono::system_clock::now();
 
 //        std::vector<std::future<cv::UMat>> futures;
         for (auto &frame: frames) {
             for (const auto &filter: filters) {
                 frame = std::move(filter->filter(frame));
-//                filter->filter(frame);
             }
         }
 
@@ -23,9 +22,9 @@ namespace xm {
 //            auto r = future.get();
 //        }
 
-//        const auto t1 = std::chrono::system_clock::now();
-//        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
-//        log->info("time: {}", d);
+        const auto t1 = std::chrono::system_clock::now();
+        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
+        log->info("time: {}", d);
     }
 
     void FileBoot::prepare_filters() {

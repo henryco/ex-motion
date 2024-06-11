@@ -157,6 +157,8 @@ set(SOURCE_FILES
         xmotion/core/ocl/ocl_kernels_chromakey.h
         xmotion/core/ocl/ocl_data.h
         sources/core/ocl_data.cpp
+        xmotion/core/ocl/ocl_interop.h
+        sources/core/ocl_interop.cpp
 )
 
 if (UNIX AND NOT APPLE)

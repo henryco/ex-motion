@@ -10,6 +10,7 @@
 #include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../xmotion/core/ocl/ocl_kernels.h"
 #include "../../xmotion/core/ocl/ocl_kernels_chromakey.h"
+#include "../../xmotion/core/ocl/ocl_interop.h"
 #include <CL/cl.h>
 #include <opencv2/imgproc.hpp>
 #include <cmath>
@@ -681,47 +682,24 @@ namespace xm::ocl {
 
     void chroma_key_single_pass(const cv::UMat &in, cv::UMat &out, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
                                 const cv::Scalar &color, bool linear, int mask_size, int blur, int queue_index) {
-        xm::ocl::Image2D img((size_t) in.cols,
-                             (size_t) in.rows,
-                             (size_t) in.channels(),
-                             (size_t) 1,
-                             (cl_mem) in.handle(cv::ACCESS_READ),
-                             Kernels::instance().ocl_context,
-                             Kernels::instance().device_id,
-                             xm::ocl::ACCESS::RO);
-        img.retain();
+        auto img = xm::ocl::iop::from_cv_umat(in,
+                                              Kernels::instance().ocl_context,
+                                              Kernels::instance().device_id,
+                                              xm::ocl::ACCESS::RO);
         auto result = chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index).getImage2D();
-        cv::ocl::convertFromBuffer(result.handle,
-                                   result.channels * result.cols,
-                                   (int) result.rows,
-                                   (int) result.cols,
-                                   CV_8UC(result.channels),
-                                   out);
+        xm::ocl::iop::to_cv_umat(result, out);
     }
 
     QueuePromise chroma_key_single_pass(const cv::UMat &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
                                         const cv::Scalar &color, bool linear, int mask_size, int blur,
                                         int queue_index) {
-        xm::ocl::Image2D img((size_t) in.cols,
-                             (size_t) in.rows,
-                             (size_t) in.channels(),
-                             (size_t) 1,
-                             (cl_mem) in.handle(cv::ACCESS_READ),
-                             Kernels::instance().ocl_context,
-                             Kernels::instance().device_id,
-                             xm::ocl::ACCESS::RO);
-        img.retain();
+        auto img = xm::ocl::iop::from_cv_umat(in,
+                                              Kernels::instance().ocl_context,
+                                              Kernels::instance().device_id,
+                                              xm::ocl::ACCESS::RO);
         auto promise = chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index);
         return QueuePromise([promise]() mutable -> cv::UMat {
-            cv::UMat output;
-            auto result = promise.getImage2D();
-            cv::ocl::convertFromBuffer(result.handle,
-                                       result.channels * result.cols,
-                                       (int) result.rows,
-                                       (int) result.cols,
-                                       CV_8UC(result.channels),
-                                       output);
-            return output;
+            return xm::ocl::iop::to_cv_umat(promise.getImage2D());
         });
     }
 

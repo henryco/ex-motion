@@ -12,11 +12,11 @@ namespace xm::ocl::iop {
 
     cv::AccessFlag access_to_cv(ACCESS access);
 
-    inline xm::ocl::Image2D from_cv_umat(
+    xm::ocl::Image2D from_cv_umat(
             const cv::UMat &mat,
             xm::ocl::ACCESS access = ACCESS::RW);
 
-    inline xm::ocl::Image2D from_cv_umat(
+    xm::ocl::Image2D from_cv_umat(
             const cv::UMat &mat,
             cl_context context,
             cl_device_id device,
@@ -25,12 +25,12 @@ namespace xm::ocl::iop {
     /**
      * @param cv_type if -1, CV_8UC(image.channels) is used
      */
-    inline cv::UMat to_cv_umat(const xm::ocl::Image2D &image, int cv_type = -1);
+    cv::UMat to_cv_umat(const xm::ocl::Image2D &image, int cv_type = -1);
 
     /**
      * @param cv_type if -1, CV_8UC(image.channels) is used
      */
-    inline void to_cv_umat(const xm::ocl::Image2D &image, cv::UMat &out, int cv_type = -1);
+    void to_cv_umat(const xm::ocl::Image2D &image, cv::UMat &out, int cv_type = -1);
 }
 
 #endif //XMOTION_OCL_INTEROP_H

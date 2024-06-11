@@ -17,7 +17,7 @@ namespace xm::ocl::iop {
         throw std::invalid_argument("Unknown access modifier");
     }
 
-    inline xm::ocl::Image2D from_cv_umat(const cv::UMat &source, ACCESS modifier) {
+    xm::ocl::Image2D from_cv_umat(const cv::UMat &source, ACCESS modifier) {
         return from_cv_umat(
                 source,
                 (cl_context) cv::ocl::Context::getDefault().ptr(),
@@ -25,7 +25,7 @@ namespace xm::ocl::iop {
                 modifier);
     }
 
-    inline xm::ocl::Image2D from_cv_umat(const cv::UMat &mat, cl_context context, cl_device_id device, ACCESS access) {
+    xm::ocl::Image2D from_cv_umat(const cv::UMat &mat, cl_context context, cl_device_id device, ACCESS access) {
         return xm::ocl::Image2D(
                 mat.cols,
                 mat.rows,
@@ -34,16 +34,16 @@ namespace xm::ocl::iop {
                 (cl_mem) mat.handle(access_to_cv(access)),
                 context,
                 device,
-                ACCESS::WO).retain();
+                access).retain();
     }
 
-    inline cv::UMat to_cv_umat(const Image2D &image, int cv_type) {
+    cv::UMat to_cv_umat(const Image2D &image, int cv_type) {
         cv::UMat mat;
         to_cv_umat(image, mat, cv_type);
         return mat;
     }
 
-    inline void to_cv_umat(const Image2D &image, cv::UMat &out, int cv_type) {
+    void to_cv_umat(const Image2D &image, cv::UMat &out, int cv_type) {
         cv::ocl::convertFromBuffer(image.handle,
                                    image.channels * image.cols,
                                    (int) image.rows,

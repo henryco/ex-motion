@@ -267,4 +267,83 @@ namespace xm::ocl {
         if (event != nullptr)
             clReleaseEvent(event);
     }
+
+    bool check_extension(const std::string &ext_name, cl_device_id dev_id) {
+        cl_int err;
+
+        cl_uint platform_count;
+        err = clGetPlatformIDs(0, nullptr, &platform_count);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot query platforms count: " + std::to_string(err));
+
+        cl_platform_id *platforms;
+        platforms = new cl_platform_id[platform_count];
+        err = clGetPlatformIDs(platform_count, platforms, nullptr);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot query platforms: " + std::to_string(err));
+
+        cl_platform_id platform = platforms[0];
+        delete[] platforms;
+
+        size_t platform_ext_size;
+        err = clGetPlatformInfo(platform, CL_PLATFORM_EXTENSIONS, 0, NULL, &platform_ext_size);
+        if (err != CL_SUCCESS) {
+            throw std::runtime_error("Cannot query gpu device platform extension size: " + std::to_string(err));
+        }
+
+        auto platform_extensions = new char[platform_ext_size];
+        err = clGetPlatformInfo(platform, CL_PLATFORM_EXTENSIONS, platform_ext_size, platform_extensions, NULL);
+        if (err != CL_SUCCESS) {
+            delete[] platform_extensions;
+            throw std::runtime_error("Cannot query gpu device platform extension size: " + std::to_string(err));
+        }
+
+        cl_device_id device_id;
+        if (dev_id == nullptr) {
+            cl_uint device_count;
+            err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 0, nullptr, &device_count);
+            if (err != CL_SUCCESS) {
+                delete[] platform_extensions;
+                throw std::runtime_error("Cannot query gpu device count: " + std::to_string(err));
+            }
+
+            cl_device_id *devices;
+            devices = new cl_device_id[device_count];
+            err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, device_count, devices, nullptr);
+            if (err != CL_SUCCESS) {
+                delete[] platform_extensions;
+                delete[] devices;
+                throw std::runtime_error("Cannot query gpu device id: " + std::to_string(err));
+            }
+            device_id = devices[0];
+            delete[] devices;
+        } else {
+            device_id = dev_id;
+        }
+
+        size_t device_ext_size;
+        err = clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, 0, NULL, &device_ext_size);
+        if (err != CL_SUCCESS) {
+            delete[] platform_extensions;
+            throw std::runtime_error("Cannot query gpu device extensions size");
+        }
+
+        auto device_extensions = new char[device_ext_size];
+        err = clGetDeviceInfo(device_id, CL_DEVICE_EXTENSIONS, device_ext_size, device_extensions, NULL);
+        if (err != CL_SUCCESS) {
+            delete[] platform_extensions;
+            delete[] device_extensions;
+            throw std::runtime_error("Cannot query gpu device extensions");
+        }
+
+        const std::string p(platform_extensions, platform_ext_size);
+        const std::string d(device_extensions, device_ext_size);
+
+        const auto support = (p.find(ext_name) != std::string::npos)
+                && (d.find(ext_name) != std::string::npos);
+
+        delete[] platform_extensions;
+        delete[] device_extensions;
+        return support;
+    }
 }

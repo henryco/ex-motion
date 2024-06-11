@@ -102,6 +102,13 @@ idx = set_kernel_arg(kernel, idx, sizeof(int), &height);
     void finish_queue(cl_command_queue queue);
 
     bool check_svm_cap(cl_device_id device);
+
+    /**
+     * Checks platform and device for extension support
+     * @param ext_name CL extension name, ie: "cl_khr_gl_sharing"
+     * @param dev_id device id, optional
+     */
+    bool check_extension(const std::string &ext_name, cl_device_id dev_id = nullptr);
 }
 
 #endif //XMOTION_CL_KERNEL_H

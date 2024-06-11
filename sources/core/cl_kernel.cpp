@@ -346,4 +346,12 @@ namespace xm::ocl {
         delete[] device_extensions;
         return support;
     }
+
+    cl_uint get_ref_count(cl_mem obj) {
+        cl_uint count;
+        cl_int err = clGetMemObjectInfo(obj, CL_MEM_REFERENCE_COUNT, sizeof(count), &count, NULL);
+        if (err == CL_SUCCESS)
+            return count;
+        throw std::runtime_error("Cannot query reference count for cl_mem: " + std::to_string(err));
+    }
 }

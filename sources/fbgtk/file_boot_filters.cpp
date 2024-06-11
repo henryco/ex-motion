@@ -15,6 +15,7 @@ namespace xm {
         for (auto &frame: frames) {
             for (const auto &filter: filters) {
                 frame = std::move(filter->filter(frame));
+//                filter->filter(frame);
             }
         }
 

@@ -13,6 +13,7 @@
 
 #include "kernel.h"
 #include "cl_kernel.h"
+#include "ocl_data.h"
 
 namespace xm::ocl {
 
@@ -31,7 +32,7 @@ namespace xm::ocl {
         cl_device_id device_id;
         cl_context ocl_context;
         cl_command_queue ocl_command_queue;
-        cl_command_queue ocl_command_queue_ooo; // out of order
+        std::map<int, cl_command_queue> ocl_queue_map;
 
         /* ==================== OPENCL KERNELS ==================== */
         cl_program program_blur;
@@ -81,8 +82,21 @@ namespace xm::ocl {
 
         ~Kernels();
 
+        cl_command_queue retrieve_queue(int index);
+
     private:
         Kernels();
+    };
+
+    class QueuePromise {
+    private:
+        std::function<xm::ocl::Image2D()> cb_ocl{};
+        std::function<cv::UMat()> cb_umat{};
+    public:
+        explicit QueuePromise(std::function<cv::UMat()> &&_callback);
+        explicit QueuePromise(std::function<xm::ocl::Image2D()> &&_callback);
+        xm::ocl::Image2D getImage2D();
+        cv::UMat getUMat();
     };
 
     /**
@@ -91,7 +105,10 @@ namespace xm::ocl {
      * @param out output image in BGR color space (3 channels uchar)
      * @param kernel_size should be odd: 3, 5, 7, 9 ... etc
      */
-    void blur(const cv::UMat &in, cv::UMat &out, int kernel_size = 5);
+    void blur(const cv::UMat &in,
+              cv::UMat &out,
+              int kernel_size = 5,
+              int queue_index = -1);
 
     /**
      * Returns mask that satisfies HLS range. This function supports HUE wrapping (!)
@@ -100,7 +117,11 @@ namespace xm::ocl {
      * @param in input image in BGR color space (3 channels uchar)
      * @param out output mask grayscale (1 channel uchar)
      */
-    void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out);
+    void bgr_in_range_hls(const cv::Scalar &hls_low,
+                          const cv::Scalar &hls_up,
+                          const cv::UMat &in,
+                          cv::UMat &out,
+                          int queue_index = -1);
 
     /**
      * Dilation filter (conv)
@@ -109,7 +130,11 @@ namespace xm::ocl {
      * @param iterations numbers of iterations to apply this filter
      * @param kernel_size kernel size for filter
      */
-    void dilate(const cv::UMat &in, cv::UMat &out, int iterations = 1, int kernel_size = 3);
+    void dilate(const cv::UMat &in,
+                cv::UMat &out,
+                int iterations = 1,
+                int kernel_size = 3,
+                int queue_index = -1);
 
     /**
      * Erosion filter (conv)
@@ -118,7 +143,11 @@ namespace xm::ocl {
      * @param iterations numbers of iterations to apply this filter
      * @param kernel_size kernel size for filter
      */
-    void erode(const cv::UMat &in, cv::UMat &out, int iterations = 1, int kernel_size = 3);
+    void erode(const cv::UMat &in,
+               cv::UMat &out,
+               int iterations = 1,
+               int kernel_size = 3,
+               int queue_index = -1);
 
     /**
      * Apply mask to image, places for which mask value != 0 would be replaced with given color.
@@ -128,17 +157,44 @@ namespace xm::ocl {
      * @param mask grayscale mask (single channel uchar), can be smaller or larger than image (!)
      * @param out output image in BGR color space (3 channels uchar)
      */
-    void apply_mask_with_color(const cv::Scalar &color, const cv::UMat &img, const cv::UMat &mask, cv::UMat &out);
+    void apply_mask_with_color(const cv::Scalar &color,
+                               const cv::UMat &img,
+                               const cv::UMat &mask,
+                               cv::UMat &out,
+                               int queue_index = -1);
 
     void chroma_key(const cv::UMat &in, cv::UMat &out,
                     const cv::Scalar &hls_low,
                     const cv::Scalar &hls_up,
                     const cv::Scalar &color,
-                    bool linear = false,
-                    int mask_size = 256, // 256, 512, ...
-                    int blur = 0, // 3, 5, 7, 9, 11, ...
-                    int fine = 0, // 3, 5, 7, 9, 11, ...
-                    int refine = 0 // 0, 1, 2, ...
+                    bool linear,
+                    int mask_size, // 256, 512, ...
+                    int blur, // 3, 5, 7, 9, 11, ...
+                    int fine, // 3, 5, 7, 9, 11, ...
+                    int refine, // 0, 1, 2, ...
+                    int queue_index = -1
+    );
+
+    QueuePromise chroma_key_single_pass(
+            const cv::UMat &in,
+            const cv::Scalar &hls_low,
+            const cv::Scalar &hls_up,
+            const cv::Scalar &color,
+            bool linear,
+            int mask_size, // 256, 512, ...
+            int blur, // 3, 5, 7, 9, 11, ...
+            int queue_index = -1
+    );
+
+    QueuePromise chroma_key_single_pass(
+            const xm::ocl::Image2D &in,
+            const cv::Scalar &hls_low,
+            const cv::Scalar &hls_up,
+            const cv::Scalar &color,
+            bool linear,
+            int mask_size, // 256, 512, ...
+            int blur, // 3, 5, 7, 9, 11, ...
+            int queue_index = -1
     );
 
     void chroma_key_single_pass(
@@ -146,9 +202,10 @@ namespace xm::ocl {
             const cv::Scalar &hls_low,
             const cv::Scalar &hls_up,
             const cv::Scalar &color,
-            bool linear = false,
-            int mask_size = 256, // 256, 512, ...
-            int blur = 0 // 3, 5, 7, 9, 11, ...
+            bool linear,
+            int mask_size, // 256, 512, ...
+            int blur, // 3, 5, 7, 9, 11, ...
+            int queue_index = -1
     );
 }
 

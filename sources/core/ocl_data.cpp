@@ -6,31 +6,16 @@
 
 namespace xm::ocl {
 
-    void Image2D::copy_from(const Image2D &other) {
-        detached = false;
-        cols = other.cols;
-        rows = other.rows;
-        channels = other.channels;
-        channel_size = other.channel_size;
-        context = other.context;
-        device = other.device;
-        handle = other.handle;
-    }
-
-    void Image2D::reset_state(Image2D &other) {
-        other.detached = false;
-        other.context = nullptr;
-        other.device = nullptr;
-        other.handle = nullptr;
-        other.channel_size = 0;
-        other.channels = 0;
-        other.cols = 0;
-        other.rows = 0;
+    Image2D &Image2D::decrement_ref() {
+        if (handle != nullptr)
+            clReleaseMemObject(handle);
+        return *this;
     }
 
     void Image2D::release() {
-        if (handle != nullptr && !detached)
+        if (handle != nullptr && !is_detached)
             clReleaseMemObject(handle);
+        reset_state(*this);
     }
 
     std::size_t Image2D::size() const {
@@ -45,8 +30,37 @@ namespace xm::ocl {
         release();
     }
 
+    void Image2D::copy_from(const Image2D &other) {
+        is_detached = false;
+        access = other.access;
+        cols = other.cols;
+        rows = other.rows;
+        channels = other.channels;
+        channel_size = other.channel_size;
+        context = other.context;
+        device = other.device;
+        handle = other.handle;
+    }
+
+    void Image2D::reset_state(Image2D &other) {
+        other.is_detached = true;
+        other.context = nullptr;
+        other.device = nullptr;
+        other.handle = nullptr;
+        other.channel_size = 0;
+        other.channels = 0;
+        other.cols = 0;
+        other.rows = 0;
+    }
+
     Image2D::Image2D(const Image2D &other) {
         copy_from(other);
+        clRetainMemObject(handle);
+    }
+
+    Image2D::Image2D(const Image2D &other, cl_mem _handle) {
+        copy_from(other);
+        handle = _handle;
     }
 
     Image2D::Image2D(Image2D &&other) noexcept {
@@ -54,8 +68,18 @@ namespace xm::ocl {
         reset_state(other);
     }
 
-    Image2D &Image2D::detach(bool _) {
-        detached = _;
+    Image2D::Image2D(const Image2D &&other, cl_mem _handle) {
+        copy_from(other);
+        handle = _handle;
+    }
+
+    Image2D &Image2D::detached(bool _) {
+        is_detached = _;
+        return *this;
+    }
+
+    Image2D &Image2D::retain() {
+        clRetainMemObject(handle);
         return *this;
     }
 
@@ -64,6 +88,7 @@ namespace xm::ocl {
             return *this;
         release();
         copy_from(other);
+        clRetainMemObject(handle);
         return *this;
     }
 
@@ -82,7 +107,8 @@ namespace xm::ocl {
                      size_t _channel_size,
                      cl_mem _handle,
                      cl_context _context,
-                     cl_device_id _device)
+                     cl_device_id _device,
+                     ACCESS _access)
             : cols(_cols),
               rows(_rows),
               channels(_channels),
@@ -90,5 +116,6 @@ namespace xm::ocl {
               handle(_handle),
               context(_context),
               device(_device),
-              detached(false) {}
+              access(_access),
+              is_detached(false) {}
 }

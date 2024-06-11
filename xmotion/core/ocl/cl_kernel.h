@@ -109,6 +109,11 @@ idx = set_kernel_arg(kernel, idx, sizeof(int), &height);
      * @param dev_id device id, optional
      */
     bool check_extension(const std::string &ext_name, cl_device_id dev_id = nullptr);
+
+    /**
+     * @return reference count for given memory object
+     */
+    cl_uint get_ref_count(cl_mem obj);
 }
 
 #endif //XMOTION_CL_KERNEL_H

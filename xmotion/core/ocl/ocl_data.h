@@ -9,6 +9,18 @@
 
 namespace xm::ocl {
 
+    enum class ACCESS {
+
+        /** READ ONLY */
+        RO,
+
+        /** WRITE ONLY */
+        WO,
+
+        /** READ WRITE */
+        RW
+    };
+
     class Image2D {
 
     public:
@@ -21,7 +33,9 @@ namespace xm::ocl {
         cl_context context = nullptr;
         cl_device_id device = nullptr;
 
-        bool detached = false;
+        ACCESS access = ACCESS::RW;
+
+        bool is_detached = false;
 
         std::size_t size() const;
 
@@ -33,11 +47,16 @@ namespace xm::ocl {
                 size_t channel_size,
                 cl_mem handle,
                 cl_context context,
-                cl_device_id device);
+                cl_device_id device,
+                ACCESS access);
 
         Image2D(const Image2D &other);
 
+        Image2D(const Image2D &_template, cl_mem handle);
+
         Image2D(Image2D &&other) noexcept;
+
+        Image2D(const Image2D &&_template, cl_mem handle);
 
         Image2D& operator=(const Image2D& other);
 
@@ -48,14 +67,18 @@ namespace xm::ocl {
         /**
          * !!! May cause memory leaks !!!
          */
-        Image2D &detach(bool _ = true);
+        Image2D &detached(bool _ = true);
+
+        Image2D &retain();
+
+        Image2D &decrement_ref();
+
+        void release();
 
     private:
         void copy_from(const Image2D &other);
 
         void reset_state(Image2D &other);
-
-        void release();
     };
 
 }

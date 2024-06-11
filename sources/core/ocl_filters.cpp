@@ -3,6 +3,8 @@
 //
 
 #pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnusedValue"
+#pragma ide diagnostic ignored "UnusedLocalVariable"
 #pragma ide diagnostic ignored "bugprone-easily-swappable-parameters"
 
 #include "../../xmotion/core/ocl/ocl_filters.h"
@@ -17,6 +19,22 @@ namespace xm::ocl {
 
     namespace aux {
         std::mutex GLOBAL_MUTEX;
+    }
+
+    cv::UMat QueuePromise::getUMat() {
+        return cb_umat();
+    }
+
+    xm::ocl::Image2D QueuePromise::getImage2D() {
+        return cb_ocl();
+    }
+
+    QueuePromise::QueuePromise(std::function<cv::UMat()> &&_callback) {
+        cb_umat = std::move(_callback);
+    }
+
+    QueuePromise::QueuePromise(std::function<xm::ocl::Image2D()> &&_callback) {
+        cb_ocl = std::move(_callback);
     }
 
     Kernels::Kernels() {
@@ -37,7 +55,6 @@ namespace xm::ocl {
         svm_supported = check_svm_cap(device_id);
 
         ocl_command_queue = xm::ocl::create_queue_device(ocl_context, device_id, true, aux::DEBUG);
-        ocl_command_queue_ooo = xm::ocl::create_queue_device(ocl_context, device_id, false, aux::DEBUG);
 
         program_blur = xm::ocl::build_program(ocl_context, device_id, kernels::GAUSSIAN_BLUR_KERNEL);
         kernel_blur_h = xm::ocl::build_kernel(program_blur, "gaussian_blur_horizontal");
@@ -99,6 +116,12 @@ namespace xm::ocl {
         clReleaseKernel(kernel_mask_apply);
         clReleaseProgram(program_mask_apply);
 
+        for (auto &item: ocl_queue_map) {
+            if (item.second == nullptr)
+                continue;
+            clReleaseCommandQueue(item.second);
+        }
+
         clReleaseCommandQueue(ocl_command_queue);
         clReleaseContext(ocl_context);
         clReleaseDevice(device_id);
@@ -111,7 +134,22 @@ namespace xm::ocl {
             log->debug("[{}] kernel [{}] execution time: {} ns", thread_id, name, std::to_string(time));
     }
 
-    void blur(const cv::UMat &in, cv::UMat &out, const int kernel_size) {
+    cl_command_queue Kernels::retrieve_queue(int index) {
+        if (index <= 0)
+            return ocl_command_queue;
+
+        if (ocl_queue_map.contains(index))
+            return ocl_queue_map[index];
+
+        ocl_queue_map.emplace(index, xm::ocl::create_queue_device(
+                ocl_context,
+                device_id,
+                true,
+                aux::DEBUG));
+        return ocl_queue_map[index];
+    }
+
+    void blur(const cv::UMat &in, cv::UMat &out, const int kernel_size, int queue_index) {
         if (kernel_size < 3 || kernel_size % 2 == 0 || kernel_size > 31)
             throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
         cv::UMat result_1(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
@@ -122,7 +160,7 @@ namespace xm::ocl {
                 .handle(cv::ACCESS_READ);
         auto kh_size = (int) (kernel_size / 2);
 
-        const auto queue = Kernels::instance().ocl_command_queue;
+        const auto queue = Kernels::instance().retrieve_queue(queue_index);
         const auto pref_size = Kernels::instance().blur_local_size;
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size(in.cols, pref_size),
@@ -176,10 +214,10 @@ namespace xm::ocl {
         out = std::move(result_2);
     }
 
-    void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out) {
+    void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out, int queue_index) {
         cv::UMat result(in.rows, in.cols, CV_8UC1, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
-        const auto queue = Kernels::instance().ocl_command_queue;
+        const auto queue = Kernels::instance().retrieve_queue(queue_index);
         const auto pref_size = Kernels::instance().range_hls_local_size;
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size(in.cols, pref_size),
@@ -220,7 +258,7 @@ namespace xm::ocl {
         out = std::move(result);
     }
 
-    void dilate(const cv::UMat &in, cv::UMat &out, int iterations, int kernel_size) {
+    void dilate(const cv::UMat &in, cv::UMat &out, int iterations, int kernel_size, int queue_index) {
         if (kernel_size < 3 || kernel_size % 2 == 0)
             throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
 
@@ -229,7 +267,7 @@ namespace xm::ocl {
 
         auto kh_size = (int) (kernel_size / 2);
 
-        const auto queue = Kernels::instance().ocl_command_queue;
+        const auto queue = Kernels::instance().retrieve_queue(queue_index);
         const auto pref_size = Kernels::instance().dilate_local_size;
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size(in.cols, pref_size),
@@ -284,7 +322,7 @@ namespace xm::ocl {
         out = std::move(result_2);
     }
 
-    void erode(const cv::UMat &in, cv::UMat &out, int iterations, int kernel_size) {
+    void erode(const cv::UMat &in, cv::UMat &out, int iterations, int kernel_size, int queue_index) {
         if (kernel_size < 3 || kernel_size % 2 == 0)
             throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
 
@@ -293,7 +331,7 @@ namespace xm::ocl {
 
         auto kh_size = (int) (kernel_size / 2);
 
-        const auto queue = Kernels::instance().ocl_command_queue;
+        const auto queue = Kernels::instance().retrieve_queue(queue_index);
         const auto pref_size = Kernels::instance().erode_local_size;
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size(in.cols, pref_size),
@@ -348,10 +386,10 @@ namespace xm::ocl {
         out = std::move(result_2);
     }
 
-    void apply_mask_with_color(const cv::Scalar &color, const cv::UMat &img, const cv::UMat &mask, cv::UMat &out) {
+    void apply_mask_with_color(const cv::Scalar &color, const cv::UMat &img, const cv::UMat &mask, cv::UMat &out, int queue_index) {
         cv::UMat result(img.rows, img.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
-        const auto queue = Kernels::instance().ocl_command_queue;
+        const auto queue = Kernels::instance().retrieve_queue(queue_index);
         const auto pref_size = Kernels::instance().mask_apply_local_size;
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size(img.cols, pref_size),
@@ -403,7 +441,8 @@ namespace xm::ocl {
                     int mask_size,
                     int blur,
                     int fine,
-                    int refine) {
+                    int refine,
+                    int queue_index) {
 
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
@@ -416,7 +455,7 @@ namespace xm::ocl {
         cl_int err;
 
         const auto context = Kernels::instance().ocl_context;
-        const auto queue = Kernels::instance().ocl_command_queue;
+        const auto queue = Kernels::instance().retrieve_queue(queue_index);
         const auto inter_size = n_w * n_h * 3;
         const auto pref_size = Kernels::instance().mask_apply_local_size;
         size_t l_size[2] = {pref_size, pref_size};
@@ -641,27 +680,73 @@ namespace xm::ocl {
     }
 
     void chroma_key_single_pass(const cv::UMat &in, cv::UMat &out, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                const cv::Scalar &color, bool linear, int mask_size, int blur) {
-        const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
-        cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+                                const cv::Scalar &color, bool linear, int mask_size, int blur, int queue_index) {
+        xm::ocl::Image2D img((size_t) in.cols,
+                             (size_t) in.rows,
+                             (size_t) in.channels(),
+                             (size_t) 1,
+                             (cl_mem) in.handle(cv::ACCESS_READ),
+                             Kernels::instance().ocl_context,
+                             Kernels::instance().device_id,
+                             xm::ocl::ACCESS::RO);
+        img.retain();
+        auto result = chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index).getImage2D();
+        cv::ocl::convertFromBuffer(result.handle,
+                                   result.channels * result.cols,
+                                   (int) result.rows,
+                                   (int) result.cols,
+                                   CV_8UC(result.channels),
+                                   out);
+    }
 
+    QueuePromise chroma_key_single_pass(const cv::UMat &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
+                                        const cv::Scalar &color, bool linear, int mask_size, int blur,
+                                        int queue_index) {
+        xm::ocl::Image2D img((size_t) in.cols,
+                             (size_t) in.rows,
+                             (size_t) in.channels(),
+                             (size_t) 1,
+                             (cl_mem) in.handle(cv::ACCESS_READ),
+                             Kernels::instance().ocl_context,
+                             Kernels::instance().device_id,
+                             xm::ocl::ACCESS::RO);
+        img.retain();
+        auto promise = chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index);
+        return QueuePromise([promise]() mutable -> cv::UMat {
+            cv::UMat output;
+            auto result = promise.getImage2D();
+            cv::ocl::convertFromBuffer(result.handle,
+                                       result.channels * result.cols,
+                                       (int) result.rows,
+                                       (int) result.cols,
+                                       CV_8UC(result.channels),
+                                       output);
+            return output;
+        });
+    }
+
+    QueuePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
+                                        const cv::Scalar &color, bool linear, int mask_size, int blur,
+                                        int queue_index) {
+        const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (int) ((float) n_w / ratio);
 
-
-        //        const auto context = Kernels::instance().ocl_context;
-        const auto queue = Kernels::instance().ocl_command_queue;
+        const auto context = in.context;
+        const auto queue = Kernels::instance().retrieve_queue(queue_index);
+        const auto inter_size = in.cols * in.rows * 3;
         const auto pref_size = Kernels::instance().power_chroma_local_size;
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size(n_w, pref_size),
                             xm::ocl::optimal_global_size(n_h, pref_size)};
 
         // resize -> (blur_h -> blur_v) -> range_hls -> mask_apply
+        cl_int err;
 
-        cl_mem buffer_in = (cl_mem) in.handle(cv::ACCESS_READ);
+        cl_mem buffer_in = (cl_mem) in.handle;
         cl_mem buffer_blur = (cl_mem) kernel_blur_buffer.handle(cv::ACCESS_READ);
-        cl_mem buffer_out = (cl_mem) result.handle(cv::ACCESS_WRITE);
+        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
 
         auto kernel_chroma = Kernels::instance().kernel_power_chroma;
 
@@ -685,7 +770,6 @@ namespace xm::ocl {
         auto is_blur = (uchar) (blur >= 3);
         auto dx = (uint) std::ceil(scale_w);
         auto dy = (uint) std::ceil(scale_h);
-
 
         xm::ocl::set_kernel_arg(kernel_chroma, 0, sizeof(cl_mem), &buffer_in);
         xm::ocl::set_kernel_arg(kernel_chroma, 1, sizeof(cl_mem), &buffer_out);
@@ -718,9 +802,7 @@ namespace xm::ocl {
 
         xm::ocl::finish_queue(queue);
 
-        cl_event chroma_event;
-
-        chroma_event = xm::ocl::enqueue_kernel_fast(
+        cl_event chroma_event = xm::ocl::enqueue_kernel_fast(
                 queue,
                 kernel_chroma,
                 2,
@@ -728,14 +810,15 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
-        xm::ocl::finish_queue(queue);
-
-        if (chroma_event != nullptr)
-            Kernels::instance().print_time(xm::ocl::measure_exec_time(chroma_event), "power_chroma");
-        xm::ocl::release_event(chroma_event);
-
-        out = std::move(result);
+        return QueuePromise([queue, chroma_event, buffer_out, in]() mutable -> xm::ocl::Image2D {
+            xm::ocl::finish_queue(queue);
+            if (chroma_event != nullptr)
+                Kernels::instance().print_time(xm::ocl::measure_exec_time(chroma_event), "power_chroma");
+            xm::ocl::release_event(chroma_event);
+            return xm::ocl::Image2D(in, buffer_out);
+        });
     }
+
 
 }
 #pragma clang diagnostic pop

@@ -23,22 +23,6 @@ namespace xm::ocl {
         std::mutex GLOBAL_MUTEX;
     }
 
-    cv::UMat QueuePromise::getUMat() {
-        return cb_umat();
-    }
-
-    xm::ocl::Image2D QueuePromise::getImage2D() {
-        return cb_ocl();
-    }
-
-    QueuePromise::QueuePromise(std::function<cv::UMat()> &&_callback) {
-        cb_umat = std::move(_callback);
-    }
-
-    QueuePromise::QueuePromise(std::function<xm::ocl::Image2D()> &&_callback) {
-        cb_ocl = std::move(_callback);
-    }
-
     Kernels::Kernels() {
         std::ostringstream oss;
         oss << std::this_thread::get_id();
@@ -683,26 +667,27 @@ namespace xm::ocl {
                                               Kernels::instance().ocl_context,
                                               Kernels::instance().device_id,
                                               xm::ocl::ACCESS::RO);
-        auto result = chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index).getImage2D();
-        xm::ocl::iop::to_cv_umat(result, out);
+        chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index)
+                .waitFor()
+                .toUMat(out);
     }
 
-    QueuePromise chroma_key_single_pass(const cv::UMat &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                        const cv::Scalar &color, bool linear, int mask_size, int blur,
-                                        int queue_index) {
+    xm::ocl::iop::QueuePromise chroma_key_single_pass(const cv::UMat &in,
+                                                      const cv::Scalar &hls_low,
+                                                      const cv::Scalar &hls_up,
+                                                      const cv::Scalar &color,
+                                                      bool linear, int mask_size, int blur,
+                                                      int queue_index) {
         auto img = xm::ocl::iop::from_cv_umat(in,
                                               Kernels::instance().ocl_context,
                                               Kernels::instance().device_id,
                                               xm::ocl::ACCESS::RO);
-        auto promise = chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index);
-        return QueuePromise([promise]() mutable -> cv::UMat {
-            return xm::ocl::iop::to_cv_umat(promise.getImage2D());
-        });
+        return chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index);
     }
 
-    QueuePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                        const cv::Scalar &color, bool linear, int mask_size, int blur,
-                                        int queue_index) {
+    xm::ocl::iop::QueuePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
+                                                      const cv::Scalar &color, bool linear, int mask_size, int blur,
+                                                      int queue_index) {
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
@@ -783,15 +768,8 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
-        return QueuePromise([queue, chroma_event, buffer_out, in]() mutable -> xm::ocl::Image2D {
-            xm::ocl::finish_queue(queue);
-            if (chroma_event != nullptr)
-                Kernels::instance().print_time(xm::ocl::measure_exec_time(chroma_event), "power_chroma");
-            xm::ocl::release_event(chroma_event);
-            return xm::ocl::Image2D(in, buffer_out);
-        });
+        return xm::ocl::iop::QueuePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event);
     }
-
 
 }
 #pragma clang diagnostic pop

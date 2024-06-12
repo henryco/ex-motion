@@ -14,6 +14,7 @@
 #include "kernel.h"
 #include "cl_kernel.h"
 #include "ocl_data.h"
+#include "ocl_interop.h"
 
 namespace xm::ocl {
 
@@ -86,17 +87,6 @@ namespace xm::ocl {
 
     private:
         Kernels();
-    };
-
-    class QueuePromise {
-    private:
-        std::function<xm::ocl::Image2D()> cb_ocl{};
-        std::function<cv::UMat()> cb_umat{};
-    public:
-        explicit QueuePromise(std::function<cv::UMat()> &&_callback);
-        explicit QueuePromise(std::function<xm::ocl::Image2D()> &&_callback);
-        xm::ocl::Image2D getImage2D();
-        cv::UMat getUMat();
     };
 
     /**
@@ -175,7 +165,7 @@ namespace xm::ocl {
                     int queue_index = -1
     );
 
-    QueuePromise chroma_key_single_pass(
+    xm::ocl::iop::QueuePromise chroma_key_single_pass(
             const cv::UMat &in,
             const cv::Scalar &hls_low,
             const cv::Scalar &hls_up,
@@ -186,7 +176,7 @@ namespace xm::ocl {
             int queue_index = -1
     );
 
-    QueuePromise chroma_key_single_pass(
+    xm::ocl::iop::QueuePromise chroma_key_single_pass(
             const xm::ocl::Image2D &in,
             const cv::Scalar &hls_low,
             const cv::Scalar &hls_up,

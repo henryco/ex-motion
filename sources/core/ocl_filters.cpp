@@ -2,6 +2,7 @@
 // Created by henryco on 6/3/24.
 //
 
+#include <iostream>
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "UnusedValue"
 #pragma ide diagnostic ignored "UnusedLocalVariable"
@@ -90,7 +91,7 @@ namespace xm::ocl {
             cv::UMat kernel_mat;
             const auto k_size = (i * 2) + 1;
             cv::getGaussianKernel(k_size, ((float) k_size - 1.f) / 6.f, CV_32F).copyTo(kernel_mat);
-            blur_kernels[i] = kernel_mat;
+            blur_kernels[i] = xm::ocl::iop::from_cv_umat(kernel_mat, ocl_context, device_id, xm::ocl::ACCESS::RO);
         }
 
         log->debug("[{}] oCL kernels initialized", thread_id);
@@ -156,9 +157,7 @@ namespace xm::ocl {
         cv::UMat result_1(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
         cv::UMat result_2(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
-        auto kernel_mat_buffer = (cl_mem) Kernels::instance()
-                .blur_kernels[(kernel_size - 1) / 2]
-                .handle(cv::ACCESS_READ);
+        auto kernel_mat_buffer = (cl_mem) Kernels::instance().blur_kernels[(kernel_size - 1) / 2].handle;
         auto kh_size = (int) (kernel_size / 2);
 
         const auto queue = Kernels::instance().retrieve_queue(queue_index);
@@ -444,8 +443,6 @@ namespace xm::ocl {
                     int fine,
                     int refine,
                     int queue_index) {
-
-        const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
@@ -466,7 +463,7 @@ namespace xm::ocl {
 
         // ======= BUFFERS ALLOCATION !
         cl_mem buffer_in = (cl_mem) in.handle(cv::ACCESS_READ);
-        cl_mem buffer_blur = (cl_mem) kernel_blur_buffer.handle(cv::ACCESS_READ);
+        cl_mem buffer_blur = (cl_mem) Kernels::instance().blur_kernels[(blur - 1) / 2].handle;
         cl_mem buffer_io_1 = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
         cl_mem buffer_io_2 = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
         cl_mem buffer_out = (cl_mem) result.handle(cv::ACCESS_WRITE);
@@ -722,8 +719,8 @@ namespace xm::ocl {
         // resize -> (blur_h -> blur_v) -> range_hls -> mask_apply
         cl_int err;
 
-        cl_mem buffer_in = (cl_mem) in.handle;
-        cl_mem buffer_blur = (cl_mem) kernel_blur_buffer.handle(cv::ACCESS_READ);
+        cl_mem buffer_in = in.handle;
+        cl_mem buffer_blur = Kernels::instance().blur_kernels[(blur - 1) / 2].handle;
         cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
 
         auto kernel_chroma = Kernels::instance().kernel_power_chroma;
@@ -777,8 +774,6 @@ namespace xm::ocl {
 
         xm::ocl::set_kernel_arg(kernel_chroma, 21, sizeof(uint), &dx);
         xm::ocl::set_kernel_arg(kernel_chroma, 22, sizeof(uint), &dy);
-
-        xm::ocl::finish_queue(queue);
 
         cl_event chroma_event = xm::ocl::enqueue_kernel_fast(
                 queue,

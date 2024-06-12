@@ -118,4 +118,8 @@ namespace xm::ocl {
               device(_device),
               access(_access),
               is_detached(false) {}
+
+    Image2D::Image2D() {
+        reset_state(*this);
+    }
 }

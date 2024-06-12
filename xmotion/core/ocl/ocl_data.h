@@ -41,6 +41,8 @@ namespace xm::ocl {
 
         bool empty() const;
 
+        Image2D();
+
         Image2D(size_t cols,
                 size_t rows,
                 size_t channels,

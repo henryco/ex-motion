@@ -65,7 +65,7 @@ namespace xm::ocl {
         size_t power_chroma_local_size;
 
         /* ==================== CACHE KERNELS ==================== */
-        cv::UMat blur_kernels[(31 - 1) / 2];
+        xm::ocl::Image2D blur_kernels[(31 - 1) / 2];
 
         static Kernels &instance() {
             static thread_local Kernels obj;

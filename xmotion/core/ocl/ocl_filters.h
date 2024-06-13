@@ -65,6 +65,10 @@ namespace xm::ocl {
         cl_kernel kernel_power_mask;
         size_t power_chroma_local_size;
 
+        cl_program program_flip_rotate;
+        cl_kernel kernel_flip_rotate;
+        size_t flip_rotate_local_size;
+
         /* ==================== CACHE KERNELS ==================== */
         xm::ocl::Image2D blur_kernels[(31 - 1) / 2];
 
@@ -166,17 +170,6 @@ namespace xm::ocl {
     );
 
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(
-            const cv::UMat &in,
-            const cv::Scalar &hls_low,
-            const cv::Scalar &hls_up,
-            const cv::Scalar &color,
-            bool linear,
-            int mask_size, // 256, 512, ...
-            int blur, // 3, 5, 7, 9, 11, ...
-            int queue_index = -1
-    );
-
-    xm::ocl::iop::ClImagePromise chroma_key_single_pass(
             const xm::ocl::Image2D &in,
             const cv::Scalar &hls_low,
             const cv::Scalar &hls_up,
@@ -187,14 +180,11 @@ namespace xm::ocl {
             int queue_index = -1
     );
 
-    void chroma_key_single_pass(
-            const cv::UMat &in, cv::UMat &out,
-            const cv::Scalar &hls_low,
-            const cv::Scalar &hls_up,
-            const cv::Scalar &color,
-            bool linear,
-            int mask_size, // 256, 512, ...
-            int blur, // 3, 5, 7, 9, 11, ...
+    xm::ocl::iop::ClImagePromise flip_rotate(
+            const xm::ocl::Image2D &in,
+            bool flip_x,
+            bool flip_y,
+            bool rotate,
             int queue_index = -1
     );
 }

@@ -12,6 +12,7 @@
 #include "../../xmotion/core/ocl/ocl_kernels.h"
 #include "../../xmotion/core/ocl/ocl_kernels_chromakey.h"
 #include "../../xmotion/core/ocl/ocl_interop.h"
+#include "../../xmotion/core/ocl/ocl_kernels_flip.h"
 #include <CL/cl.h>
 #include <opencv2/imgproc.hpp>
 #include <cmath>
@@ -71,6 +72,10 @@ namespace xm::ocl {
         kernel_power_mask = xm::ocl::build_kernel(program_power_chroma, "power_mask");
         power_chroma_local_size = xm::ocl::optimal_local_size(device_id, kernel_power_chroma);
 
+        program_flip_rotate = xm::ocl::build_program(ocl_context, device_id, kernels::FLIP_ROTATE_KERNEL);
+        kernel_flip_rotate = xm::ocl::build_kernel(program_flip_rotate, "flip_rotate");
+        flip_rotate_local_size = xm::ocl::optimal_local_size(device_id, kernel_flip_rotate);
+
         for (int i = 1; i < ((31 - 1) / 2); i++) {
             cv::UMat kernel_mat;
             const auto k_size = (i * 2) + 1;
@@ -101,6 +106,14 @@ namespace xm::ocl {
 
         clReleaseKernel(kernel_mask_apply);
         clReleaseProgram(program_mask_apply);
+
+        clReleaseKernel(kernel_power_chroma);
+        clReleaseKernel(kernel_power_apply);
+        clReleaseKernel(kernel_power_mask);
+        clReleaseProgram(program_power_chroma);
+
+        clReleaseKernel(kernel_flip_rotate);
+        clReleaseProgram(program_flip_rotate);
 
         for (auto &item: ocl_queue_map) {
             if (item.second == nullptr)
@@ -661,30 +674,6 @@ namespace xm::ocl {
         out = std::move(result);
     }
 
-    void chroma_key_single_pass(const cv::UMat &in, cv::UMat &out, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                const cv::Scalar &color, bool linear, int mask_size, int blur, int queue_index) {
-        auto img = xm::ocl::iop::from_cv_umat(in,
-                                              Kernels::instance().ocl_context,
-                                              Kernels::instance().device_id,
-                                              xm::ocl::ACCESS::RO);
-        chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index)
-                .waitFor()
-                .toUMat(out);
-    }
-
-    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const cv::UMat &in,
-                                                        const cv::Scalar &hls_low,
-                                                        const cv::Scalar &hls_up,
-                                                        const cv::Scalar &color,
-                                                        bool linear, int mask_size, int blur,
-                                                        int queue_index) {
-        auto img = xm::ocl::iop::from_cv_umat(in,
-                                              Kernels::instance().ocl_context,
-                                              Kernels::instance().device_id,
-                                              xm::ocl::ACCESS::RO);
-        return chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index);
-    }
-
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
                                                         const cv::Scalar &color, bool linear, int mask_size, int blur,
                                                         int queue_index) {
@@ -769,6 +758,55 @@ namespace xm::ocl {
                 aux::DEBUG);
 
         return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event);
+    }
+
+    xm::ocl::iop::ClImagePromise flip_rotate(const Image2D &in, bool flip_x, bool flip_y, bool rotate, int queue_index) {
+        const auto context = in.context;
+        const auto kernel = Kernels::instance().kernel_flip_rotate;
+        const auto queue = Kernels::instance().retrieve_queue(queue_index);
+        const auto pref_size = Kernels::instance().flip_rotate_local_size;
+        const auto inter_size = in.cols * in.rows * in.channels;
+
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) in.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) in.rows, pref_size)};
+
+        cl_int err;
+        cl_mem buffer_in = in.handle;
+        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot create cl buffer: " + std::to_string(err));
+
+        auto width = (int) in.cols;
+        auto height = (int) in.rows;
+        auto c_size = (int) in.channels;
+        auto _x = (int) (flip_x ? 1 : 0);
+        auto _y = (int) (flip_y ? 1 : 0);
+        auto _r = (int) (rotate ? 1 : 0);
+
+        xm::ocl::set_kernel_arg(kernel, 0, sizeof(cl_mem), &buffer_in);
+        xm::ocl::set_kernel_arg(kernel, 1, sizeof(cl_mem), &buffer_out);
+        xm::ocl::set_kernel_arg(kernel, 2, sizeof(int), &width);
+        xm::ocl::set_kernel_arg(kernel, 3, sizeof(int), &height);
+        xm::ocl::set_kernel_arg(kernel, 4, sizeof(int), &c_size);
+        xm::ocl::set_kernel_arg(kernel, 5, sizeof(int), &_x);
+        xm::ocl::set_kernel_arg(kernel, 6, sizeof(int), &_y);
+        xm::ocl::set_kernel_arg(kernel, 7, sizeof(int), &_r);
+
+        cl_event flip_rotate_event = xm::ocl::enqueue_kernel_fast(
+                queue,
+                kernel,
+                2,
+                g_size,
+                l_size,
+                aux::DEBUG);
+
+        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(
+                rotate ? height : width,
+                rotate ? width : height,
+                in.channels, in.channel_size,
+                buffer_out, in.context, in.device, xm::ocl::ACCESS::RW),
+                                            queue, flip_rotate_event);
     }
 
 }

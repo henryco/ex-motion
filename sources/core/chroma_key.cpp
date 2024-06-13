@@ -105,14 +105,14 @@ namespace xm::chroma {
                     mask_iterations);
         } else {
             // faster, lower mask quality
-            xm::ocl::chroma_key_single_pass(
-                    in, out,
-                    hls_key_lower,
-                    hls_key_upper,
-                    bgr_bg_color,
-                    linear_interpolation,
-                    mask_size,
-                    blur_kernel);
+//            xm::ocl::chroma_key_single_pass(
+//                    in, out,
+//                    hls_key_lower,
+//                    hls_key_upper,
+//                    bgr_bg_color,
+//                    linear_interpolation,
+//                    mask_size,
+//                    blur_kernel);
         }
 
         return std::move(out);

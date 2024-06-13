@@ -6,6 +6,7 @@
 #include <opencv2/core/ocl.hpp>
 
 #include "../../xmotion/core/camera/stereo_camera.h"
+#include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../xmotion/core/ocl/ocl_interop.h"
 #include "../../xmotion/core/ocl/cl_kernel.h"
 
@@ -125,7 +126,14 @@ namespace xm {
 
         // CROPPING AND FLIPPING
         std::map<std::string, xm::ocl::Image2D> images;
+        std::map<std::string, xm::ocl::iop::ClImagePromise> promises;
+        int queue_idx = 0;
+
+        const auto t0 = std::chrono::system_clock::now();
+
         for (const auto &property: properties) {
+            queue_idx += 1;
+
             const auto &src = frames.at(property.device_id);
             auto queue = command_queues.at(property.device_id);
 
@@ -142,35 +150,22 @@ namespace xm {
                 .waitFor().toImage2D(dst);
             }
 
-            // TODO
-//            // flip x and y
-//            if (property.flip_x && property.flip_y) {
-//                cv::UMat tmp;
-//                cv::flip(dst, tmp, -1);
-//                tmp.copyTo(dst);
-//            }
-//            // flip x
-//            else if (property.flip_x && !property.flip_y) {
-//                cv::UMat tmp;
-//                cv::flip(dst, tmp, 1);
-//                tmp.copyTo(dst);
-//            }
-//            // flip y
-//            else if (property.flip_y && !property.flip_x) {
-//                cv::UMat tmp;
-//                cv::flip(dst, tmp, 0);
-//                tmp.copyTo(dst);
-//            }
-//
-//            // Rotate 90* clockwise
-//            if (property.rotate) {
-//                cv::UMat tmp;
-//                cv::rotate(dst, tmp, cv::ROTATE_90_CLOCKWISE);
-//                tmp.copyTo(dst);
-//            }
+            if (property.flip_x || property.flip_y || property.rotate) {
+                auto promise = xm::ocl::flip_rotate(dst, property.flip_x, property.flip_y, property.rotate, queue_idx);
+                promises[property.name] = promise;
+                continue; // we will iterate promises later
+            }
 
             images[property.name] = dst;
         }
+
+        for (auto &p: promises) {
+            images[p.first] = p.second.waitFor().getImage2D();
+        }
+
+        const auto t1 = std::chrono::system_clock::now();
+        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
+        log->info("camera time: {}", d);
 
         return images;
     }

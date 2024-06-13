@@ -161,6 +161,7 @@ set(SOURCE_FILES
         sources/core/ocl_data.cpp
         sources/core/ocl_interop.cpp
         sources/fbgtk/file_worker.cpp
+        xmotion/core/ocl/ocl_kernels_flip.h
 )
 
 if (UNIX AND NOT APPLE)

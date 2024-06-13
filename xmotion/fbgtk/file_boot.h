@@ -45,7 +45,7 @@ namespace xm {
         void open_project(const char *argv) override;
 
     private:
-        void filter_frames(std::vector<cv::UMat> &frames_in_out);
+        void filter_frames(std::vector<xm::ocl::Image2D> &frames_in_out);
 
         void prepare_gui();
 

@@ -6,6 +6,7 @@
 #include <opencv2/imgproc.hpp>
 #include "../../xmotion/core/algo/chain.h"
 #include "../../xmotion/core/utils/cv_utils.h"
+#include "../../xmotion/core/ocl/ocl_interop.h"
 
 void xm::ChainCalibration::init(const xm::chain::Initial &params) {
     timer.set_delay(params.delay);
@@ -17,7 +18,7 @@ void xm::ChainCalibration::init(const xm::chain::Initial &params) {
     image_points.reserve(total_pairs);
 }
 
-xm::ChainCalibration &xm::ChainCalibration::proceed(float delta, const std::vector<cv::UMat> &_frames) {
+xm::ChainCalibration &xm::ChainCalibration::proceed(float delta, const std::vector<xm::ocl::Image2D> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
@@ -37,7 +38,7 @@ xm::ChainCalibration &xm::ChainCalibration::proceed(float delta, const std::vect
     return *this;
 }
 
-bool xm::ChainCalibration::capture_squares(const std::vector<cv::UMat> &_frames) {
+bool xm::ChainCalibration::capture_squares(const std::vector<xm::ocl::Image2D> &_frames) {
 
     if (current_pair >= total_pairs) {
         results.current = 0;
@@ -56,23 +57,29 @@ bool xm::ChainCalibration::capture_squares(const std::vector<cv::UMat> &_frames)
             continue;
         }
 
+        cv::UMat frame;
+        xm::ocl::iop::to_cv_umat(_frames[i], frame);
+
         {
             // graying-out inactive frames
             cv::UMat gray;
-            cv::cvtColor(_frames[i], gray, cv::COLOR_BGR2GRAY);
+            cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
             cv::cvtColor(gray, gray, cv::COLOR_GRAY2BGR);
-            images.push_back(gray);
+            images.push_back(xm::ocl::iop::from_cv_umat(gray));
         }
     }
 
+    cv::UMat frame_left;
+    xm::ocl::iop::to_cv_umat(_frames[left], frame_left);
+
     const auto squares_l = xm::ocv::find_squares(
-            _frames[left],
+            frame_left,
             config.columns,
             config.rows,
             config.sb
     );
 
-    images[left] = squares_l.result;
+    images[left] = xm::ocl::iop::from_cv_umat(squares_l.result);
     if (!squares_l.found) {
         results.current = current_pair;
         results.remains_ms = config.delay;
@@ -81,14 +88,17 @@ bool xm::ChainCalibration::capture_squares(const std::vector<cv::UMat> &_frames)
         return false;
     }
 
+    cv::UMat frame_right;
+    xm::ocl::iop::to_cv_umat(_frames[right], frame_right);
+
     const auto squares_r = xm::ocv::find_squares(
-            _frames[right],
+            frame_right,
             config.columns,
             config.rows,
             config.sb
     );
 
-    images[right] = squares_r.result;
+    images[right] = xm::ocl::iop::from_cv_umat(squares_r.result);
     if (!squares_r.found) {
         results.current = current_pair;
         results.remains_ms = config.delay;
@@ -234,15 +244,21 @@ void xm::ChainCalibration::put_debug_text() {
 
     const auto font = cv::FONT_HERSHEY_SIMPLEX;
 
+    cv::UMat front;
+    xm::ocl::iop::to_cv_umat(images.front(), front);
+
     if (results.ready && !active) {
         const cv::Scalar color(0, 255, 0);
-        cv::putText(images.front(), "Calibrated", cv::Point(20, 50), font, 1.5, color, 3);
+        cv::putText(front, "Calibrated", cv::Point(20, 50), font, 1.5, color, 3);
         return;
     }
 
     if (results.remains_ms <= 10) {
-        for (auto &image: images)
-            image.setTo(cv::Scalar(255, 255, 255));
+        for (auto &image: images) {
+            cv::UMat curr;
+            xm::ocl::iop::to_cv_umat(image, curr);
+            curr.setTo(cv::Scalar(255, 255, 255));
+        }
     }
 
     const auto size = image_points.empty() ? 0 : image_points.back().size();
@@ -250,8 +266,8 @@ void xm::ChainCalibration::put_debug_text() {
     const std::string t1 = std::to_string(size) + " / " + std::to_string(config.total);
     const std::string t2 = std::to_string(results.remains_ms) + " ms";
 
-    cv::putText(images.front(), t1, cv::Point(20, 50), font, 1.5, color, 3);
-    cv::putText(images.front(), t2, cv::Point(20, 100), font, 1.5, color, 3);
+    cv::putText(front, t1, cv::Point(20, 50), font, 1.5, color, 3);
+    cv::putText(front, t2, cv::Point(20, 100), font, 1.5, color, 3);
 }
 
 void xm::ChainCalibration::start() {
@@ -284,7 +300,7 @@ bool xm::ChainCalibration::is_active() const {
     return active;
 }
 
-const std::vector<cv::UMat> &xm::ChainCalibration::frames() const {
+const std::vector<xm::ocl::Image2D> &xm::ChainCalibration::frames() const {
     return images;
 }
 

@@ -51,7 +51,7 @@ void xm::Pose::init_undistort_maps() {
     }
 }
 
-xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::UMat> &_frames) {
+xm::Pose &xm::Pose::proceed(float delta, const std::vector<xm::ocl::Image2D> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
@@ -62,15 +62,21 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::UMat> &_frames) {
             return *this;
         }
 
-        for (int i = 0; i < _frames.size(); i++)
-            images.push_back(undistorted(_frames.at(i), i));
+        for (int i = 0; i < _frames.size(); i++) {
+            cv::UMat frame;
+            xm::ocl::iop::to_cv_umat(_frames.at(i), frame);
+            images.push_back(xm::ocl::iop::from_cv_umat(undistorted(frame, i)));
+        }
         return *this;
     }
 
     std::vector<cv::UMat> input_frames;
     input_frames.reserve(_frames.size());
-    for (int i = 0; i < _frames.size(); i++)
-        input_frames.push_back(undistorted(_frames.at(i), i));
+    for (int i = 0; i < _frames.size(); i++) {
+        cv::UMat frame;
+        xm::ocl::iop::to_cv_umat(_frames.at(i), frame);
+        input_frames.push_back(undistorted(frame, i));
+    }
 
     std::vector<cv::UMat> output_frames;
     std::vector<std::future<eox::dnn::PosePipelineOutput>> features;
@@ -140,7 +146,7 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<cv::UMat> &_frames) {
 
     images.clear();
     for (const auto &frame: output_frames) {
-        images.push_back(frame);
+        images.push_back(xm::ocl::iop::from_cv_umat(frame));
     }
 
     results.error = false;

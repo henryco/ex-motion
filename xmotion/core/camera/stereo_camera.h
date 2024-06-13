@@ -14,6 +14,7 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <opencv2/videoio.hpp>
 
+#include "../ocl/ocl_data.h"
 #include "../utils/thread_pool.h"
 #include "../../../platforms/agnostic_cap.h"
 
@@ -46,12 +47,13 @@ namespace xm {
         /**
          * {id: capture}
          */
+        std::map<std::string, cl_command_queue> command_queues{};
         std::map<std::string, cv::VideoCapture> captures{};
 
         std::vector<SCamProp> properties{};
 
         /**
-         * threadpool
+         * thread pool
          */
         std::shared_ptr<eox::util::ThreadPool> executor;
 
@@ -70,9 +72,9 @@ namespace xm {
 
         virtual void open(const SCamProp &prop);
 
-        virtual std::map<std::string, cv::UMat> captureWithName();
+        virtual std::map<std::string, xm::ocl::Image2D> captureWithName();
 
-        virtual std::vector<cv::UMat> capture();
+        virtual std::vector<xm::ocl::Image2D> capture();
 
         virtual void setControl(const std::string &device_id, uint prop_id, int value);
 

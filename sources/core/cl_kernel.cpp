@@ -141,7 +141,8 @@ namespace xm::ocl {
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot query device for command queue properties: " + std::to_string(err));
 
-        cl_command_queue_properties dev_queue = (device_queue_properties & CL_QUEUE_ON_DEVICE) ? CL_QUEUE_ON_DEVICE : 0;
+//        cl_command_queue_properties dev_queue = (device_queue_properties & CL_QUEUE_ON_DEVICE) ? CL_QUEUE_ON_DEVICE : 0;
+        cl_command_queue_properties dev_queue = 0; // TODO TEST LATER
         cl_command_queue_properties profiling = profile ? CL_QUEUE_PROFILING_ENABLE : 0;
         cl_command_queue_properties concurrent = (!order) ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
         cl_command_queue_properties properties[] = {

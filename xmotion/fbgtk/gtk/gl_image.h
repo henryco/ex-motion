@@ -10,6 +10,7 @@
 #include <gtkmm/glarea.h>
 #include <opencv2/core/mat.hpp>
 #include "../../core/ogl/texture_1.h"
+#include "../../core/ocl/ocl_data.h"
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -26,6 +27,7 @@ private:
     std::vector<std::unique_ptr<Gtk::Widget>> widgets;
     std::vector<std::unique_ptr<xogl::Texture1>> textures;
     std::vector<std::unique_ptr<Gtk::GLArea>> glAreas;
+    std::vector<xm::ocl::Image2D> cl_frames;
     std::vector<cv::UMat> u_frames;
     std::vector<cv::Mat> frames;
     std::vector<bool> initialized;
@@ -59,6 +61,8 @@ public:
     void setFrames(const std::vector<cv::Mat>& _frames);
 
     void setFrames(const std::vector<cv::UMat>& _frames);
+
+    void setFrames(const std::vector<xm::ocl::Image2D>& _frames);
 
     void update();
 

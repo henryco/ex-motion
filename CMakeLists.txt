@@ -159,6 +159,7 @@ set(SOURCE_FILES
         sources/core/ocl_data.cpp
         xmotion/core/ocl/ocl_interop.h
         sources/core/ocl_interop.cpp
+        xmotion/core/ocl/ocl_interop_ext.h
 )
 
 if (UNIX AND NOT APPLE)

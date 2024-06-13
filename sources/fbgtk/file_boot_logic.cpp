@@ -15,16 +15,24 @@ namespace xm {
     void FileBoot::update(float delta, float _, float fps) {
         window->setFps((int) fps);
 
-        std::vector<cv::UMat> frames = camera->capture();
+
+        std::vector<xm::ocl::Image2D> frames = camera->capture();
+
+
+
         filter_frames(frames);
 
         logic->proceed(delta, frames);
         process_results();
 
+        const auto t0 = std::chrono::system_clock::now();
         if (!bypass)
             window->refresh(logic->frames());
-        else
-            window->refresh(false);
+
+        const auto t1 = std::chrono::system_clock::now();
+
+        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
+        log->info("time: {}", d);
     }
 
     void FileBoot::process_results() {

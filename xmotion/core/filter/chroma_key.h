@@ -91,6 +91,8 @@ namespace xm::chroma {
 
         cv::UMat filter(const cv::UMat &in) override;
 
+        xm::ocl::iop::QueuePromise filter(const ocl::Image2D &in) override;
+
     };
 
 } // xm

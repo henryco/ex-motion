@@ -23,7 +23,7 @@ namespace xm::ocl {
     }
 
     bool Image2D::empty() const {
-        return handle != nullptr;
+        return handle == nullptr || size() == 0;
     }
 
     Image2D::~Image2D() {
@@ -63,6 +63,12 @@ namespace xm::ocl {
         handle = _handle;
     }
 
+    Image2D::Image2D(const Image2D &other, cl_mem _handle, ACCESS modifier) {
+        copy_from(other);
+        handle = _handle;
+        access = modifier;
+    }
+
     Image2D::Image2D(Image2D &&other) noexcept {
         copy_from(other);
         reset_state(other);
@@ -71,6 +77,12 @@ namespace xm::ocl {
     Image2D::Image2D(const Image2D &&other, cl_mem _handle) {
         copy_from(other);
         handle = _handle;
+    }
+
+    Image2D::Image2D(const Image2D &&other, cl_mem _handle, ACCESS modifier) {
+        copy_from(other);
+        handle = _handle;
+        access = modifier;
     }
 
     Image2D &Image2D::detached(bool _) {

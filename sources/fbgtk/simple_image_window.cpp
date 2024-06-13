@@ -3,6 +3,7 @@
 //
 
 #include "../../xmotion/fbgtk/gtk/simple_image_window.h"
+#include "../../xmotion/core/ocl/ocl_interop.h"
 
 namespace xm {
 
@@ -11,6 +12,11 @@ namespace xm {
         signal_size_allocate().connect([this](const Gtk::Allocation& allocation) {
             onResize(allocation);
         });
+    }
+
+    void SimpleImageWindow::refresh(const std::vector<xm::ocl::Image2D> &_frames) {
+        glImage.setFrames(_frames);
+        refresh(true);
     }
 
     void SimpleImageWindow::refresh(const std::vector<cv::UMat> &_frames) {

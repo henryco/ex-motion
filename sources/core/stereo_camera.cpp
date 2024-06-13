@@ -3,8 +3,11 @@
 //
 
 #include <utility>
+#include <opencv2/core/ocl.hpp>
 
 #include "../../xmotion/core/camera/stereo_camera.h"
+#include "../../xmotion/core/ocl/ocl_interop.h"
+#include "../../xmotion/core/ocl/cl_kernel.h"
 
 namespace xm {
     int fourCC(const char *name) {
@@ -16,8 +19,14 @@ namespace xm {
     }
 
     StereoCamera::~StereoCamera() {
+        for (auto &queue: command_queues) {
+            if (queue.second == nullptr)
+                continue;
+            clReleaseCommandQueue(queue.second);
+        }
         for (auto &capture: captures)
             capture.second.release();
+        command_queues.clear();
         captures.clear();
     }
 
@@ -29,6 +38,10 @@ namespace xm {
 
     void StereoCamera::open(const SCamProp &prop) {
         properties.push_back(prop);
+
+        auto device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
+        auto ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
+        command_queues[prop.device_id] = xm::ocl::create_queue_device(ocl_context, device_id, true, false);
 
         if (captures.contains(prop.device_id) && captures.at(prop.device_id).isOpened()) {
             log->warn("capture: {} is already open", prop.device_id);
@@ -53,7 +66,7 @@ namespace xm {
         captures[prop.device_id] = cv::VideoCapture(idx, api, params);
     }
 
-    std::map<std::string, cv::UMat> StereoCamera::captureWithName() {
+    std::map<std::string, xm::ocl::Image2D> StereoCamera::captureWithName() {
         if (captures.empty()) {
             log->warn("StereoCamera is not initialized");
             return {};
@@ -87,65 +100,74 @@ namespace xm {
             }
         }
 
-        std::vector<std::future<std::pair<std::string, cv::UMat>>> results;
+        std::vector<std::future<std::pair<std::string, xm::ocl::Image2D>>> results;
         results.reserve(captures.size());
         for (auto &capture: captures) {
-            results.push_back(executor->execute<std::pair<std::string, cv::UMat>>(
-                    [&capture]() mutable -> std::pair<std::string, cv::UMat> {
-                        cv::UMat frame;
+            results.push_back(executor->execute<std::pair<std::string, xm::ocl::Image2D>>(
+                    [&capture, this]() mutable -> std::pair<std::string, xm::ocl::Image2D> {
+                        cv::Mat frame;
                         capture.second.retrieve(frame);
-                        return {capture.first, frame};
+                        auto queue = command_queues.at(capture.first);
+                        return {capture.first,
+                                xm::ocl::iop::from_cv_mat(frame, queue).waitFor().getImage2D()};
                     }));
         }
 
-        std::map<std::string, cv::UMat> frames;
+        std::map<std::string, xm::ocl::Image2D> frames;
         for (auto &future: results) {
             auto pair = future.get();
             if (pair.second.empty()) {
                 log->warn("empty frame");
-                return frames;
+                return {};
             }
             frames[pair.first] = pair.second;
         }
 
         // CROPPING AND FLIPPING
-        std::map<std::string, cv::UMat> images;
+        std::map<std::string, xm::ocl::Image2D> images;
         for (const auto &property: properties) {
             const auto &src = frames.at(property.device_id);
-            cv::UMat dst;
+            auto queue = command_queues.at(property.device_id);
+
+            xm::ocl::Image2D dst;
 
             // whole frame
-            if (property.x == 0 && property.y == 0 && property.w == property.width && property.h == property.height)
-                src.copyTo(dst);
+            if (property.x == 0 && property.y == 0 && property.w == property.width && property.h == property.height) {
+//                xm::ocl::iop::copy_ocl(src, queue).waitFor().toImage2D(dst);
+                dst = src;
+            }
             // sub region
-            else
-                src(cv::Rect(property.x, property.y, property.w, property.h)).copyTo(dst);
-
-            // flip x and y
-            if (property.flip_x && property.flip_y) {
-                cv::UMat tmp;
-                cv::flip(dst, tmp, -1);
-                tmp.copyTo(dst);
-            }
-            // flip x
-            else if (property.flip_x && !property.flip_y) {
-                cv::UMat tmp;
-                cv::flip(dst, tmp, 1);
-                tmp.copyTo(dst);
-            }
-            // flip y
-            else if (property.flip_y && !property.flip_x) {
-                cv::UMat tmp;
-                cv::flip(dst, tmp, 0);
-                tmp.copyTo(dst);
+            else {
+                xm::ocl::iop::copy_ocl(src, queue, property.x, property.y, property.w, property.h)
+                .waitFor().toImage2D(dst);
             }
 
-            // Rotate 90* clockwise
-            if (property.rotate) {
-                cv::UMat tmp;
-                cv::rotate(dst, tmp, cv::ROTATE_90_CLOCKWISE);
-                tmp.copyTo(dst);
-            }
+            // TODO
+//            // flip x and y
+//            if (property.flip_x && property.flip_y) {
+//                cv::UMat tmp;
+//                cv::flip(dst, tmp, -1);
+//                tmp.copyTo(dst);
+//            }
+//            // flip x
+//            else if (property.flip_x && !property.flip_y) {
+//                cv::UMat tmp;
+//                cv::flip(dst, tmp, 1);
+//                tmp.copyTo(dst);
+//            }
+//            // flip y
+//            else if (property.flip_y && !property.flip_x) {
+//                cv::UMat tmp;
+//                cv::flip(dst, tmp, 0);
+//                tmp.copyTo(dst);
+//            }
+//
+//            // Rotate 90* clockwise
+//            if (property.rotate) {
+//                cv::UMat tmp;
+//                cv::rotate(dst, tmp, cv::ROTATE_90_CLOCKWISE);
+//                tmp.copyTo(dst);
+//            }
 
             images[property.name] = dst;
         }
@@ -153,9 +175,9 @@ namespace xm {
         return images;
     }
 
-    std::vector<cv::UMat> StereoCamera::capture() {
+    std::vector<xm::ocl::Image2D> StereoCamera::capture() {
         const auto results = captureWithName();
-        std::vector<cv::UMat> vec;
+        std::vector<xm::ocl::Image2D> vec;
         vec.reserve(properties.size());
         for (const auto &prop: properties)
             vec.push_back(results.at(prop.name));

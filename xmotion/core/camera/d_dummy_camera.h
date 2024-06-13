@@ -20,9 +20,9 @@ namespace xm {
 
         void open(const SCamProp &prop) override;
 
-        std::map<std::string, cv::UMat> captureWithName() override;
+        std::map<std::string, xm::ocl::Image2D> captureWithName() override;
 
-        std::vector<cv::UMat> capture() override;
+        std::vector<xm::ocl::Image2D> capture() override;
 
         void setControl(const std::string &device_id, uint prop_id, int value) override;
 

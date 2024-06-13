@@ -6,6 +6,7 @@
 #include <opencv2/calib3d.hpp>
 #include "../../xmotion/core/algo/calibration.h"
 #include "../../xmotion/core/utils/cv_utils.h"
+#include "../../xmotion/core/ocl/ocl_interop.h"
 
 void xm::Calibration::init(const xm::calib::Initial &params) {
     timer.set_delay(params.delay);
@@ -21,7 +22,7 @@ bool xm::Calibration::capture_squares(const cv::UMat &frame) {
     );
 
     images.clear();
-    images.push_back(squares.result);
+    images.push_back(xm::ocl::iop::from_cv_umat(squares.result));
 
     if (!squares.found) {
         results.remains_ms = config.delay;
@@ -171,7 +172,7 @@ void xm::Calibration::calibrate() {
     results.remains_cap = 0;
 }
 
-xm::Calibration &xm::Calibration::proceed(float delta, const std::vector<cv::UMat> &_frames) {
+xm::Calibration &xm::Calibration::proceed(float delta, const std::vector<xm::ocl::Image2D> &_frames) {
     if (!is_active() || _frames.empty()) {
         images.clear();
         images.reserve(_frames.size());
@@ -180,7 +181,9 @@ xm::Calibration &xm::Calibration::proceed(float delta, const std::vector<cv::UMa
         return *this;
     }
 
-    if (!capture_squares(_frames.front())) {
+    cv::UMat front;
+    xm::ocl::iop::to_cv_umat(_frames.front(), front);
+    if (!capture_squares(front)) {
         put_debug_text();
         return *this;
     }
@@ -196,23 +199,26 @@ void xm::Calibration::put_debug_text() {
 
     const auto font = cv::FONT_HERSHEY_SIMPLEX;
 
+    cv::UMat front;
+    xm::ocl::iop::to_cv_umat(images.front(), front);
+
     if (results.ready && active) {
-        images.front().setTo(cv::Scalar(0, 0, 0));
+        front.setTo(cv::Scalar(0, 0, 0));
         const cv::Scalar color(0, 255, 0);
-        cv::putText(images.front(), "Calibrating...", cv::Point(20, 50), font, 1.5, color, 3);
+        cv::putText(front, "Calibrating...", cv::Point(20, 50), font, 1.5, color, 3);
         return;
     }
 
     if (results.remains_ms <= 10) {
-        images.front().setTo(cv::Scalar(255, 255, 255));
+        front.setTo(cv::Scalar(255, 255, 255));
     }
 
     const cv::Scalar color(0, 0, 255);
     const std::string t1 = std::to_string(image_points.size()) + " / " + std::to_string(config.total);
     const std::string t2 = std::to_string(results.remains_ms) + " ms";
 
-    cv::putText(images.front(), t1, cv::Point(20, 50), font, 1.5, color, 3);
-    cv::putText(images.front(), t2, cv::Point(20, 100), font, 1.5, color, 3);
+    cv::putText(front, t1, cv::Point(20, 50), font, 1.5, color, 3);
+    cv::putText(front, t2, cv::Point(20, 100), font, 1.5, color, 3);
 }
 
 void xm::Calibration::start() {
@@ -239,7 +245,7 @@ bool xm::Calibration::is_active() const {
     return active;
 }
 
-const std::vector<cv::UMat> &xm::Calibration::frames() const {
+const std::vector<xm::ocl::Image2D> &xm::Calibration::frames() const {
     return images;
 }
 

@@ -6,6 +6,9 @@
 #define XMOTION_I_FILTER_H
 
 #include <opencv2/core/mat.hpp>
+#include "../ocl/ocl_data.h"
+#include "../ocl/ocl_interop.h"
+
 namespace xm {
 
     class Filter {
@@ -13,6 +16,8 @@ namespace xm {
         virtual cv::Mat filter(const cv::Mat &in) = 0;
 
         virtual cv::UMat filter(const cv::UMat &in) = 0;
+
+        virtual xm::ocl::iop::QueuePromise filter(const xm::ocl::Image2D &in) = 0;
 
         virtual ~Filter() = default;
     };

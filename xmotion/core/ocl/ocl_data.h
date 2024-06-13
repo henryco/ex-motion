@@ -56,9 +56,13 @@ namespace xm::ocl {
 
         Image2D(const Image2D &_template, cl_mem handle);
 
+        Image2D(const Image2D &_template, cl_mem handle, ACCESS modifier);
+
         Image2D(Image2D &&other) noexcept;
 
         Image2D(const Image2D &&_template, cl_mem handle);
+
+        Image2D(const Image2D &&_template, cl_mem handle, ACCESS modifier);
 
         Image2D& operator=(const Image2D& other);
 

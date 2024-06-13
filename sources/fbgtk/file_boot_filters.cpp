@@ -8,13 +8,13 @@
 
 namespace xm {
 
-    void FileBoot::filter_frames(std::vector<cv::UMat> &frames) {
+    void FileBoot::filter_frames(std::vector<xm::ocl::Image2D> &frames) {
 //        const auto t0 = std::chrono::system_clock::now();
 
 //        std::vector<std::future<cv::UMat>> futures;
-        for (auto &frame: frames) {
-            for (const auto &filter: filters) {
-                frame = std::move(filter->filter(frame));
+        for (const auto &filter: filters) {
+            for (auto &frame: frames) {
+                filter->filter(frame).waitFor().toImage2D(frame);
             }
         }
 

@@ -15,6 +15,7 @@
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include "../../xmotion/core/ocl/ocl_interop.h"
 
 namespace xm::nview {
 
@@ -250,7 +251,7 @@ namespace xm {
 
     private:
         std::vector<xm::nview::ReMaps> remap_maps{};
-        std::vector<cv::UMat> images{};
+        std::vector<xm::ocl::Image2D> images{};
         xm::nview::Result results{};
         xm::nview::Initial config{};
 
@@ -271,7 +272,7 @@ namespace xm {
 
         void init(const xm::nview::Initial &params);
 
-        Pose &proceed(float delta, const std::vector<cv::UMat> &frames) override;
+        Pose &proceed(float delta, const std::vector<xm::ocl::Image2D> &frames) override;
 
         bool is_active() const override;
 
@@ -279,7 +280,7 @@ namespace xm {
 
         void stop() override;
 
-        const std::vector<cv::UMat> &frames() const override;
+        const std::vector<xm::ocl::Image2D> &frames() const override;
 
         void debug(bool _debug) override;
 

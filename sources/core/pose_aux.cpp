@@ -109,7 +109,7 @@ bool xm::Pose::is_active() const {
     return active;
 }
 
-const std::vector<cv::UMat> &xm::Pose::frames() const {
+const std::vector<xm::ocl::Image2D> &xm::Pose::frames() const {
     return images;
 }
 

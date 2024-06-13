@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <opencv2/imgproc.hpp>
 #include "../../xmotion/core/camera/d_dummy_camera.h"
+#include "../../xmotion/core/ocl/ocl_interop.h"
 
 void xm::DummyCamera::release() {
     StereoCamera::release();
@@ -21,23 +22,23 @@ void xm::DummyCamera::open(const xm::SCamProp &prop) {
     src = image;
 }
 
-std::map<std::string, cv::UMat> xm::DummyCamera::captureWithName() {
-    std::map<std::string, cv::UMat> map;
+std::map<std::string, xm::ocl::Image2D> xm::DummyCamera::captureWithName() {
+    std::map<std::string, xm::ocl::Image2D> map;
     for (auto & prop : properties) {
         cv::UMat cpy;
         src.copyTo(cpy);
-        map[prop.name] = cpy;
+        map[prop.name] = xm::ocl::iop::from_cv_umat(cpy);
     }
     return map;
 }
 
-std::vector<cv::UMat> xm::DummyCamera::capture() {
-    std::vector<cv::UMat> images;
+std::vector<xm::ocl::Image2D> xm::DummyCamera::capture() {
+    std::vector<xm::ocl::Image2D> images;
     images.reserve(properties.size());
     for (int i = 0; i < properties.size(); i++) {
         cv::UMat cpy;
         src.copyTo(cpy);
-        images.push_back(cpy);
+        images.push_back(xm::ocl::iop::from_cv_umat(cpy));
     }
     return images;
 }

@@ -118,4 +118,16 @@ namespace xm::chroma {
         return std::move(out);
     }
 
+    xm::ocl::iop::QueuePromise ChromaKey::filter(const ocl::Image2D &in) {
+        // TODO
+        return xm::ocl::chroma_key_single_pass(
+                in,
+                hls_key_lower,
+                hls_key_upper,
+                bgr_bg_color,
+                linear_interpolation,
+                mask_size,
+                blur_kernel);
+    }
+
 } // xm

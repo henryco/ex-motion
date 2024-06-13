@@ -4,10 +4,12 @@
 
 #include "../../xmotion/fbgtk/gtk/gl_image.h"
 #include "../../xmotion/core/dnn/net/dnn_cl_utils.h"
+#include "../../xmotion/core/ocl/ocl_interop.h"
 #include <utility>
 #include <gtkmm/eventbox.h>
 #include <opencv2/imgproc.hpp>
 #include <CL/cl.h>
+#include <opencv2/core/ocl.hpp>
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "ConstantFunctionResult"
@@ -34,7 +36,7 @@ namespace eox::xgtk {
                 return false;
             }
 
-            if (frames.empty() && u_frames.empty()) {
+            if (frames.empty() && u_frames.empty() && cl_frames.empty()) {
                 return true;
             }
 
@@ -42,7 +44,8 @@ namespace eox::xgtk {
             glClear(GL_COLOR_BUFFER_BIT);
 
             if (!frames.empty()) {
-                texture->setImage(xogl::Image(frames[num].data, width, height, format));
+                cv::Mat frame = fitSize(frames[num]);
+                texture->setImage(xogl::Image(frame.data, width, height, format));
                 texture->render();
             }
 
@@ -51,11 +54,18 @@ namespace eox::xgtk {
                 // TODO FIXME: TEMPORARY SOLUTION BECAUSE OpenCL <-> OpenGL interop on linux nvidia devices is GARBAGE!
 
                 cv::Mat temp;
-                u_frames[num].copyTo(temp);
+                fitSize(u_frames[num]).copyTo(temp);
                 texture->setImage(xogl::Image(temp.data, width, height, format));
 
                 // TODO FIXME: TEMPORARY SOLUTION BECAUSE OpenCL <-> OpenGL interop on linux nvidia devices is GARBAGE!
 
+                texture->render();
+
+            } else if (!cl_frames.empty()) {
+                cv::Mat temp;
+                xm::ocl::iop::to_cv_mat(cl_frames[num], temp, (cl_command_queue) cv::ocl::Queue::getDefault().ptr());
+                temp = fitSize(temp);
+                texture->setImage(xogl::Image(temp.data, width, height, format));
                 texture->render();
             }
 
@@ -83,20 +93,30 @@ namespace eox::xgtk {
     void GLImage::setFrames(const std::vector<cv::Mat>& _frames) {
         frames.clear();
         u_frames.clear();
+        cl_frames.clear();
         for (const auto& item: _frames) {
-            // YES, we NEED TO FIT IT
-            frames.push_back(fitSize(item));
+            frames.push_back(item);
         }
     }
 
     void GLImage::setFrames(const std::vector<cv::UMat> &_frames) {
         frames.clear();
         u_frames.clear();
+        cl_frames.clear();
         for (const auto& item: _frames) {
-            // YES, we NEED TO FIT IT
-            u_frames.push_back(fitSize(item));
+            u_frames.push_back(item);
         }
     }
+
+    void GLImage::setFrames(const std::vector<xm::ocl::Image2D> &_frames) {
+        frames.clear();
+        u_frames.clear();
+        cl_frames.clear();
+        for (const auto &item: _frames) {
+            cl_frames.push_back(item);
+        }
+    }
+
 
     void GLImage::init(size_t number, int _width, int _height, std::vector<std::string> ids, GLenum _format) {
         init(1, number, number, _width, _height, std::move(ids), _format);
@@ -133,7 +153,10 @@ namespace eox::xgtk {
         frames.reserve(_number);
 
         u_frames.clear();
-        u_frames.resize(_number);
+        u_frames.reserve(_number);
+
+        cl_frames.clear();
+        cl_frames.reserve(_number);
 
         widgets.clear();
         for (const auto &item: this->get_children()) {

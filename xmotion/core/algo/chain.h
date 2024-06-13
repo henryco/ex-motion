@@ -101,7 +101,7 @@ namespace xm {
         // [pair_numb][image_number][2: (l,r)][points: Rows x Cols][2: (x,y)]
         std::vector<std::vector<std::vector<std::vector<cv::Point2f>>>> image_points{};
 
-        std::vector<cv::UMat> images{};
+        std::vector<xm::ocl::Image2D> images{};
         xm::chain::Result results{};
         xm::chain::Initial config;
         eox::utils::Timer timer{};
@@ -116,7 +116,7 @@ namespace xm {
     public:
         void init(const xm::chain::Initial &params);
 
-        ChainCalibration &proceed(float delta, const std::vector<cv::UMat> &frames) override;
+        ChainCalibration &proceed(float delta, const std::vector<xm::ocl::Image2D> &frames) override;
 
         bool is_active() const override;
 
@@ -124,14 +124,14 @@ namespace xm {
 
         void stop() override;
 
-        const std::vector<cv::UMat> &frames() const override;
+        const std::vector<xm::ocl::Image2D> &frames() const override;
 
         void debug(bool _debug) override;
 
         const xm::chain::Result &result() const;
 
     protected:
-        bool capture_squares(const std::vector<cv::UMat> &_frames);
+        bool capture_squares(const std::vector<xm::ocl::Image2D> &_frames);
 
         void calibrate();
 

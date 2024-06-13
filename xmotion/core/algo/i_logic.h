@@ -9,7 +9,7 @@
 #define XMOTION_LOGIC_H
 
 #include <vector>
-#include <opencv2/core/mat.hpp>
+#include "../ocl/ocl_data.h"
 
 namespace xm {
 
@@ -18,9 +18,9 @@ namespace xm {
     public:
         virtual ~Logic() = default;
 
-        virtual Logic& proceed(float delta, const std::vector<cv::UMat> &frames) = 0;
+        virtual Logic& proceed(float delta, const std::vector<xm::ocl::Image2D> &frames) = 0;
 
-        virtual const std::vector<cv::UMat> &frames() const = 0;
+        virtual const std::vector<xm::ocl::Image2D> &frames() const = 0;
 
         virtual bool is_active() const = 0;
 

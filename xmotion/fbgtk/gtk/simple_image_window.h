@@ -6,6 +6,7 @@
 #define XMOTION_SIMPLE_IMAGE_WINDOW_H
 
 #include "gl_image.h"
+#include "../../core/ocl/ocl_data.h"
 #include <gtkmm/window.h>
 #include <glibmm/dispatcher.h>
 
@@ -34,6 +35,8 @@ namespace xm {
         void refresh(const std::vector<cv::Mat>& _frames);
 
         void refresh(const std::vector<cv::UMat>& _frames);
+
+        void refresh(const std::vector<xm::ocl::Image2D>& _frames);
 
         void refresh(bool redraw = true);
 

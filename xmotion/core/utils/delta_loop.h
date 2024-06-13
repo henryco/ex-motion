@@ -15,6 +15,21 @@
 
 namespace eox::util {
 
+    class DeltaWorker {
+    public:
+        virtual void update(float dt, float latency, float fps) = 0;
+
+        virtual ~DeltaWorker() = default;
+    };
+
+    class DeltaRunner : public DeltaWorker {
+    private:
+        std::function<void(float,float,float)> callback;
+    public:
+        explicit DeltaRunner(std::function<void(float,float, float)> cb);
+
+        void update(float dt, float latency, float fps) override;
+    };
 
     /**
      * @class DeltaLoop
@@ -28,8 +43,7 @@ namespace eox::util {
     private:
         std::chrono::nanoseconds frame;
         std::unique_ptr<std::thread> thread;
-        std::function<void(float, float, float)> runnable;
-
+        std::function<DeltaWorker*()> worker_provider;
         std::atomic<bool> alive = false;
         std::condition_variable flag;
         std::mutex mutex;
@@ -83,6 +97,8 @@ namespace eox::util {
 
         explicit DeltaLoop(std::function<void(float, float, float)> runnable, int fps = 0);
 
+        explicit DeltaLoop(std::function<DeltaWorker*()> provider, int fps = 0);
+
         ~DeltaLoop();
 
         void start();
@@ -90,6 +106,8 @@ namespace eox::util {
         void stop();
 
         void setFunc(std::function<void(float, float, float)> _runnable);
+
+        void setProvider(std::function<DeltaWorker*()> provider);
 
         void setFps(int fps);
 

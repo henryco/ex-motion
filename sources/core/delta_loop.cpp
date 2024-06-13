@@ -9,13 +9,29 @@
 
 namespace eox::util {
 
+    void DeltaRunner::update(float dt, float latency, float fps) {
+        callback(dt, latency, fps);
+    }
+
+    DeltaRunner::DeltaRunner(std::function<void(float, float, float)> cb) {
+        callback = std::move(cb);
+    }
+
     DeltaLoop::DeltaLoop(const int fps) { // NOLINT(*-pro-type-member-init)
         setFps(fps);
     }
 
     DeltaLoop::DeltaLoop(std::function<void(float, float, float)> runnable, const int fps)
     : DeltaLoop(fps) {
-        this->runnable = std::move(runnable);
+        this->worker_provider = [r = std::move(runnable)]() -> DeltaWorker* {
+            return new DeltaRunner(r);
+        };
+        start();
+    }
+
+    DeltaLoop::DeltaLoop(std::function<DeltaWorker*()> provider, int fps)
+    : DeltaLoop(fps) {
+        this->worker_provider = std::move(provider);
         start();
     }
 
@@ -24,7 +40,13 @@ namespace eox::util {
     }
 
     void DeltaLoop::setFunc(std::function<void(float, float, float)> _runnable) {
-        this->runnable = std::move(_runnable);
+        this->worker_provider = [r = std::move(_runnable)]() -> DeltaWorker* {
+            return new DeltaRunner(r);
+        };
+    }
+
+    void DeltaLoop::setProvider(std::function<DeltaWorker*()> provider) {
+        this->worker_provider = std::move(provider);
     }
 
     void DeltaLoop::setFps(int _fps) {
@@ -36,6 +58,7 @@ namespace eox::util {
     }
 
     void DeltaLoop::worker() {
+        std::unique_ptr<DeltaWorker> worker(worker_provider());
 
         auto loop_pre = std::chrono::high_resolution_clock::now();
         auto loop_post = std::chrono::high_resolution_clock::now();
@@ -69,7 +92,7 @@ namespace eox::util {
 
             loop_pre = std::chrono::high_resolution_clock::now();
 
-            runnable(
+            worker->update(
                     ((float) duration.count()) / 1000000.f, // delta
                     ((float) late.count()) / 1000000.f,  // latency
                     fps / (float) iteration              // averaged fps

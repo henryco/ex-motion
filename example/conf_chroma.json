@@ -35,17 +35,17 @@
     "fast": false,
     "capture": [
       {
-        "id": "/dev/video100",
-        "name": "razer",
+        "id": "/dev/video103",
+        "name": "tst12",
         "width": 1920,
         "height": 1080,
-        "fps": 30,
+        "fps": 60,
         "codec": "MJPG",
         "buffer": 2,
         "rotate": true,
         "flip": {
-          "x": true,
-          "y": true
+          "x": false,
+          "y": false
         },
         "region": {
           "x": 0,

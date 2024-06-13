@@ -7,8 +7,6 @@
 
 #include "../../xmotion/core/camera/stereo_camera.h"
 #include "../../xmotion/core/ocl/ocl_filters.h"
-#include "../../xmotion/core/ocl/ocl_interop.h"
-#include "../../xmotion/core/ocl/cl_kernel.h"
 
 namespace xm {
     int fourCC(const char *name) {
@@ -101,73 +99,74 @@ namespace xm {
             }
         }
 
-        std::vector<std::future<std::pair<std::string, xm::ocl::Image2D>>> results;
+        std::vector<std::future<std::map<std::string, xm::ocl::Image2D>>> results;
         results.reserve(captures.size());
         for (auto &capture: captures) {
-            results.push_back(executor->execute<std::pair<std::string, xm::ocl::Image2D>>(
-                    [&capture, this]() mutable -> std::pair<std::string, xm::ocl::Image2D> {
+            results.push_back(executor->execute<std::map<std::string, xm::ocl::Image2D>>(
+                    [&capture, this]() mutable -> std::map<std::string, xm::ocl::Image2D> {
+
                         cv::Mat frame;
-                        capture.second.retrieve(frame);
-                        auto queue = command_queues.at(capture.first);
-                        return {capture.first,
-                                xm::ocl::iop::from_cv_mat(frame, queue).waitFor().getImage2D()};
+                        auto any = capture.second.retrieve(frame);
+                        if (!any && frame.empty())
+                            return {};
+
+                        const auto device_id = capture.first;
+                        auto queue = command_queues.at(device_id);
+
+                        auto image_promise = xm::ocl::iop::from_cv_mat(frame, queue);
+                        auto src = image_promise.getImage2D();
+                        const auto t0 = std::chrono::system_clock::now();
+                        std::map<std::string, xm::ocl::Image2D> image_map;
+                        for (const auto &property: properties) {
+                            if (property.device_id != device_id)
+                                continue;
+
+                            xm::ocl::Image2D dst;
+
+                            // whole frame
+                            if (property.x == 0 && property.y == 0 && property.w == property.width && property.h == property.height) {
+                                // xm::ocl::iop::copy_ocl(src, queue).toImage2D(dst);
+                                dst = src;
+                            }
+
+                            // sub region
+                            else {
+                                xm::ocl::iop::copy_ocl(src, queue, property.x, property.y, property.w, property.h)
+                                        .toImage2D(dst);
+                            }
+
+                            if (property.flip_x || property.flip_y || property.rotate) {
+                                xm::ocl::flip_rotate(queue, dst, property.flip_x, property.flip_y, property.rotate)
+                                        .toImage2D(dst);
+                            }
+
+                            image_map[property.name] = dst;
+                        }
+
+                        xm::ocl::finish_queue(queue);
+
+                        const auto t1 = std::chrono::system_clock::now();
+                        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
+                        log->info("camera time: {}", d);
+
+                        return image_map;
                     }));
         }
 
         std::map<std::string, xm::ocl::Image2D> frames;
         for (auto &future: results) {
-            auto pair = future.get();
-            if (pair.second.empty()) {
+            auto map = future.get();
+            if (map.empty()) {
                 log->warn("empty frame");
                 return {};
             }
-            frames[pair.first] = pair.second;
+            for (const auto &pair: map) {
+                frames[pair.first] = pair.second;
+            }
         }
 
-        // CROPPING AND FLIPPING
-        std::map<std::string, xm::ocl::Image2D> images;
-        std::map<std::string, xm::ocl::iop::ClImagePromise> promises;
-        int queue_idx = 0;
 
-        const auto t0 = std::chrono::system_clock::now();
-
-        for (const auto &property: properties) {
-            queue_idx += 1;
-
-            const auto &src = frames.at(property.device_id);
-            auto queue = command_queues.at(property.device_id);
-
-            xm::ocl::Image2D dst;
-
-            // whole frame
-            if (property.x == 0 && property.y == 0 && property.w == property.width && property.h == property.height) {
-//                xm::ocl::iop::copy_ocl(src, queue).waitFor().toImage2D(dst);
-                dst = src;
-            }
-            // sub region
-            else {
-                xm::ocl::iop::copy_ocl(src, queue, property.x, property.y, property.w, property.h)
-                .waitFor().toImage2D(dst);
-            }
-
-            if (property.flip_x || property.flip_y || property.rotate) {
-                auto promise = xm::ocl::flip_rotate(dst, property.flip_x, property.flip_y, property.rotate, queue_idx);
-                promises[property.name] = promise;
-                continue; // we will iterate promises later
-            }
-
-            images[property.name] = dst;
-        }
-
-        for (auto &p: promises) {
-            images[p.first] = p.second.waitFor().getImage2D();
-        }
-
-        const auto t1 = std::chrono::system_clock::now();
-        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
-        log->info("camera time: {}", d);
-
-        return images;
+        return frames;
     }
 
     std::vector<xm::ocl::Image2D> StereoCamera::capture() {

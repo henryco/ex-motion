@@ -761,9 +761,12 @@ namespace xm::ocl {
     }
 
     xm::ocl::iop::ClImagePromise flip_rotate(const Image2D &in, bool flip_x, bool flip_y, bool rotate, int queue_index) {
+        return flip_rotate(Kernels::instance().retrieve_queue(queue_index), in, flip_x, flip_y, rotate);
+    }
+
+    xm::ocl::iop::ClImagePromise flip_rotate(cl_command_queue queue, const Image2D &in, bool flip_x, bool flip_y, bool rotate) {
         const auto context = in.context;
         const auto kernel = Kernels::instance().kernel_flip_rotate;
-        const auto queue = Kernels::instance().retrieve_queue(queue_index);
         const auto pref_size = Kernels::instance().flip_rotate_local_size;
         const auto inter_size = in.cols * in.rows * in.channels;
 

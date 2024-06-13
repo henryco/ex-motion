@@ -1,41 +1,53 @@
 //
-// Created by henryco on 4/22/24.
+// Created by henryco on 13/06/24.
 //
+
+#include "../../xmotion/fbgtk/file_worker.h"
+#include "../../xmotion/core/algo/calibration.h"
+#include "../../xmotion/core/algo/chain.h"
+#include "../../xmotion/core/algo/pose.h"
+#include "../../xmotion/fbgtk/data/json_ocv.h"
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "cppcoreguidelines-pro-type-static-cast-downcast"
 
-#include "../../xmotion/fbgtk/file_boot.h"
-#include "../../xmotion/core/algo/calibration.h"
-#include "../../xmotion/fbgtk/data/json_ocv.h"
-#include "../../xmotion/core/algo/chain.h"
-#include "../../xmotion/core/algo/pose.h"
-
 namespace xm {
 
-    void FileBoot::update(float delta, float _, float fps) {
-        window->setFps((int) fps);
+    FileWorker::FileWorker(xm::SimpleImageWindow *_window,
+                           xm::CamParamsWindow *_params_window,
+                           const xm::data::JsonConfig &_config,
+                           const std::string &_project_file):
+            config(_config), project_file(_project_file),
+            window(_window), params_window(_params_window) {
 
+        prepare_filters();
+        prepare_logic();
+        prepare_cam();
+        prepare_gui();
 
-        std::vector<xm::ocl::Image2D> frames = camera->capture();
-
-
-
-        filter_frames(frames);
-
-        logic->proceed(delta, frames);
-        process_results();
-
-        const auto t0 = std::chrono::system_clock::now();
-        if (!bypass)
-            window->refresh(logic->frames());
-
-        const auto t1 = std::chrono::system_clock::now();
-
-        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
-        log->info("time: {}", d);
+//        thread_pool->start(config.camera.capture.size());
+        thread_pool = std::make_shared<eox::util::ThreadPool>();
+        thread_pool->start(10);
+        camera->setThreadPool(thread_pool);
     }
 
-    void FileBoot::process_results() {
+    void xm::FileWorker::update(float dt, float latency, float fps) {
+        std::vector<xm::ocl::Image2D> frames = camera->capture();
+
+//        const auto t0 = std::chrono::system_clock::now();
+
+        filter_frames(frames);
+        logic->proceed(dt, frames);
+        process_results();
+
+        update_gui(fps);
+//        const auto t1 = std::chrono::system_clock::now();
+//        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
+//        log->info("time: {}", d);
+    }
+
+
+    void FileWorker::process_results() {
         if (config.type == data::CALIBRATION) {
             on_single_results();
             return;
@@ -59,7 +71,7 @@ namespace xm {
         throw std::runtime_error("Invalid config type");
     }
 
-    void FileBoot::prepare_logic() {
+    void FileWorker::prepare_logic() {
         if (config.type == data::CALIBRATION) {
             opt_single_calibration();
             return;
@@ -84,7 +96,7 @@ namespace xm {
     }
 
 
-    void FileBoot::opt_single_calibration() {
+    void FileWorker::opt_single_calibration() {
         logic = std::make_unique<xm::Calibration>();
         logic->debug(config.misc.debug);
 
@@ -113,7 +125,7 @@ namespace xm {
         (static_cast<xm::Calibration *>(logic.get()))->init(params);
     }
 
-    void FileBoot::opt_chain_calibration() {
+    void FileWorker::opt_chain_calibration() {
         logic = std::make_unique<xm::ChainCalibration>();
         logic->debug(config.misc.debug);
 
@@ -149,11 +161,11 @@ namespace xm {
         (static_cast<xm::ChainCalibration *>(logic.get()))->init(params);
     }
 
-    void FileBoot::opt_cross_calibration() {
+    void FileWorker::opt_cross_calibration() {
         // TODO
     }
 
-    void FileBoot::opt_pose_estimation() {
+    void FileWorker::opt_pose_estimation() {
         logic = std::make_unique<xm::Pose>();
         logic->debug(config.misc.debug);
 
@@ -172,29 +184,29 @@ namespace xm {
             const auto height = config.camera.capture[i].region.h;
             vec.push_back(
                     {
-                        .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),
-                        .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(device.model.body)),
-                        .roi_rollback_window = device.roi.rollback_window,
-                        .roi_center_window = device.roi.center_window,
-                        .roi_clamp_window = device.roi.clamp_window,
-                        .roi_margin = device.roi.margin,
-                        .roi_scale = device.roi.scale,
-                        .roi_padding_x = device.roi.padding_x,
-                        .roi_padding_y = device.roi.padding_y,
-                        .threshold_detector = device.threshold.detector,
-                        .threshold_marks = device.threshold.marks,
-                        .threshold_pose = device.threshold.pose,
-                        .threshold_roi = device.threshold.roi,
-                        .filter_velocity_factor = device.filter.velocity,
-                        .filter_windows_size = device.filter.window,
-                        .filter_target_fps = device.filter.fps,
-                        .undistort_source = device.undistort.source,
-                        .undistort_points = device.undistort.points,
-                        .undistort_alpha = device.undistort.alpha,
-                        .width = rotate ? height : width,
-                        .height = rotate ? width : height,
-                        .K = calibration.K,
-                        .D = calibration.D
+                            .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),
+                            .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(device.model.body)),
+                            .roi_rollback_window = device.roi.rollback_window,
+                            .roi_center_window = device.roi.center_window,
+                            .roi_clamp_window = device.roi.clamp_window,
+                            .roi_margin = device.roi.margin,
+                            .roi_scale = device.roi.scale,
+                            .roi_padding_x = device.roi.padding_x,
+                            .roi_padding_y = device.roi.padding_y,
+                            .threshold_detector = device.threshold.detector,
+                            .threshold_marks = device.threshold.marks,
+                            .threshold_pose = device.threshold.pose,
+                            .threshold_roi = device.threshold.roi,
+                            .filter_velocity_factor = device.filter.velocity,
+                            .filter_windows_size = device.filter.window,
+                            .filter_target_fps = device.filter.fps,
+                            .undistort_source = device.undistort.source,
+                            .undistort_points = device.undistort.points,
+                            .undistort_alpha = device.undistort.alpha,
+                            .width = rotate ? height : width,
+                            .height = rotate ? width : height,
+                            .K = calibration.K,
+                            .D = calibration.D
                     });
             i++;
         }
@@ -218,12 +230,12 @@ namespace xm {
                     log->info("Reading chain-calibration file[{}]: {}, {}", k, pair_name, file);
                     const auto chain_calibration = xm::data::ocv::read_chain_calibration(file);
                     pairs.push_back({
-                        .K1 = vec.at(k).K.clone(),
-                        .K2 = vec.at(k + 1).K.clone(),
-                        .RT = chain_calibration.RT,
-                        .E = chain_calibration.E,
-                        .F = chain_calibration.F,
-                    });
+                                            .K1 = vec.at(k).K.clone(),
+                                            .K2 = vec.at(k + 1).K.clone(),
+                                            .RT = chain_calibration.RT,
+                                            .E = chain_calibration.E,
+                                            .F = chain_calibration.F,
+                                    });
 
                     k++;
                     if (k >= config.pose.devices.size())
@@ -252,7 +264,7 @@ namespace xm {
         (static_cast<xm::Pose *>(logic.get()))->init(params);
     }
 
-    void FileBoot::on_single_results() {
+    void FileWorker::on_single_results() {
         const auto results = (static_cast<xm::Calibration *>(logic.get()))->result();
         if (!results.ready)
             return;
@@ -283,7 +295,7 @@ namespace xm {
         log->info("saved");
     }
 
-    void FileBoot::on_chain_results() {
+    void FileWorker::on_chain_results() {
         const auto results = (static_cast<xm::ChainCalibration *>(logic.get()))->result();
         if (!results.ready)
             return;
@@ -317,12 +329,13 @@ namespace xm {
         }
     }
 
-    void FileBoot::on_cross_results() {
+    void FileWorker::on_cross_results() {
         // TODO
     }
 
-    void FileBoot::on_pose_results() {
+    void FileWorker::on_pose_results() {
         // TODO
     }
-}
+
+} // xm
 #pragma clang diagnostic pop

@@ -2,13 +2,13 @@
 // Created by henryco on 6/2/24.
 //
 
-#include "../../xmotion/fbgtk/file_boot.h"
+#include "../../xmotion/fbgtk/file_worker.h"
 #include "../../xmotion/core/filter/chroma_key.h"
 #include "../../xmotion/core/utils/cv_utils.h"
 
 namespace xm {
 
-    void FileBoot::filter_frames(std::vector<xm::ocl::Image2D> &frames) {
+    void FileWorker::filter_frames(std::vector<xm::ocl::Image2D> &frames) {
 //        const auto t0 = std::chrono::system_clock::now();
 
 //        std::vector<std::future<cv::UMat>> futures;
@@ -27,7 +27,7 @@ namespace xm {
 //        log->info("time: {}", d);
     }
 
-    void FileBoot::prepare_filters() {
+    void FileWorker::prepare_filters() {
         if (!config.filters._present)
             return;
 
@@ -36,7 +36,7 @@ namespace xm {
         opt_filter_delta();
     }
 
-    void FileBoot::opt_filter_chroma() {
+    void FileWorker::opt_filter_chroma() {
         if (!config.filters.background.chroma._present)
             return;
 
@@ -56,7 +56,7 @@ namespace xm {
         filters.push_back(std::move(filter));
     }
 
-    void FileBoot::opt_filter_delta() {
+    void FileWorker::opt_filter_delta() {
         if (!config.filters.background.delta._present)
             return;
         // TODO

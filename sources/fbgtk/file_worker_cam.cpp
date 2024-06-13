@@ -3,12 +3,12 @@
 //
 
 #include <fstream>
-#include "../../xmotion/fbgtk/file_boot.h"
+#include "../../xmotion/fbgtk/file_worker.h"
 #include "../../xmotion/core/camera/d_dummy_camera.h"
 
 namespace xm {
 
-    void FileBoot::prepare_cam() {
+    void FileWorker::prepare_cam() {
         camera = config.camera.dummy
                 ? std::make_unique<xm::DummyCamera>()
                 : std::make_unique<xm::StereoCamera>();
@@ -34,7 +34,7 @@ namespace xm {
         }
     }
 
-    void FileBoot::on_camera_save(const std::string &device_id) {
+    void FileWorker::on_camera_save(const std::string &device_id) {
         const std::filesystem::path project_dir = xm::data::prepare_project_dir(project_file);
         const std::filesystem::path parent = xm::data::create_dir_rec(project_dir / "cam");
         for (const auto &c: config.camera.capture) {
@@ -51,7 +51,7 @@ namespace xm {
         }
     }
 
-    void FileBoot::on_camera_read(const std::string &device_id, const std::string &name) {
+    void FileWorker::on_camera_read(const std::string &device_id, const std::string &name) {
         const std::filesystem::path project_dir = xm::data::prepare_project_dir(project_file);
         const std::filesystem::path conf = project_dir / "cam" / (name + ".xcam");
 
@@ -66,13 +66,13 @@ namespace xm {
         is.close();
     }
 
-    int FileBoot::on_camera_update(const std::string &device_id, uint id, int value) {
+    int FileWorker::on_camera_update(const std::string &device_id, uint id, int value) {
         camera->setControl(device_id, id, value);
         log->debug("updated camera settings for: {} | {}:{}", device_id, id, value);
         return value;
     }
 
-    void FileBoot::on_camera_reset(const std::string &device_id) {
+    void FileWorker::on_camera_reset(const std::string &device_id) {
         camera->resetControls(device_id);
         log->debug("reset camera settings for: {}", device_id);
     }

@@ -24,68 +24,18 @@ namespace xm {
                 spdlog::stdout_color_mt("file_boot");
 
     protected:
-        std::shared_ptr<eox::util::ThreadPool> thread_pool;
-        std::vector<std::unique_ptr<xm::Filter>> filters;
-
-        std::unique_ptr<xm::CamParamsWindow> params_window;
-        std::unique_ptr<xm::SimpleImageWindow> window;
-        std::unique_ptr<xm::StereoCamera> camera;
-        std::unique_ptr<xm::Logic> logic;
-
+        xm::CamParamsWindow *params_window;
+        xm::SimpleImageWindow* window;
         xm::data::JsonConfig config;
         std::string project_file;
-
-        bool bypass = false;
-
     public:
         int boostrap(int &argc, char **&argv) override;
 
-        void update(float delta, float latency, float fps) override;
+        eox::util::DeltaWorker *worker() override;
 
         void open_project(const char *argv) override;
 
-    private:
-        void filter_frames(std::vector<xm::ocl::Image2D> &frames_in_out);
-
-        void prepare_gui();
-
-        void prepare_cam();
-
-        void prepare_logic();
-
-        void prepare_filters();
-
-        void load_device_params();
-
-        void process_results();
-
-        int on_camera_update(const std::string &device_id, uint id, int value);
-
-        void on_camera_reset(const std::string &device_id);
-
-        void on_camera_save(const std::string &device_id);
-
-        void on_camera_read(const std::string &device_id, const std::string &name);
-
-        void opt_filter_chroma();
-
-        void opt_filter_delta();
-
-        void opt_single_calibration();
-
-        void opt_chain_calibration();
-
-        void opt_cross_calibration();
-
-        void opt_pose_estimation();
-
-        void on_single_results();
-
-        void on_chain_results();
-
-        void on_cross_results();
-
-        void on_pose_results();
+        ~FileBoot() override;
     };
 
 } // xm

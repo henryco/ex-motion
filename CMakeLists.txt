@@ -108,6 +108,12 @@ set(SOURCE_FILES
         xmotion/core/ocl/ocl_filters.h
         xmotion/core/ocl/ocl_kernels.h
         xmotion/core/dnn/net/dnn_cl_utils.h
+        xmotion/core/ocl/cl_kernel.h
+        xmotion/core/ocl/ocl_kernels_chromakey.h
+        xmotion/core/ocl/ocl_interop.h
+        xmotion/core/ocl/ocl_interop_ext.h
+        xmotion/fbgtk/file_worker.h
+        xmotion/core/ocl/ocl_data.h
 
         sources/core/velocity_filter.cpp
         sources/core/low_pass_filter.cpp
@@ -133,11 +139,10 @@ set(SOURCE_FILES
         sources/fbgtk/gtk_cam_params.cpp
         sources/fbgtk/cam_params_window.cpp
         sources/fbgtk/gtk_config_stack.cpp
-        sources/fbgtk/file_boot_gui.cpp
-        sources/fbgtk/file_boot_cam.cpp
+        sources/fbgtk/file_worker_gui.cpp
+        sources/fbgtk/file_worker_cam.cpp
         sources/core/calibration.cpp
         sources/core/pose.cpp
-        sources/fbgtk/file_boot_logic.cpp
         sources/core/cv_utils.cpp
         sources/fbgtk/json_ocv.cpp
         sources/core/chain.cpp
@@ -148,18 +153,14 @@ set(SOURCE_FILES
         sources/core/pose_aux.cpp
         sources/core/epi_util.cpp
         sources/core/chroma_key.cpp
-        sources/fbgtk/file_boot_filters.cpp
+        sources/fbgtk/file_worker_filters.cpp
         sources/core/kernel.cpp
         sources/core/ocl_filters.cpp
         sources/core/dnn_cl_utils.cpp
-        xmotion/core/ocl/cl_kernel.h
         sources/core/cl_kernel.cpp
-        xmotion/core/ocl/ocl_kernels_chromakey.h
-        xmotion/core/ocl/ocl_data.h
         sources/core/ocl_data.cpp
-        xmotion/core/ocl/ocl_interop.h
         sources/core/ocl_interop.cpp
-        xmotion/core/ocl/ocl_interop_ext.h
+        sources/fbgtk/file_worker.cpp
 )
 
 if (UNIX AND NOT APPLE)

@@ -16,6 +16,7 @@ namespace xm {
         eox::util::DeltaLoop deltaLoop;
 
     public:
+        virtual ~UpdatedBoot() = default;
 
         int boot(int &argc, char **&argv) final;
 
@@ -29,8 +30,7 @@ namespace xm {
 
         virtual int boostrap(int &argc, char **&argv) = 0;
 
-        virtual void update(float delta, float latency, float fps) = 0;
-
+        virtual eox::util::DeltaWorker* worker() = 0;
     private:
         static void print_ocv_ocl_stats();
     };

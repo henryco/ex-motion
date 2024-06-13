@@ -7,6 +7,7 @@
 
 #include "../../xmotion/fbgtk/file_boot.h"
 #include "../../xmotion/core/utils/eox_globals.h"
+#include "../../xmotion/fbgtk/file_worker.h"
 
 namespace xm {
 
@@ -25,18 +26,24 @@ namespace xm {
                 "dev.tindersamurai.xmotion"
         );
 
-        prepare_filters();
-        prepare_logic();
-        prepare_cam();
-        prepare_gui();
-
-        thread_pool = std::make_shared<eox::util::ThreadPool>();
-//        thread_pool->start(config.camera.capture.size());
-        thread_pool->start(10);
-        camera->setThreadPool(thread_pool);
+        window = new xm::SimpleImageWindow();
+        params_window = new xm::CamParamsWindow();
+        window->signal_delete_event().connect([this](GdkEventAny *any_event) {
+            stop_loop();
+            return false;
+        });
 
         start_loop(999);
         return app->run(*window);
+    }
+
+    eox::util::DeltaWorker *FileBoot::worker() {
+        return new xm::FileWorker(window, params_window, config, project_file);
+    }
+
+    FileBoot::~FileBoot() {
+        delete params_window;
+        delete window;
     }
 
 } // xm

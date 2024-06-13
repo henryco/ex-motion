@@ -31,7 +31,7 @@ namespace xm::ocl::iop {
         cl_int err;
         cl_mem buffer = clCreateBuffer(context, access_to_cl(access), mat.total() * mat.elemSize(), mat.data, &err);
         if (err != CL_SUCCESS)
-            throw std::runtime_error("Cannot create OpenCL buffer");
+            throw std::runtime_error("Cannot create OpenCL buffer: " + std::to_string(err));
         return xm::ocl::Image2D(
                 mat.cols,
                 mat.rows,
@@ -66,13 +66,13 @@ namespace xm::ocl::iop {
         size_t size = mat.total() * mat.elemSize();
         cl_mem buffer = clCreateBuffer(context, access_to_cl(access), size, nullptr, &err);
         if (err != CL_SUCCESS)
-            throw std::runtime_error("Cannot create cl buffer");
+            throw std::runtime_error("Cannot create cl buffer: " + std::to_string(err));
 
         err = clEnqueueWriteBuffer(
                 queue, buffer, CL_FALSE, 0,
                 size, mat.data, 0, nullptr, nullptr);
         if (err != CL_SUCCESS)
-            throw std::runtime_error("Cannot enqueue copy data to cl buffer.");
+            throw std::runtime_error("Cannot enqueue copy data to cl buffer: " + std::to_string(err));
 
         auto image = xm::ocl::Image2D(
                 mat.cols,
@@ -127,14 +127,14 @@ namespace xm::ocl::iop {
         cl_mem buffer = clCreateBuffer(image.context,
                                        access_to_cl(access), image.size(), nullptr, &err);
         if (err != CL_SUCCESS)
-            throw std::runtime_error("Cannot create cl buffer");
+            throw std::runtime_error("Cannot create cl buffer: " + std::to_string(err));
 
         err = clEnqueueCopyBuffer(queue,
                                   image.handle, buffer,
                                   0, 0, image.size(),
                                   0, nullptr, nullptr);
         if (err != CL_SUCCESS)
-            throw std::runtime_error("Cannot enqueue copy data between cl buffers.");
+            throw std::runtime_error("Cannot enqueue copy data between cl buffers: " + std::to_string(err));
 
         return ClImagePromise(xm::ocl::Image2D(image, buffer, access), queue);
     }
@@ -142,8 +142,43 @@ namespace xm::ocl::iop {
     ClImagePromise copy_ocl(const Image2D &image, cl_command_queue queue,
                             int xo, int yo, int width, int height,
                             ACCESS access) {
-        // TODO
-        throw std::runtime_error("NOT IMPLEMENTED");
+        cl_int err;
+        const size_t c_size = image.channels * image.channel_size;
+        const size_t size = (size_t) width * (size_t) height * c_size;
+        cl_mem buffer = clCreateBuffer(image.context, access_to_cl(access), size,
+                                       nullptr, &err);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot create cl buffer: " + std::to_string(err));
+
+        for (size_t row = 0; row < height; row++) {
+            const size_t src_offset = ((yo + row) * image.cols + xo) * c_size;
+            const size_t dst_offset = row * width * c_size;
+            const size_t row_size = width * c_size;
+
+            err = clEnqueueCopyBuffer(queue,
+                                      image.handle,
+                                      buffer,
+                                      src_offset,
+                                      dst_offset,
+                                      row_size,
+                                      0,
+                                      nullptr,
+                                      nullptr);
+            if (err != CL_SUCCESS) {
+                clReleaseMemObject(buffer);
+                throw std::runtime_error("Cannot enqueue buffer copy: " + std::to_string(err));
+            }
+        }
+
+        return ClImagePromise(xm::ocl::Image2D(
+                width,
+                height,
+                image.channels,
+                image.channel_size,
+                buffer,
+                image.context,
+                image.device,
+                access),queue);
     }
 
     void to_cv_mat(const Image2D &image, cv::Mat &out, cl_command_queue queue, int cv_type) {

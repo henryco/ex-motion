@@ -205,11 +205,18 @@ namespace xm::ocl::iop {
 
     ClImagePromise::ClImagePromise(const Image2D &out,
                                    cl_command_queue _queue,
-                                   cl_event _event) :
+                                   cl_event _event):
             image(out),
             ocl_queue(_queue),
             ocl_event(_event),
             completed(false) {}
+
+    ClImagePromise::ClImagePromise(const Image2D &out,
+                                   cl_event ocl_event):
+            image(out),
+            ocl_queue(nullptr),
+            ocl_event(ocl_event),
+            completed(true) {}
 
     void ClImagePromise::toUMat(cv::UMat &mat) {
         xm::ocl::iop::to_cv_umat(image, mat);

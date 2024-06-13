@@ -7,8 +7,6 @@
 
 #include "../../xmotion/core/camera/stereo_camera.h"
 #include "../../xmotion/core/ocl/ocl_filters.h"
-#include "../../xmotion/core/ocl/ocl_interop.h"
-#include "../../xmotion/core/ocl/cl_kernel.h"
 
 namespace xm {
     int fourCC(const char *name) {
@@ -125,14 +123,8 @@ namespace xm {
         }
 
         // CROPPING AND FLIPPING
-        std::map<std::string, xm::ocl::Image2D> images;
         std::map<std::string, xm::ocl::iop::ClImagePromise> promises;
-        int queue_idx = 0;
-
-        const auto t0 = std::chrono::system_clock::now();
-
         for (const auto &property: properties) {
-            queue_idx += 1;
 
             const auto &src = frames.at(property.device_id);
             auto queue = command_queues.at(property.device_id);
@@ -141,31 +133,27 @@ namespace xm {
 
             // whole frame
             if (property.x == 0 && property.y == 0 && property.w == property.width && property.h == property.height) {
-//                xm::ocl::iop::copy_ocl(src, queue).waitFor().toImage2D(dst);
+                //  xm::ocl::iop::copy_ocl(src, queue).toImage2D(dst);
                 dst = src;
+                promises[property.name] = dst;
             }
             // sub region
             else {
-                xm::ocl::iop::copy_ocl(src, queue, property.x, property.y, property.w, property.h)
-                .waitFor().toImage2D(dst);
+                auto promise = xm::ocl::iop::copy_ocl(src, queue, property.x, property.y, property.w, property.h);
+                promise.toImage2D(dst);
+                promises[property.name] = promise;
             }
 
             if (property.flip_x || property.flip_y || property.rotate) {
-                auto promise = xm::ocl::flip_rotate(dst, property.flip_x, property.flip_y, property.rotate, queue_idx);
+                auto promise = xm::ocl::flip_rotate(queue, dst, property.flip_x, property.flip_y, property.rotate);
                 promises[property.name] = promise;
-                continue; // we will iterate promises later
             }
-
-            images[property.name] = dst;
         }
 
+        std::map<std::string, xm::ocl::Image2D> images;
         for (auto &p: promises) {
             images[p.first] = p.second.waitFor().getImage2D();
         }
-
-        const auto t1 = std::chrono::system_clock::now();
-        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
-        log->info("camera time: {}", d);
 
         return images;
     }

@@ -19,7 +19,10 @@ namespace xm::ocl::iop {
 
     public:
         CLPromise<T>(T obj, cl_command_queue queue, cl_event event = nullptr):
-                data(obj), ocl_queue(queue), ocl_event(event) {}
+                data(obj), ocl_queue(queue), ocl_event(event), completed(false) {}
+
+        CLPromise<T>(T obj, cl_event event = nullptr): // NOLINT(*-explicit-constructor)
+                data(obj), ocl_queue(nullptr), ocl_event(event), completed(true) {}
 
         CLPromise<T>() = default;
 

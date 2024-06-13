@@ -187,6 +187,14 @@ namespace xm::ocl {
             bool rotate,
             int queue_index = -1
     );
+
+    xm::ocl::iop::ClImagePromise flip_rotate(
+            cl_command_queue queue,
+            const xm::ocl::Image2D &in,
+            bool flip_x,
+            bool flip_y,
+            bool rotate
+    );
 }
 
 #endif //XMOTION_OCL_FILTERS_H

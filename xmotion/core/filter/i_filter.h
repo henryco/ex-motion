@@ -17,7 +17,7 @@ namespace xm {
 
         virtual cv::UMat filter(const cv::UMat &in) = 0;
 
-        virtual xm::ocl::iop::QueuePromise filter(const xm::ocl::Image2D &in) = 0;
+        virtual xm::ocl::iop::ClImagePromise filter(const xm::ocl::Image2D &in) = 0;
 
         virtual ~Filter() = default;
     };

@@ -51,7 +51,7 @@ namespace xm::ocl::iop {
                 modifier);
     }
 
-    QueuePromise from_cv_mat(const cv::Mat &source, cl_command_queue command_queue, ACCESS modifier) {
+    ClImagePromise from_cv_mat(const cv::Mat &source, cl_command_queue command_queue, ACCESS modifier) {
         return from_cv_mat(
                 source,
                 (cl_context) cv::ocl::Context::getDefault().ptr(),
@@ -60,8 +60,8 @@ namespace xm::ocl::iop {
                 modifier);
     }
 
-    QueuePromise from_cv_mat(const cv::Mat &mat, cl_context context,
-                             cl_device_id device, cl_command_queue queue, ACCESS access) {
+    ClImagePromise from_cv_mat(const cv::Mat &mat, cl_context context,
+                               cl_device_id device, cl_command_queue queue, ACCESS access) {
         cl_int err;
         size_t size = mat.total() * mat.elemSize();
         cl_mem buffer = clCreateBuffer(context, access_to_cl(access), size, nullptr, &err);
@@ -84,7 +84,7 @@ namespace xm::ocl::iop {
                 device,
                 access);
 
-        return QueuePromise(image, queue);
+        return ClImagePromise(image, queue);
     }
 
     xm::ocl::Image2D from_cv_umat(const cv::UMat &source, ACCESS modifier) {
@@ -122,7 +122,7 @@ namespace xm::ocl::iop {
                                    out);
     }
 
-    QueuePromise copy_ocl(const Image2D &image, cl_command_queue queue, xm::ocl::ACCESS access) {
+    ClImagePromise copy_ocl(const Image2D &image, cl_command_queue queue, xm::ocl::ACCESS access) {
         cl_int err;
         cl_mem buffer = clCreateBuffer(image.context,
                                        access_to_cl(access), image.size(), nullptr, &err);
@@ -136,12 +136,12 @@ namespace xm::ocl::iop {
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot enqueue copy data between cl buffers.");
 
-        return QueuePromise(xm::ocl::Image2D(image, buffer, access), queue);
+        return ClImagePromise(xm::ocl::Image2D(image, buffer, access), queue);
     }
 
-    QueuePromise copy_ocl(const Image2D &image, cl_command_queue queue,
-                          int xo, int yo, int width, int height,
-                          ACCESS access) {
+    ClImagePromise copy_ocl(const Image2D &image, cl_command_queue queue,
+                            int xo, int yo, int width, int height,
+                            ACCESS access) {
         // TODO
         throw std::runtime_error("NOT IMPLEMENTED");
     }
@@ -168,23 +168,23 @@ namespace xm::ocl::iop {
         return CLPromise<cv::Mat>(dst, queue);
     }
 
-    QueuePromise::QueuePromise(const Image2D &out,
-                               cl_command_queue _queue,
-                               cl_event _event) :
+    ClImagePromise::ClImagePromise(const Image2D &out,
+                                   cl_command_queue _queue,
+                                   cl_event _event) :
             image(out),
             ocl_queue(_queue),
             ocl_event(_event),
             completed(false) {}
 
-    void QueuePromise::toUMat(cv::UMat &mat) {
+    void ClImagePromise::toUMat(cv::UMat &mat) {
         xm::ocl::iop::to_cv_umat(image, mat);
     }
 
-    cv::UMat QueuePromise::getUMat() {
+    cv::UMat ClImagePromise::getUMat() {
         return xm::ocl::iop::to_cv_umat(image);
     }
 
-    cv::Mat QueuePromise::getMat() {
+    cv::Mat ClImagePromise::getMat() {
         cv::UMat u_mat;
         xm::ocl::iop::to_cv_umat(image, u_mat);
         cv::Mat mat;
@@ -192,21 +192,21 @@ namespace xm::ocl::iop {
         return mat;
     }
 
-    void QueuePromise::toMat(cv::Mat &mat) {
+    void ClImagePromise::toMat(cv::Mat &mat) {
         cv::UMat u_mat;
         xm::ocl::iop::to_cv_umat(image, u_mat);
         u_mat.copyTo(mat);
     }
 
-    xm::ocl::Image2D QueuePromise::getImage2D() {
+    xm::ocl::Image2D ClImagePromise::getImage2D() {
         return image;
     }
 
-    void QueuePromise::toImage2D(Image2D &img) {
+    void ClImagePromise::toImage2D(Image2D &img) {
         img = image;
     }
 
-    QueuePromise &QueuePromise::waitFor() {
+    ClImagePromise &ClImagePromise::waitFor() {
         if (completed)
             return *this;
         {
@@ -219,20 +219,20 @@ namespace xm::ocl::iop {
         return *this;
     }
 
-    QueuePromise::~QueuePromise() {
+    ClImagePromise::ClImagePromise() {
         if (ocl_event != nullptr)
             clReleaseEvent(ocl_event);
     }
 
-    bool QueuePromise::resolved() const {
+    bool ClImagePromise::resolved() const {
         return completed;
     }
 
-    const cl_event &QueuePromise::event() const {
+    const cl_event &ClImagePromise::event() const {
         return ocl_event;
     }
 
-    QueuePromise::QueuePromise(QueuePromise &&other) noexcept {
+    ClImagePromise::ClImagePromise(ClImagePromise &&other) noexcept {
         completed = other.completed;
         ocl_event = other.ocl_event;
         ocl_queue = other.ocl_queue;
@@ -242,7 +242,7 @@ namespace xm::ocl::iop {
         other.completed = true;
     }
 
-    QueuePromise::QueuePromise(const QueuePromise &other) {
+    ClImagePromise::ClImagePromise(const ClImagePromise &other) {
         completed = other.completed;
         ocl_queue = other.ocl_queue;
         ocl_event = other.ocl_event;
@@ -250,7 +250,7 @@ namespace xm::ocl::iop {
         clRetainEvent(ocl_event);
     }
 
-    QueuePromise &QueuePromise::operator=(QueuePromise &&other) noexcept {
+    ClImagePromise &ClImagePromise::operator=(ClImagePromise &&other) noexcept {
         if (this == &other)
             return *this;
         if (ocl_event != nullptr)
@@ -265,7 +265,7 @@ namespace xm::ocl::iop {
         return *this;
     }
 
-    QueuePromise &QueuePromise::operator=(const QueuePromise &other) {
+    ClImagePromise &ClImagePromise::operator=(const ClImagePromise &other) {
         if (this == &other)
             return *this;
         if (ocl_event != nullptr)
@@ -278,7 +278,7 @@ namespace xm::ocl::iop {
         return *this;
     }
 
-    cl_command_queue QueuePromise::queue() const {
+    cl_command_queue ClImagePromise::queue() const {
         return ocl_queue;
     }
 }

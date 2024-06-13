@@ -672,12 +672,12 @@ namespace xm::ocl {
                 .toUMat(out);
     }
 
-    xm::ocl::iop::QueuePromise chroma_key_single_pass(const cv::UMat &in,
-                                                      const cv::Scalar &hls_low,
-                                                      const cv::Scalar &hls_up,
-                                                      const cv::Scalar &color,
-                                                      bool linear, int mask_size, int blur,
-                                                      int queue_index) {
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const cv::UMat &in,
+                                                        const cv::Scalar &hls_low,
+                                                        const cv::Scalar &hls_up,
+                                                        const cv::Scalar &color,
+                                                        bool linear, int mask_size, int blur,
+                                                        int queue_index) {
         auto img = xm::ocl::iop::from_cv_umat(in,
                                               Kernels::instance().ocl_context,
                                               Kernels::instance().device_id,
@@ -685,9 +685,9 @@ namespace xm::ocl {
         return chroma_key_single_pass(img, hls_low, hls_up, color, linear, mask_size, blur, queue_index);
     }
 
-    xm::ocl::iop::QueuePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                                      const cv::Scalar &color, bool linear, int mask_size, int blur,
-                                                      int queue_index) {
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
+                                                        const cv::Scalar &color, bool linear, int mask_size, int blur,
+                                                        int queue_index) {
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
@@ -768,7 +768,7 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
-        return xm::ocl::iop::QueuePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event);
+        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event);
     }
 
 }

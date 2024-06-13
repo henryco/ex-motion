@@ -15,7 +15,7 @@ namespace xm::ocl::iop {
      * Not really thread safe!!!
      * (but who cares, it don't really have to)
      */
-    class QueuePromise {
+    class ClImagePromise {
     private:
         cl_command_queue ocl_queue = nullptr;
         cl_event ocl_event = nullptr;
@@ -23,19 +23,19 @@ namespace xm::ocl::iop {
         bool completed = false;
 
     public:
-        QueuePromise(const xm::ocl::Image2D &out,
-                     cl_command_queue ocl_queue,
-                     cl_event ocl_event = nullptr);
+        ClImagePromise(const xm::ocl::Image2D &out,
+                       cl_command_queue ocl_queue,
+                       cl_event ocl_event = nullptr);
 
-        ~QueuePromise();
+        ClImagePromise();
 
-        QueuePromise(QueuePromise &&other) noexcept;
+        ClImagePromise(ClImagePromise &&other) noexcept;
 
-        QueuePromise(const QueuePromise &other);
+        ClImagePromise(const ClImagePromise &other);
 
-        QueuePromise &operator=(QueuePromise &&other) noexcept;
+        ClImagePromise &operator=(ClImagePromise &&other) noexcept;
 
-        QueuePromise &operator=(const QueuePromise &other);
+        ClImagePromise &operator=(const ClImagePromise &other);
 
         /**
          * Often you should call waitFor() first
@@ -72,7 +72,7 @@ namespace xm::ocl::iop {
         /**
          * Waits for data to be ready
          */
-        QueuePromise &waitFor();
+        ClImagePromise &waitFor();
 
         bool resolved() const;
 
@@ -95,12 +95,12 @@ namespace xm::ocl::iop {
             cl_device_id device,
             xm::ocl::ACCESS access = ACCESS::RW);
 
-    QueuePromise from_cv_mat(
+    ClImagePromise from_cv_mat(
             const cv::Mat &mat,
             cl_command_queue queue,
             xm::ocl::ACCESS access = ACCESS::RW);
 
-    QueuePromise from_cv_mat(
+    ClImagePromise from_cv_mat(
             const cv::Mat &mat,
             cl_context context,
             cl_device_id device,
@@ -117,12 +117,12 @@ namespace xm::ocl::iop {
             cl_device_id device,
             xm::ocl::ACCESS access = ACCESS::RW);
 
-    QueuePromise copy_ocl(
+    ClImagePromise copy_ocl(
             const xm::ocl::Image2D &image,
             cl_command_queue queue,
             xm::ocl::ACCESS access = ACCESS::RW);
 
-    QueuePromise copy_ocl(
+    ClImagePromise copy_ocl(
             const xm::ocl::Image2D &image,
             cl_command_queue queue,
             int xo, int yo, int width, int height,

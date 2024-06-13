@@ -118,7 +118,7 @@ namespace xm::chroma {
         return std::move(out);
     }
 
-    xm::ocl::iop::QueuePromise ChromaKey::filter(const ocl::Image2D &in) {
+    xm::ocl::iop::ClImagePromise ChromaKey::filter(const ocl::Image2D &in) {
         // TODO
         return xm::ocl::chroma_key_single_pass(
                 in,

@@ -165,7 +165,7 @@ namespace xm::ocl {
                     int queue_index = -1
     );
 
-    xm::ocl::iop::QueuePromise chroma_key_single_pass(
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(
             const cv::UMat &in,
             const cv::Scalar &hls_low,
             const cv::Scalar &hls_up,
@@ -176,7 +176,7 @@ namespace xm::ocl {
             int queue_index = -1
     );
 
-    xm::ocl::iop::QueuePromise chroma_key_single_pass(
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(
             const xm::ocl::Image2D &in,
             const cv::Scalar &hls_low,
             const cv::Scalar &hls_up,

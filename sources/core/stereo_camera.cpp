@@ -18,24 +18,34 @@ namespace xm {
     }
 
     StereoCamera::~StereoCamera() {
+        log->debug("release stereo camera");
         for (auto &queue: command_queues) {
             if (queue.second == nullptr)
                 continue;
+            log->debug("release command queue: {}", queue.first);
             clReleaseCommandQueue(queue.second);
         }
-        for (auto &capture: captures)
+
+        for (auto &capture: captures) {
+            log->debug("release capture: {}", capture.first);
             capture.second.release();
+        }
+
         command_queues.clear();
         captures.clear();
     }
 
     void StereoCamera::release() {
-        for (auto &capture: captures)
+        log->debug("release captures");
+        for (auto &capture: captures) {
+            log->debug("release capture: {}", capture.first);
             capture.second.release();
+        }
         captures.clear();
     }
 
     void StereoCamera::open(const SCamProp &prop) {
+        log->debug("open: {}, {}", prop.device_id, prop.name);
         properties.push_back(prop);
 
         auto device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
@@ -43,7 +53,7 @@ namespace xm {
         command_queues[prop.device_id] = xm::ocl::create_queue_device(ocl_context, device_id, true, false);
 
         if (captures.contains(prop.device_id) && captures.at(prop.device_id).isOpened()) {
-            log->warn("capture: {} is already open", prop.device_id);
+            log->debug("capture: {} is already open", prop.device_id);
             return;
         }
 

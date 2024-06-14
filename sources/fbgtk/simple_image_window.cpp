@@ -81,7 +81,7 @@ namespace xm {
     }
 
     void SimpleImageWindow::setFps(int _fps) {
-        const auto old = fps;
+        const auto old = fps; // TODO: FIXME SEGFAULT ON EXIT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         fps = std::min(_fps, 1000);
         if (old != fps)
             fps_changed = true;

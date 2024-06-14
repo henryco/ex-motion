@@ -9,6 +9,8 @@ namespace xm {
 
     void FileWorker::update_gui(float fps) {
         Glib::signal_idle().connect([this, fps]() -> bool {
+            if (window == nullptr)
+                return false;
             window->setFps((int) fps);
             if (!bypass)
                 window->refresh(logic->frames());

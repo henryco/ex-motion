@@ -17,6 +17,13 @@ namespace eox::util {
 
     class DeltaWorker {
     public:
+
+        /**
+         * Main worker callback
+         * @param dt delta time in ms
+         * @param latency time between callback invocation in ms
+         * @param fps frames per second
+         */
         virtual void update(float dt, float latency, float fps) = 0;
 
         virtual ~DeltaWorker() = default;
@@ -44,9 +51,13 @@ namespace eox::util {
         std::chrono::nanoseconds frame;
         std::unique_ptr<std::thread> thread;
         std::function<DeltaWorker*()> worker_provider;
+
         std::atomic<bool> alive = false;
-        std::condition_variable flag;
+        std::atomic<bool> init = false;
+        std::condition_variable flag_start;
+        std::condition_variable flag_stop;
         std::mutex mutex;
+
 
     public:
 

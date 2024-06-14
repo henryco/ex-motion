@@ -60,6 +60,13 @@ namespace eox::util {
     void DeltaLoop::worker() {
         std::unique_ptr<DeltaWorker> worker(worker_provider());
 
+        {
+            // initialization stage completed
+            std::unique_lock<std::mutex> lock(mutex);
+            init = true;
+        }
+        flag_start.notify_one();
+
         auto loop_pre = std::chrono::high_resolution_clock::now();
         auto loop_post = std::chrono::high_resolution_clock::now();
         auto drift = std::chrono::nanoseconds(0);
@@ -119,7 +126,7 @@ namespace eox::util {
                     continue;
                 }
 
-                flag.wait_for(lock, total);
+                flag_stop.wait_for(lock, total);
                 lock.unlock();
 
                 drift += should - (std::chrono::high_resolution_clock::now());
@@ -128,6 +135,7 @@ namespace eox::util {
     }
 
     void DeltaLoop::start() {
+        init = false;
         {
             std::unique_lock<std::mutex> lock(mutex);
             if (alive) {
@@ -138,6 +146,12 @@ namespace eox::util {
             lock.unlock();
         }
         thread = std::make_unique<std::thread>(&DeltaLoop::worker, this);
+
+        {
+            // wait for optional initialization completion
+            std::unique_lock<std::mutex> lock(mutex);
+            flag_start.wait(lock, [this]() -> bool { return init;});
+        }
     }
 
     void DeltaLoop::stop() {
@@ -146,7 +160,7 @@ namespace eox::util {
         {
             std::lock_guard<std::mutex> lock(mutex);
             alive = false;
-            flag.notify_all();
+            flag_stop.notify_all();
         }
 
         if (thread->joinable()) {

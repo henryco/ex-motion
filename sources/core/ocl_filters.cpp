@@ -430,17 +430,8 @@ namespace xm::ocl {
         out = result;
     }
 
-    void chroma_key(const cv::UMat &in, cv::UMat &out,
-                    const cv::Scalar &hls_low,
-                    const cv::Scalar &hls_up,
-                    const cv::Scalar &color,
-                    bool linear,
-                    int mask_size,
-                    int blur,
-                    int fine,
-                    int refine,
-                    int queue_index) {
-        cv::UMat result(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
+    xm::ocl::iop::ClImagePromise chroma_key(cl_command_queue queue, const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
+                                            const cv::Scalar &color, bool linear, int mask_size, int blur, int fine, int refine) {
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (int) ((float) n_w / ratio);
@@ -450,20 +441,18 @@ namespace xm::ocl {
         cl_int err;
 
         const auto context = Kernels::instance().ocl_context;
-        const auto queue = Kernels::instance().retrieve_queue(queue_index);
-        const auto inter_size = n_w * n_h * 3;
+        const auto inter_size = n_w * n_h * 1; // grayscale/black-white mask, only one channel
         const auto pref_size = Kernels::instance().mask_apply_local_size;
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size(n_w, pref_size),
                             xm::ocl::optimal_global_size(n_h, pref_size)};
 
-
         // ======= BUFFERS ALLOCATION !
-        cl_mem buffer_in = (cl_mem) in.handle(cv::ACCESS_READ);
+        cl_mem buffer_in = (cl_mem) in.handle;
         cl_mem buffer_blur = (cl_mem) Kernels::instance().blur_kernels[(blur - 1) / 2].handle;
         cl_mem buffer_io_1 = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
         cl_mem buffer_io_2 = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
-        cl_mem buffer_out = (cl_mem) result.handle(cv::ACCESS_WRITE);
+        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, in.size(), NULL, &err);
 
 
         // ======= KERNELS ALLOCATION !
@@ -564,19 +553,8 @@ namespace xm::ocl {
             xm::ocl::set_kernel_arg(kernel_power_apply, 13, sizeof(uchar), &color_r);
         }
 
-
-        // ======= KERNEL EVENTS !
-        cl_event *erode_h_events = new cl_event[std::max(0, refine)];
-        cl_event *erode_v_events = new cl_event[std::max(0, refine)];
-        cl_event *dilate_h_events = new cl_event[std::max(0, refine)];
-        cl_event *dilate_v_events = new cl_event[std::max(0, refine)];
-        cl_event maks_range_event;
-        cl_event maks_apply_event;
-
-        xm::ocl::finish_queue(queue);
-
         // ======= KERNEL ENQUEUE !
-        maks_range_event = xm::ocl::enqueue_kernel_fast(
+        xm::ocl::enqueue_kernel_fast(
                 queue,
                 kernel_power_mask,
                 2,
@@ -585,14 +563,14 @@ namespace xm::ocl {
                 aux::DEBUG);
 
         for (int i = 0; i < refine; i++) {
-            erode_h_events[i] = xm::ocl::enqueue_kernel_fast(
+            xm::ocl::enqueue_kernel_fast(
                     queue,
                     kernel_erode_h,
                     2,
                     g_size,
                     l_size,
                     aux::DEBUG);
-            erode_v_events[i] = xm::ocl::enqueue_kernel_fast(
+            xm::ocl::enqueue_kernel_fast(
                     queue,
                     kernel_erode_v,
                     2,
@@ -602,14 +580,14 @@ namespace xm::ocl {
         }
 
         for (int i = 0; i < refine; i++) {
-            dilate_h_events[i] = xm::ocl::enqueue_kernel_fast(
+            xm::ocl::enqueue_kernel_fast(
                     queue,
                     kernel_dilate_h,
                     2,
                     g_size,
                     l_size,
                     aux::DEBUG);
-            dilate_v_events[i] = xm::ocl::enqueue_kernel_fast(
+            xm::ocl::enqueue_kernel_fast(
                     queue,
                     kernel_dilate_v,
                     2,
@@ -618,7 +596,7 @@ namespace xm::ocl {
                     aux::DEBUG);
         }
 
-        maks_apply_event = xm::ocl::enqueue_kernel_fast(
+        xm::ocl::enqueue_kernel_fast(
                 queue,
                 kernel_power_apply,
                 2,
@@ -626,52 +604,16 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
+        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue)
+        .withCleanup(new std::function<void()>([buffer_io_1, buffer_io_2]() {
+            clReleaseMemObject(buffer_io_1);
+            clReleaseMemObject(buffer_io_2);
+        }));
+    }
 
-        // ======= KERNEL QUEUE FINALIZATION !
-        xm::ocl::finish_queue(queue);
-
-
-        // ======= KERNEL EXECUTION TIME MEASURING !
-        if (aux::DEBUG) {
-            if (maks_range_event != nullptr)
-                Kernels::instance().print_time(xm::ocl::measure_exec_time(maks_range_event), "power_mask");
-            for (int i = 0; i < refine; i++) {
-                if (erode_h_events[i] != nullptr)
-                    Kernels::instance().print_time(xm::ocl::measure_exec_time(erode_h_events[i]), "erode_h");
-                if (erode_v_events[i] != nullptr)
-                    Kernels::instance().print_time(xm::ocl::measure_exec_time(erode_v_events[i]), "erode_v");
-            }
-            for (int i = 0; i < refine; i++) {
-                if (dilate_h_events[i] != nullptr)
-                    Kernels::instance().print_time(xm::ocl::measure_exec_time(dilate_h_events[i]), "dilate_h");
-                if (dilate_v_events[i] != nullptr)
-                    Kernels::instance().print_time(xm::ocl::measure_exec_time(dilate_v_events[i]), "dilate_v");
-            }
-            if (maks_apply_event != nullptr)
-                Kernels::instance().print_time(xm::ocl::measure_exec_time(maks_apply_event), "power_apply");
-        }
-
-        // ======= RELEASE HEAP DATA !
-        clReleaseMemObject(buffer_io_1);
-        clReleaseMemObject(buffer_io_2);
-
-        xm::ocl::release_event(maks_range_event);
-        xm::ocl::release_event(maks_apply_event);
-
-        for (int i = 0; i < refine; i++) {
-            xm::ocl::release_event(erode_h_events[i]);
-            xm::ocl::release_event(erode_v_events[i]);
-            xm::ocl::release_event(dilate_h_events[i]);
-            xm::ocl::release_event(dilate_v_events[i]);
-        }
-
-        delete[] erode_h_events;
-        delete[] erode_v_events;
-        delete[] dilate_h_events;
-        delete[] dilate_v_events;
-
-        // ======= RESULT !
-        out = std::move(result);
+    xm::ocl::iop::ClImagePromise chroma_key(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::Scalar &color,
+                    bool linear, int mask_size, int blur, int fine, int refine, int queue_index) {
+        return chroma_key(Kernels::instance().retrieve_queue(queue_index), in, hls_low, hls_up, color, linear, mask_size, blur, fine, refine);
     }
 
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(cl_command_queue queue, const Image2D &in, const cv::Scalar &hls_low,

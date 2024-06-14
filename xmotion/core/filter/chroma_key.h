@@ -87,10 +87,6 @@ namespace xm::chroma {
     public:
         void init(const Conf &conf);
 
-        cv::Mat filter(const cv::Mat &in) override;
-
-        cv::UMat filter(const cv::UMat &in) override;
-
         xm::ocl::iop::ClImagePromise filter(const ocl::Image2D &in) override;
 
     };

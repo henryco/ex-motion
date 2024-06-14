@@ -5,6 +5,7 @@
 #ifndef XMOTION_OCL_INTEROP_EXT_H
 #define XMOTION_OCL_INTEROP_EXT_H
 
+#include <functional>
 #include <CL/cl.h>
 
 namespace xm::ocl::iop {
@@ -12,6 +13,7 @@ namespace xm::ocl::iop {
     template <typename T>
     class CLPromise {
     protected:
+        std::shared_ptr<std::function<void()>> cleanup_cb;
         cl_command_queue ocl_queue = nullptr;
         cl_event ocl_event = nullptr;
         bool completed = false;
@@ -32,6 +34,7 @@ namespace xm::ocl::iop {
         }
 
         CLPromise<T>(CLPromise<T> &&other) noexcept {
+            cleanup_cb = std::move(other.cleanup_cb);
             completed = other.completed;
             ocl_queue = other.ocl_queue;
             ocl_event = other.ocl_event;
@@ -42,6 +45,7 @@ namespace xm::ocl::iop {
         }
 
         CLPromise<T>(const CLPromise<T> &other) {
+            cleanup_cb = other.cleanup_cb;
             completed = other.completed;
             ocl_queue = other.ocl_queue;
             ocl_event = other.ocl_event;
@@ -54,6 +58,7 @@ namespace xm::ocl::iop {
                 *this;
             if (ocl_event != nullptr)
                 clReleaseEvent(ocl_event);
+            cleanup_cb = std::move(other.cleanup_cb);
             completed = other.completed;
             ocl_queue = other.ocl_queue;
             ocl_event = other.ocl_event;
@@ -69,6 +74,7 @@ namespace xm::ocl::iop {
                 *this;
             if (ocl_event != nullptr)
                 clReleaseEvent(ocl_event);
+            cleanup_cb = other.cleanup_cb;
             completed = other.completed;
             ocl_queue = other.ocl_queue;
             ocl_event = other.ocl_event;
@@ -96,7 +102,15 @@ namespace xm::ocl::iop {
                 if (err != CL_SUCCESS)
                     throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
                 completed = true;
+
+                if (cleanup_cb)
+                    (*cleanup_cb)();
             }
+            return *this;
+        }
+
+        CLPromise<T> &withCleanup(std::function<void()> *cb_ptr) {
+            cleanup_cb = std::shared_ptr<std::function<void()>>(cb_ptr);
             return *this;
         }
 

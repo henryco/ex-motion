@@ -218,6 +218,11 @@ namespace xm::ocl::iop {
             ocl_event(ocl_event),
             completed(true) {}
 
+    ClImagePromise::~ClImagePromise() {
+        if (ocl_event != nullptr)
+            clReleaseEvent(ocl_event);
+    }
+
     void ClImagePromise::toUMat(cv::UMat &mat) {
         xm::ocl::iop::to_cv_umat(image, mat);
     }
@@ -257,13 +262,16 @@ namespace xm::ocl::iop {
             if (err != CL_SUCCESS)
                 throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
             completed = true;
+
+            if (cleanup_cb)
+                (*cleanup_cb)();
         }
         return *this;
     }
 
-    ClImagePromise::ClImagePromise() {
-        if (ocl_event != nullptr)
-            clReleaseEvent(ocl_event);
+    ClImagePromise &ClImagePromise::withCleanup(std::function<void()> *cb_ptr) {
+        cleanup_cb = std::shared_ptr<std::function<void()>>(cb_ptr);
+        return *this;
     }
 
     bool ClImagePromise::resolved() const {
@@ -275,6 +283,7 @@ namespace xm::ocl::iop {
     }
 
     ClImagePromise::ClImagePromise(ClImagePromise &&other) noexcept {
+        cleanup_cb = std::move(other.cleanup_cb);
         completed = other.completed;
         ocl_event = other.ocl_event;
         ocl_queue = other.ocl_queue;
@@ -285,6 +294,7 @@ namespace xm::ocl::iop {
     }
 
     ClImagePromise::ClImagePromise(const ClImagePromise &other) {
+        cleanup_cb = other.cleanup_cb;
         completed = other.completed;
         ocl_queue = other.ocl_queue;
         ocl_event = other.ocl_event;
@@ -297,6 +307,7 @@ namespace xm::ocl::iop {
             return *this;
         if (ocl_event != nullptr)
             clReleaseEvent(ocl_event);
+        cleanup_cb = std::move(other.cleanup_cb);
         completed = other.completed;
         ocl_queue = other.ocl_queue;
         ocl_event = other.ocl_event;
@@ -312,6 +323,7 @@ namespace xm::ocl::iop {
             return *this;
         if (ocl_event != nullptr)
             clReleaseEvent(ocl_event);
+        cleanup_cb = other.cleanup_cb;
         completed = other.completed;
         ocl_event = other.ocl_event;
         ocl_queue = other.ocl_queue;

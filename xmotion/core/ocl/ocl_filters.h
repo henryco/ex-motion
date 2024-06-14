@@ -169,6 +169,32 @@ namespace xm::ocl {
                     int queue_index = -1
     );
 
+    xm::ocl::iop::ClImagePromise chroma_key(
+            cl_command_queue queue,
+            const xm::ocl::Image2D &in,
+            const cv::Scalar &hls_low,
+            const cv::Scalar &hls_up,
+            const cv::Scalar &color,
+            bool linear,
+            int mask_size, // 256, 512, ...
+            int blur, // 3, 5, 7, 9, 11, ...
+            int fine, // 3, 5, 7, 9, 11, ...
+            int refine // 0, 1, 2, ...
+    );
+
+    xm::ocl::iop::ClImagePromise chroma_key(
+            const xm::ocl::Image2D &in,
+            const cv::Scalar &hls_low,
+            const cv::Scalar &hls_up,
+            const cv::Scalar &color,
+            bool linear,
+            int mask_size, // 256, 512, ...
+            int blur, // 3, 5, 7, 9, 11, ...
+            int fine, // 3, 5, 7, 9, 11, ...
+            int refine, // 0, 1, 2, ...
+            int queue_index = -1
+    );
+
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(
             const xm::ocl::Image2D &in,
             const cv::Scalar &hls_low,

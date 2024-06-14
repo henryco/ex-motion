@@ -5,9 +5,11 @@
 #ifndef XMOTION_OCL_INTEROP_H
 #define XMOTION_OCL_INTEROP_H
 
+#include <opencv2/core/mat.hpp>
+#include <functional>
+
 #include "ocl_data.h"
 #include "ocl_interop_ext.h"
-#include <opencv2/core/mat.hpp>
 
 namespace xm::ocl::iop {
 
@@ -17,6 +19,7 @@ namespace xm::ocl::iop {
      */
     class ClImagePromise {
     private:
+        std::shared_ptr<std::function<void()>> cleanup_cb;
         cl_command_queue ocl_queue = nullptr;
         cl_event ocl_event = nullptr;
         xm::ocl::Image2D image;
@@ -30,7 +33,9 @@ namespace xm::ocl::iop {
         ClImagePromise(const xm::ocl::Image2D &out, // NOLINT(*-explicit-constructor)
                        cl_event ocl_event = nullptr);
 
-        ClImagePromise();
+        ClImagePromise() = default;
+
+        ~ClImagePromise();
 
         ClImagePromise(ClImagePromise &&other) noexcept;
 
@@ -39,6 +44,8 @@ namespace xm::ocl::iop {
         ClImagePromise &operator=(ClImagePromise &&other) noexcept;
 
         ClImagePromise &operator=(const ClImagePromise &other);
+
+        ClImagePromise &withCleanup(std::function<void()> *cb_ptr);
 
         /**
          * Often you should call waitFor() first

@@ -180,6 +180,17 @@ namespace xm::ocl {
             int queue_index = -1
     );
 
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(
+            cl_command_queue queue,
+            const xm::ocl::Image2D &in,
+            const cv::Scalar &hls_low,
+            const cv::Scalar &hls_up,
+            const cv::Scalar &color,
+            bool linear,
+            int mask_size, // 256, 512, ...
+            int blur // 3, 5, 7, 9, 11, ...
+    );
+
     xm::ocl::iop::ClImagePromise flip_rotate(
             const xm::ocl::Image2D &in,
             bool flip_x,

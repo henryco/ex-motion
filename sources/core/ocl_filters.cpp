@@ -674,16 +674,15 @@ namespace xm::ocl {
         out = std::move(result);
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                                        const cv::Scalar &color, bool linear, int mask_size, int blur,
-                                                        int queue_index) {
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(cl_command_queue queue, const Image2D &in, const cv::Scalar &hls_low,
+                                                        const cv::Scalar &hls_up, const cv::Scalar &color, bool linear, int mask_size,
+                                                        int blur) {
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (int) ((float) n_w / ratio);
 
         const auto context = in.context;
-        const auto queue = Kernels::instance().retrieve_queue(queue_index);
         const auto inter_size = in.cols * in.rows * 3;
         const auto pref_size = Kernels::instance().power_chroma_local_size;
         size_t l_size[2] = {pref_size, pref_size};
@@ -758,6 +757,13 @@ namespace xm::ocl {
                 aux::DEBUG);
 
         return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event);
+    }
+
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
+                                                        const cv::Scalar &color, bool linear, int mask_size, int blur,
+                                                        int queue_index) {
+        return chroma_key_single_pass(Kernels::instance().retrieve_queue(queue_index),
+                                      in, hls_low, hls_up, color, linear, mask_size, blur);
     }
 
     xm::ocl::iop::ClImagePromise flip_rotate(const Image2D &in, bool flip_x, bool flip_y, bool rotate, int queue_index) {

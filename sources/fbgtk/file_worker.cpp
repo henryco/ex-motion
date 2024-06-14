@@ -32,15 +32,18 @@ namespace xm {
     }
 
     void xm::FileWorker::update(float dt, float latency, float fps) {
-        std::vector<xm::ocl::Image2D> frames = camera->capture();
-
 //        const auto t0 = std::chrono::system_clock::now();
+
+        std::vector<xm::ocl::Image2D> frames = camera->dequeue();
+        camera->enqueue();
 
         filter_frames(frames);
         logic->proceed(dt, frames);
         process_results();
 
         update_gui(fps);
+
+
 //        const auto t1 = std::chrono::system_clock::now();
 //        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
 //        log->info("time: {}", d);

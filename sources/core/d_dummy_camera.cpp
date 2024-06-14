@@ -43,6 +43,16 @@ std::vector<xm::ocl::Image2D> xm::DummyCamera::capture() {
     return images;
 }
 
+std::vector<xm::ocl::Image2D> xm::DummyCamera::dequeue() {
+    return capture();
+}
+
+std::map<std::string, xm::ocl::Image2D> xm::DummyCamera::dequeueWithName() {
+    return captureWithName();
+}
+
+void xm::DummyCamera::enqueue() {}
+
 void xm::DummyCamera::setControl(const std::string &device_id, uint prop_id, int value) {}
 
 void xm::DummyCamera::resetControls(const std::string &device_id) {}

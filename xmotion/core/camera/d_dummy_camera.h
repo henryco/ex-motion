@@ -24,6 +24,12 @@ namespace xm {
 
         std::vector<xm::ocl::Image2D> capture() override;
 
+        void enqueue() override;
+
+        std::vector<xm::ocl::Image2D> dequeue() override;
+
+        std::map<std::string, xm::ocl::Image2D> dequeueWithName() override;
+
         void setControl(const std::string &device_id, uint prop_id, int value) override;
 
         void resetControls(const std::string &device_id) override;

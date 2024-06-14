@@ -47,9 +47,21 @@ namespace xm {
         /**
          * {id: capture}
          */
-        std::map<std::string, cl_command_queue> command_queues{};
         std::map<std::string, cv::VideoCapture> captures{};
 
+        /**
+         * {id: cl_queue}
+         */
+        std::map<std::string, cl_command_queue> command_queues{};
+
+        /**
+         * {name: frame}
+         */
+        std::future<std::map<std::string, xm::ocl::Image2D>> buffer_future;
+
+        /**
+         * Camera properties
+         */
         std::vector<SCamProp> properties{};
 
         /**
@@ -67,7 +79,6 @@ namespace xm {
         /**
         * This function releases any resources held by the current instance.
         */
-
         virtual void release();
 
         virtual void open(const SCamProp &prop);
@@ -75,6 +86,18 @@ namespace xm {
         virtual std::map<std::string, xm::ocl::Image2D> captureWithName();
 
         virtual std::vector<xm::ocl::Image2D> capture();
+
+        /**
+         * Enqueue asynchronous frame capturing
+         */
+        virtual void enqueue();
+
+        /**
+         * @return asynchronously grabbed frames enqueued by calling "enqueue()"
+         */
+        virtual std::vector<xm::ocl::Image2D> dequeue();
+
+        virtual std::map<std::string, xm::ocl::Image2D> dequeueWithName();
 
         virtual void setControl(const std::string &device_id, uint prop_id, int value);
 

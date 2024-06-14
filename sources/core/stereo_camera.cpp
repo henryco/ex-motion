@@ -65,6 +65,44 @@ namespace xm {
         captures[prop.device_id] = cv::VideoCapture(idx, api, params);
     }
 
+    void StereoCamera::enqueue() {
+        if (captures.empty()) {
+            log->warn("StereoCamera is not initialized");
+            return;
+        }
+
+        if (!executor) {
+            log->debug("no active executors, creating one");
+
+            // there is no assigned executors, create one
+            executor = std::make_shared<eox::util::ThreadPool>();
+            executor->start(captures.size());
+        }
+
+        if (buffer_future.valid())
+            return;
+
+        buffer_future = executor->execute<std::map<std::string, xm::ocl::Image2D>>(
+                [this]() -> std::map<std::string, xm::ocl::Image2D> {
+                    return captureWithName();
+                });
+    }
+
+    std::map<std::string, xm::ocl::Image2D> StereoCamera::dequeueWithName() {
+        if (!buffer_future.valid())
+            return captureWithName();
+        return buffer_future.get();
+    }
+
+    std::vector<xm::ocl::Image2D> StereoCamera::dequeue() {
+        const auto results = dequeueWithName();
+        std::vector<xm::ocl::Image2D> vec;
+        vec.reserve(properties.size());
+        for (const auto &prop: properties)
+            vec.push_back(results.at(prop.name));
+        return vec;
+    }
+
     std::map<std::string, xm::ocl::Image2D> StereoCamera::captureWithName() {
         if (captures.empty()) {
             log->warn("StereoCamera is not initialized");

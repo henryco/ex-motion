@@ -58,33 +58,9 @@ if (UNIX AND NOT APPLE)
     pkg_check_modules(V4L2 REQUIRED libv4l2)
 endif ()
 
-
-# =================== OpenCL kernels generation =====================
-add_executable(convert_to_c_array scripts/embed_file.cxx)
-set(GENERATED_CL_SOURCES)
 set(KERNEL_FILES
-         kernels/bgs.h
-        # todo more
+        kernels/bgs.h
 )
-
-foreach(input_file IN LISTS KERNEL_FILES)
-    get_filename_component(output_path ${input_file} DIRECTORY)
-    get_filename_component(output_name ${input_file} NAME_WE)
-    set(kernel_name "${PROJECT_SOURCE_DIR}/${output_path}/${output_name}.cl")
-    set(output_name "${PROJECT_BINARY_DIR}/xmotion_files/generated/${output_path}/${output_name}.cpp")
-    add_custom_command(
-            OUTPUT ${output_name}
-            COMMAND convert_to_c_array ${PROJECT_SOURCE_DIR}/${input_file} ${kernel_name} ${output_name}
-            DEPENDS convert_to_c_array ${PROJECT_SOURCE_DIR}/${input_file} ${kernel_name}
-            COMMENT "Converting: ${input_file} -> ${output_name}"
-            VERBATIM)
-    list(APPEND GENERATED_CL_SOURCES ${output_name})
-endforeach()
-
-add_custom_target(generate_cl_sources
-        ALL DEPENDS ${GENERATED_CL_SOURCES})
-# =================== OpenCL kernels generation =====================
-
 
 set(SOURCE_FILES
         main.cpp
@@ -141,6 +117,8 @@ set(SOURCE_FILES
         xmotion/core/ocl/ocl_interop_ext.h
         xmotion/fbgtk/file_worker.h
         xmotion/core/ocl/ocl_data.h
+        xmotion/core/ocl/ocl_kernels_flip.h
+        xmotion/core/ocl/ocl_kernels_bgs.h
 
         sources/core/velocity_filter.cpp
         sources/core/low_pass_filter.cpp
@@ -188,8 +166,6 @@ set(SOURCE_FILES
         sources/core/ocl_data.cpp
         sources/core/ocl_interop.cpp
         sources/fbgtk/file_worker.cpp
-        xmotion/core/ocl/ocl_kernels_flip.h
-        xmotion/core/ocl/ocl_kernels_bgs.h
 )
 
 if (UNIX AND NOT APPLE)
@@ -206,6 +182,29 @@ elseif (WIN32)
 
 endif ()
 
+# =================== OpenCL kernels generation =====================
+add_executable(convert_to_c_array scripts/embed_file.cxx)
+set(GENERATED_CL_SOURCES)
+
+foreach(input_file IN LISTS KERNEL_FILES)
+    get_filename_component(output_path ${input_file} DIRECTORY)
+    get_filename_component(output_name ${input_file} NAME_WE)
+    set(kernel_name "${PROJECT_SOURCE_DIR}/${output_path}/${output_name}.cl")
+    set(output_name "${PROJECT_BINARY_DIR}/xmotion_files/generated/${output_path}/${output_name}.cpp")
+    add_custom_command(
+            OUTPUT ${output_name}
+            COMMAND convert_to_c_array ${PROJECT_SOURCE_DIR}/${input_file} ${kernel_name} ${output_name}
+            DEPENDS convert_to_c_array ${PROJECT_SOURCE_DIR}/${input_file} ${kernel_name}
+            COMMENT "Converting: ${input_file} -> ${output_name}"
+            VERBATIM)
+    list(APPEND GENERATED_CL_SOURCES ${output_name})
+endforeach()
+
+add_custom_target(generate_cl_sources
+        ALL DEPENDS ${GENERATED_CL_SOURCES})
+# =================== OpenCL kernels generation =====================
+
+
 set(RESULT_SOURCES
         ${SOURCE_FILES}
         ${KERNEL_FILES}
@@ -214,7 +213,8 @@ set(RESULT_SOURCES
 add_executable(xmotion
         ${RESULT_SOURCES})
 
-message(STATUS "FILES: ${RESULT_SOURCES}")
+message(STATUS
+        "FILES: ${RESULT_SOURCES}")
 
 add_dependencies(xmotion
         generate_cl_sources)

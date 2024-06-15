@@ -53,13 +53,9 @@ int main(int argc, char* argv[]) {
     const auto output_filename = std::string(argv[3]);
     const auto array_name = XM_removeDirectoriesAndExtension(header_filename);
 
-    std::cout << header_filename << " | " << data_filename << " | " << output_filename << " | " << array_name << std::endl;
-
     std::filesystem::path h_path = header_filename;
     std::filesystem::path o_path = output_filename;
     std::filesystem::path dir_path = o_path.parent_path();
-
-    std::cout << "DP: " << dir_path << std::endl;
 
     if (std::filesystem::exists(output_filename)) {
         std::filesystem::remove(output_filename);

@@ -61,6 +61,8 @@ endif ()
 set(KERNEL_FILES
         kernels/bgs.h
         kernels/chroma_key.h
+        kernels/flip_rotate.h
+        kernels/color_space.h
 )
 
 set(SOURCE_FILES
@@ -113,12 +115,10 @@ set(SOURCE_FILES
         xmotion/core/ocl/ocl_kernels.h
         xmotion/core/dnn/net/dnn_cl_utils.h
         xmotion/core/ocl/cl_kernel.h
-        xmotion/core/ocl/ocl_kernels_chromakey.h
         xmotion/core/ocl/ocl_interop.h
         xmotion/core/ocl/ocl_interop_ext.h
         xmotion/fbgtk/file_worker.h
         xmotion/core/ocl/ocl_data.h
-        xmotion/core/ocl/ocl_kernels_flip.h
         xmotion/core/ocl/ocl_kernels_bgs.h
 
         sources/core/velocity_filter.cpp

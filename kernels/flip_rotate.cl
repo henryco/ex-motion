@@ -1,13 +1,3 @@
-//
-// Created by henryco on 13/06/24.
-//
-
-#ifndef XMOTION_OCL_KERNELS_FLIP_H
-#define XMOTION_OCL_KERNELS_FLIP_H
-
-#include <string>
-namespace xm::ocl::kernels {
-    inline const std::string FLIP_ROTATE_KERNEL = R"C(
 __kernel void flip_rotate(
         __global const unsigned char *input,
         __global unsigned char *output,
@@ -43,7 +33,3 @@ __kernel void flip_rotate(
         output[idx_o + i] = input[idx_i + i];
     }
 }
-)C";
-}
-
-#endif //XMOTION_OCL_KERNELS_FLIP_H

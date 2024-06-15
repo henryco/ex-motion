@@ -10,11 +10,10 @@
 
 #include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../xmotion/core/ocl/ocl_kernels.h"
-#include "../../xmotion/core/ocl/ocl_kernels_chromakey.h"
-#include "../../xmotion/core/ocl/ocl_interop.h"
-#include "../../xmotion/core/ocl/ocl_kernels_flip.h"
 
 #include "../../kernels/chroma_key.h"
+#include "../../kernels/flip_rotate.h"
+#include "../../kernels/color_space.h"
 
 #include <CL/cl.h>
 #include <opencv2/imgproc.hpp>
@@ -61,8 +60,10 @@ namespace xm::ocl {
         kernel_erode_v = xm::ocl::build_kernel(program_erode, "erode_vertical");
         erode_local_size = xm::ocl::optimal_local_size(device_id, kernel_erode_h);
 
-        program_range_hls = xm::ocl::build_program(ocl_context, device_id, kernels::BGR_HLS_RANGE_KERNEL);
-        kernel_range_hls = xm::ocl::build_kernel(program_range_hls, "in_range_hls");
+        program_range_hls = xm::ocl::build_program(ocl_context, device_id,
+                                                   ocl_kernel_color_space_data,
+                                                   ocl_kernel_color_space_data_size);
+        kernel_range_hls = xm::ocl::build_kernel(program_range_hls, "kernel_range_hls_mask");
         range_hls_local_size = xm::ocl::optimal_local_size(device_id, kernel_range_hls);
 
         program_mask_apply = xm::ocl::build_program(ocl_context, device_id, kernels::MASK_APPLY_BG_FG);
@@ -77,7 +78,9 @@ namespace xm::ocl {
         kernel_power_mask = xm::ocl::build_kernel(program_power_chroma, "power_mask");
         power_chroma_local_size = xm::ocl::optimal_local_size(device_id, kernel_power_chroma);
 
-        program_flip_rotate = xm::ocl::build_program(ocl_context, device_id, kernels::FLIP_ROTATE_KERNEL);
+        program_flip_rotate = xm::ocl::build_program(ocl_context, device_id,
+                                                     ocl_kernel_flip_rotate_data,
+                                                     ocl_kernel_flip_rotate_data_size);
         kernel_flip_rotate = xm::ocl::build_kernel(program_flip_rotate, "flip_rotate");
         flip_rotate_local_size = xm::ocl::optimal_local_size(device_id, kernel_flip_rotate);
 

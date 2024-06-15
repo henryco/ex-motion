@@ -31,7 +31,8 @@ std::string XM_findFirstIdentifier(const std::string& input) {
 }
 
 std::string XM_findFirstSizeIdentifier(const std::string& input) {
-    std::regex pattern(R"(extern\s+const\s+size_t\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;)");
+//    std::regex pattern(R"(extern\s+const\s+size_t\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;)");
+    std::regex pattern(R"(extern\s+const\s+(?:std::size_t|size_t)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;)");
     std::smatch matches;
 
     if (std::regex_search(input, matches, pattern)) {

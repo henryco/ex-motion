@@ -59,6 +59,39 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 
+# =================== OpenCL kernels generation =====================
+add_executable(convert_to_c_array gen_kernel_source.cxx)
+set(GENERATED_CL_SOURCES)
+set(KERNEL_FILES
+         kernels/bgs.h
+        # todo more
+)
+
+function(add_kernel_conversion input_file)
+    get_filename_component(output_name ${input_file} NAME_WE)
+    set(output_name "${PROJECT_BINARY_DIR}/${output_name}.cpp")
+    message(STATUS "generating cl kernel file: ${input_file} -> ${output_name}")
+    add_custom_command(
+            OUTPUT ${output_name}
+            COMMAND convert_to_c_array ${input_file} ${output_name}
+            DEPENDS ${CMAKE_SOURCE_DIR}/${input_file} convert_to_c_array
+            COMMENT "Generating ${output_name} from ${input_file}"
+            VERBATIM
+    )
+    list(APPEND GENERATED_CL_SOURCES ${output_name})
+    set(GENERATED_CL_SOURCES ${GENERATED_CL_SOURCES} PARENT_SCOPE)
+endfunction()
+
+foreach(kernel_file IN LISTS KERNEL_FILES)
+    message(STATUS "processing cl kernel file: ${kernel_file}")
+    add_kernel_conversion(${kernel_file})
+endforeach()
+
+add_custom_target(generate_cl_sources
+        DEPENDS ${GENERATED_CL_SOURCES})
+# =================== OpenCL kernels generation =====================
+
+
 set(SOURCE_FILES
         main.cpp
 
@@ -179,9 +212,16 @@ elseif (WIN32)
 
 endif ()
 
+set(RESULT_SOURCES
+        ${SOURCE_FILES}
+        ${KERNEL_FILES}
+        ${GENERATED_CL_SOURCES})
 
-add_executable(xmotion ${SOURCE_FILES})
+add_executable(xmotion
+        ${RESULT_SOURCES})
 
+add_dependencies(xmotion
+        generate_cl_sources)
 
 if (WIN32)
 

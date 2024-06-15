@@ -1,15 +1,4 @@
-//
-// Created by henryco on 14/06/24.
-//
 
-#ifndef XMOTION_OCL_KERNELS_BGS_H
-#define XMOTION_OCL_KERNELS_BGS_H
-
-#include <string>
-
-namespace xm::ocl::kernels {
-
-    inline const std::string COMPUTE_LBP = R"ocl(
 inline int hamming_distance(
         const unsigned char *one,
         const unsigned char *two,
@@ -59,10 +48,10 @@ inline void compute_lbp(
             p /= c_input_size;
 
             const bool value = i_x >= 0
-                    && i_y >= 0
-                    && i_x < width
-                    && i_y < height
-                    && p >= mid;
+                               && i_y >= 0
+                               && i_x < width
+                               && i_y < height
+                               && p >= mid;
 
             out[c] |= value << b;
 
@@ -156,7 +145,7 @@ __kernel void kernel_mask_apply(
         return;
     }
 
-    const unsigned char[3] colors = { color_b, color_g, color_r };
+    const unsigned char colors[3] = { color_b, color_g, color_r };
     for (int i = 0; i < c_input_size; i++)
         output[idx_pix + i] = colors[i];
 }
@@ -181,11 +170,6 @@ __kernel void kernel_lbp(
 
     const int idx = (y * width + x) * c_code_size;
     for (int i = 0; i < c_code_size; i++)
-        output[idx + i] = lbp[i]e
+        output[idx + i] = lbp[i];
 }
 
-)ocl";
-
-}
-
-#endif //XMOTION_OCL_KERNELS_BGS_H

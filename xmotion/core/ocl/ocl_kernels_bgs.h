@@ -18,8 +18,8 @@ inline int hamming_distance(
     int d = 0;
     for (int i = 0; i < n; i++) {
         const unsigned char c = one[i] ^ two[i];
-        for (int i = 0; i < 8; i++)
-            d += ((c >> i) & 1);
+        for (int j = 0; j < 8; j++)
+            d += ((c >> j) & 1);
     }
     return d;
 }
@@ -35,6 +35,8 @@ inline void compute_lbp(
         const int x,
         const int y
 ) {
+    out[0] = 0;
+
     unsigned char mid = 0;
     const int idx_mid = (y * width + x) * c_input_size;
     for (int i = 0; i < c_input_size; i++)
@@ -68,9 +70,32 @@ inline void compute_lbp(
             if (b >= 8) {
                 b = 0;
                 c++;
+                out[c] = 0;
             }
         }
     }
+}
+
+inline unsigned char mask_lbp(
+        __global const unsigned char *input_bgr,
+        __global const unsigned char *static_lbp,
+        const int c_input_size,  // numbers of color channels in image
+        const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
+        const int kernel_size,   // actually should be <= 15
+        const int total_bits,    // pow(kernel_size, 2) - 1
+        const float threshold,   // [0 ... 1]
+        const int width,
+        const int height,
+        const int x,
+        const int y
+) {
+    unsigned char lbp[32]; // up to 256 bits
+    compute_lbp(input_bgr, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
+
+    const int idx_s = (y * width + x) * c_code_size;
+    const int d = hamming_distance(lbp, &(static_lbp[idx_s]), c_code_size);
+
+    return ((float) d / (float) total_bits) >= threshold ? 255 : 0;
 }
 
 __kernel void kernel_lbp(
@@ -94,7 +119,9 @@ __kernel void kernel_lbp(
     const int idx = (y * width + x) * c_code_size;
     for (int i = 0; i < c_code_size; i++)
         output[idx + i] = lbp[i];
-})ocl";
+}
+
+)ocl";
 
 }
 

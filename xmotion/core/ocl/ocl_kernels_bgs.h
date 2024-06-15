@@ -77,7 +77,7 @@ inline void compute_lbp(
 }
 
 inline unsigned char mask_lbp(
-        __global const unsigned char *frame_bgr,
+        __global const unsigned char *frame_image,
         __global const unsigned char *frame_lbp,
         const int c_input_size,  // numbers of color channels in image
         const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
@@ -90,7 +90,7 @@ inline unsigned char mask_lbp(
         const int y
 ) {
     unsigned char lbp[32]; // up to 256 bits
-    compute_lbp(frame_bgr, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
+    compute_lbp(frame_image, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
 
     const int idx_s = (y * width + x) * c_code_size;
     const int d = hamming_distance(lbp, &(frame_lbp[idx_s]), c_code_size);
@@ -99,7 +99,7 @@ inline unsigned char mask_lbp(
 }
 
 __kernel void kernel_mask_only(
-        __global const unsigned char *frame_bgr,
+        __global const unsigned char *frame_image,
         __global const unsigned char *frame_lbp,
         __global unsigned char *output_mask_bin,
         const int c_input_size,  // numbers of color channels in image
@@ -117,7 +117,7 @@ __kernel void kernel_mask_only(
         return;
 
     output_mask_bin[y * width + x] = mask_lbp(
-            frame_bgr,
+            frame_image,
             frame_lbp,
             c_input_size,
             c_code_size,
@@ -129,8 +129,8 @@ __kernel void kernel_mask_only(
             x, y);
 }
 
-__kernel void mask_apply(
-        __global const unsigned char *frame,
+__kernel void kernel_mask_apply(
+        __global const unsigned char *frame_image,
         __global const unsigned char *mask_bw,
         __global unsigned char* output,
         const int c_input_size,  // numbers of color channels in image
@@ -152,17 +152,17 @@ __kernel void mask_apply(
 
     if (mask > 0) {
         for (int i = 0; i < c_input_size; i++)
-            output[idx_pix + i] = frame[idx_pix + i];
+            output[idx_pix + i] = frame_image[idx_pix + i];
         return;
     }
 
-    const unsigned char[3] colors = {color_b, color_g, color_r};
+    const unsigned char[3] colors = { color_b, color_g, color_r };
     for (int i = 0; i < c_input_size; i++)
         output[idx_pix + i] = colors[i];
 }
 
 __kernel void kernel_lbp(
-        __global const unsigned char *input,
+        __global const unsigned char *frame_image,
         __global unsigned char *output,
         const int c_input_size,  // numbers of color channels in image
         const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
@@ -177,7 +177,7 @@ __kernel void kernel_lbp(
         return;
 
     unsigned char lbp[32]; // up to 256 bits
-    compute_lbp(input, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
+    compute_lbp(frame_image, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
 
     const int idx = (y * width + x) * c_code_size;
     for (int i = 0; i < c_code_size; i++)

@@ -84,6 +84,10 @@ namespace xm::ocl {
                : preferred_workgroup_size_multiple;
     }
 
+    cl_program build_program(cl_context context, cl_device_id device, const char *source, size_t source_size) {
+        return build_program(context, device, std::string(source, source_size));
+    }
+
     cl_program build_program(cl_context context, cl_device_id device, const std::string &kernel_source) {
         const char *s = kernel_source.c_str();
 

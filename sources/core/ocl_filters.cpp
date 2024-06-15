@@ -13,6 +13,9 @@
 #include "../../xmotion/core/ocl/ocl_kernels_chromakey.h"
 #include "../../xmotion/core/ocl/ocl_interop.h"
 #include "../../xmotion/core/ocl/ocl_kernels_flip.h"
+
+#include "../../kernels/chroma_key.h"
+
 #include <CL/cl.h>
 #include <opencv2/imgproc.hpp>
 #include <cmath>
@@ -66,7 +69,9 @@ namespace xm::ocl {
         kernel_mask_apply = xm::ocl::build_kernel(program_mask_apply, "apply_mask");
         mask_apply_local_size = xm::ocl::optimal_local_size(device_id, kernel_mask_apply);
 
-        program_power_chroma = xm::ocl::build_program(ocl_context, device_id, kernels::CHROMA_KEY_COMPLEX);
+        program_power_chroma = xm::ocl::build_program(ocl_context, device_id,
+                                                      ocl_kernel_chroma_key_data,
+                                                      ocl_kernel_chroma_key_data_size);
         kernel_power_chroma = xm::ocl::build_kernel(program_power_chroma, "power_chromakey");
         kernel_power_apply = xm::ocl::build_kernel(program_power_chroma, "power_apply");
         kernel_power_mask = xm::ocl::build_kernel(program_power_chroma, "power_mask");

@@ -45,6 +45,8 @@ kernel.run(2, g_size, l_size, true)
 
     cl_program build_program(cl_context context, cl_device_id device, const std::string &kernel_source);
 
+    cl_program build_program(cl_context context, cl_device_id device, const char *source, size_t source_size);
+
     cl_kernel build_kernel(cl_program program, const std::string &name);
 
     cl_command_queue create_queue_device(cl_context context, cl_device_id device, bool order, bool profile);

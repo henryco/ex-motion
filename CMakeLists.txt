@@ -60,6 +60,7 @@ endif ()
 
 set(KERNEL_FILES
         kernels/bgs.h
+        kernels/chroma_key.h
 )
 
 set(SOURCE_FILES

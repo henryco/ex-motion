@@ -99,3 +99,41 @@ __kernel void kernel_range_hls_mask(
         }
     }
 }
+
+__kernel void kernel_simple_mask_apply(
+        __global const unsigned char *mask_gray,
+        __global const unsigned char *front_bgr,
+        __global unsigned char *output_bgr,
+        const unsigned int mask_width,
+        const unsigned int mask_height,
+        const unsigned int width,
+        const unsigned int height,
+        const float scale_mask_w,
+        const float scale_mask_h,
+        const unsigned char color_b,
+        const unsigned char color_g,
+        const unsigned char color_r
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int m_x = x * scale_mask_w;
+    const int m_y = y * scale_mask_h;
+
+    const int idx = y * width + x;
+    const int mps = m_y * mask_width + m_x;
+    const int pix = idx * 3;
+
+    if (mask_gray[mps] > 0) {
+        output_bgr[pix + 0] = color_b;
+        output_bgr[pix + 1] = color_g;
+        output_bgr[pix + 2] = color_r;
+    } else {
+        output_bgr[pix + 0] = front_bgr[pix + 0];
+        output_bgr[pix + 1] = front_bgr[pix + 1];
+        output_bgr[pix + 2] = front_bgr[pix + 2];
+    }
+}

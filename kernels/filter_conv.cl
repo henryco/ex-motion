@@ -1,15 +1,3 @@
-//
-// Created by henryco on 6/4/24.
-//
-
-#ifndef XMOTION_OCL_KERNELS_H
-#define XMOTION_OCL_KERNELS_H
-
-#include <string>
-
-namespace xm::ocl::kernels {
-
-    inline const std::string GAUSSIAN_BLUR_KERNEL = R"C(
 __kernel void gaussian_blur_horizontal(
         __global const unsigned char *input,
         __global const float *gaussian_kernel,
@@ -77,9 +65,7 @@ __kernel void gaussian_blur_vertical(
     output[idx + 1] = (unsigned char) (sum[1] / weight_sum);
     output[idx + 2] = (unsigned char) (sum[2] / weight_sum);
 }
-)C";
 
-    inline const std::string DILATE_GRAY_KERNEL = R"C(
 __kernel void dilate_horizontal(
         __global const unsigned char *input,
         __global unsigned char *output,
@@ -127,9 +113,7 @@ __kernel void dilate_vertical(
     }
     output[y * width + x] = max_val;
 }
-)C";
 
-    inline const std::string ERODE_GRAY_KERNEL = R"C(
 __kernel void erode_horizontal(
         __global const unsigned char *input,
         __global unsigned char *output,
@@ -177,48 +161,3 @@ __kernel void erode_vertical(
     }
     output[y * width + x] = min_val;
 }
-)C";
-
-    inline const std::string MASK_APPLY_BG_FG = R"C(
-__kernel void apply_mask(
-        __global const unsigned char *mask_gray,
-        __global const unsigned char *front_bgr,
-        __global unsigned char *output_bgr,
-        const unsigned int mask_width,
-        const unsigned int mask_height,
-        const unsigned int width,
-        const unsigned int height,
-        const float scale_mask_w,
-        const float scale_mask_h,
-        const unsigned char color_b,
-        const unsigned char color_g,
-        const unsigned char color_r
-) {
-    const int x = get_global_id(0);
-    const int y = get_global_id(1);
-
-    if (x >= width || y >= height)
-        return;
-
-    const int m_x = x * scale_mask_w;
-    const int m_y = y * scale_mask_h;
-
-    const int idx = y * width + x;
-    const int mps = m_y * mask_width + m_x;
-    const int pix = idx * 3;
-
-    if (mask_gray[mps] > 0) {
-        output_bgr[pix + 0] = color_b;
-        output_bgr[pix + 1] = color_g;
-        output_bgr[pix + 2] = color_r;
-    } else {
-        output_bgr[pix + 0] = front_bgr[pix + 0];
-        output_bgr[pix + 1] = front_bgr[pix + 1];
-        output_bgr[pix + 2] = front_bgr[pix + 2];
-    }
-}
-)C";
-
-}
-
-#endif //XMOTION_OCL_KERNELS_H

@@ -36,27 +36,21 @@ namespace xm::ocl {
         std::map<int, cl_command_queue> ocl_queue_map;
 
         /* ==================== OPENCL KERNELS ==================== */
-        cl_program program_blur;
+        cl_program program_filter_conv;
         cl_kernel kernel_blur_h;
         cl_kernel kernel_blur_v;
-        size_t blur_local_size;
-
-        cl_program program_dilate;
         cl_kernel kernel_dilate_h;
         cl_kernel kernel_dilate_v;
-        size_t dilate_local_size;
-
-        cl_program program_erode;
         cl_kernel kernel_erode_h;
         cl_kernel kernel_erode_v;
+        size_t blur_local_size;
+        size_t dilate_local_size;
         size_t erode_local_size;
 
-        cl_program program_range_hls;
+        cl_program program_color_space;
+        cl_kernel kernel_mask_apply;
         cl_kernel kernel_range_hls;
         size_t range_hls_local_size;
-
-        cl_program program_mask_apply;
-        cl_kernel kernel_mask_apply;
         size_t mask_apply_local_size;
 
         cl_program program_power_chroma;

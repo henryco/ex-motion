@@ -63,6 +63,7 @@ set(KERNEL_FILES
         kernels/chroma_key.h
         kernels/flip_rotate.h
         kernels/color_space.h
+        kernels/filter_conv.h
 )
 
 set(SOURCE_FILES
@@ -112,14 +113,12 @@ set(SOURCE_FILES
         xmotion/core/filter/chroma_key.h
         xmotion/core/ocl/kernel.h
         xmotion/core/ocl/ocl_filters.h
-        xmotion/core/ocl/ocl_kernels.h
         xmotion/core/dnn/net/dnn_cl_utils.h
         xmotion/core/ocl/cl_kernel.h
         xmotion/core/ocl/ocl_interop.h
         xmotion/core/ocl/ocl_interop_ext.h
         xmotion/fbgtk/file_worker.h
         xmotion/core/ocl/ocl_data.h
-        xmotion/core/ocl/ocl_kernels_bgs.h
 
         sources/core/velocity_filter.cpp
         sources/core/low_pass_filter.cpp

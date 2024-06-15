@@ -9,11 +9,11 @@
 #pragma ide diagnostic ignored "bugprone-easily-swappable-parameters"
 
 #include "../../xmotion/core/ocl/ocl_filters.h"
-#include "../../xmotion/core/ocl/ocl_kernels.h"
 
 #include "../../kernels/chroma_key.h"
 #include "../../kernels/flip_rotate.h"
 #include "../../kernels/color_space.h"
+#include "../../kernels/filter_conv.h"
 
 #include <CL/cl.h>
 #include <opencv2/imgproc.hpp>
@@ -45,42 +45,42 @@ namespace xm::ocl {
 
         ocl_command_queue = xm::ocl::create_queue_device(ocl_context, device_id, true, aux::DEBUG);
 
-        program_blur = xm::ocl::build_program(ocl_context, device_id, kernels::GAUSSIAN_BLUR_KERNEL);
-        kernel_blur_h = xm::ocl::build_kernel(program_blur, "gaussian_blur_horizontal");
-        kernel_blur_v = xm::ocl::build_kernel(program_blur, "gaussian_blur_vertical");
-        blur_local_size = xm::ocl::optimal_local_size(device_id, kernel_blur_h);
-
-        program_dilate = xm::ocl::build_program(ocl_context, device_id, kernels::DILATE_GRAY_KERNEL);
-        kernel_dilate_h = xm::ocl::build_kernel(program_dilate, "dilate_horizontal");
-        kernel_dilate_v = xm::ocl::build_kernel(program_dilate, "dilate_vertical");
-        dilate_local_size = xm::ocl::optimal_local_size(device_id, kernel_dilate_h);
-
-        program_erode = xm::ocl::build_program(ocl_context, device_id, kernels::ERODE_GRAY_KERNEL);
-        kernel_erode_h = xm::ocl::build_kernel(program_erode, "erode_horizontal");
-        kernel_erode_v = xm::ocl::build_kernel(program_erode, "erode_vertical");
-        erode_local_size = xm::ocl::optimal_local_size(device_id, kernel_erode_h);
-
-        program_range_hls = xm::ocl::build_program(ocl_context, device_id,
-                                                   ocl_kernel_color_space_data,
-                                                   ocl_kernel_color_space_data_size);
-        kernel_range_hls = xm::ocl::build_kernel(program_range_hls, "kernel_range_hls_mask");
-        range_hls_local_size = xm::ocl::optimal_local_size(device_id, kernel_range_hls);
-
-        program_mask_apply = xm::ocl::build_program(ocl_context, device_id, kernels::MASK_APPLY_BG_FG);
-        kernel_mask_apply = xm::ocl::build_kernel(program_mask_apply, "apply_mask");
-        mask_apply_local_size = xm::ocl::optimal_local_size(device_id, kernel_mask_apply);
-
+        program_filter_conv = xm::ocl::build_program(ocl_context, device_id,
+                                                     ocl_kernel_filter_conv_data,
+                                                     ocl_kernel_filter_conv_data_size);
+        program_color_space = xm::ocl::build_program(ocl_context, device_id,
+                                                     ocl_kernel_color_space_data,
+                                                     ocl_kernel_color_space_data_size);
         program_power_chroma = xm::ocl::build_program(ocl_context, device_id,
                                                       ocl_kernel_chroma_key_data,
                                                       ocl_kernel_chroma_key_data_size);
+        program_flip_rotate = xm::ocl::build_program(ocl_context, device_id,
+                                                     ocl_kernel_flip_rotate_data,
+                                                     ocl_kernel_flip_rotate_data_size);
+
+        kernel_blur_h = xm::ocl::build_kernel(program_filter_conv, "gaussian_blur_horizontal");
+        kernel_blur_v = xm::ocl::build_kernel(program_filter_conv, "gaussian_blur_vertical");
+        blur_local_size = xm::ocl::optimal_local_size(device_id, kernel_blur_h);
+
+        kernel_dilate_h = xm::ocl::build_kernel(program_filter_conv, "dilate_horizontal");
+        kernel_dilate_v = xm::ocl::build_kernel(program_filter_conv, "dilate_vertical");
+        dilate_local_size = xm::ocl::optimal_local_size(device_id, kernel_dilate_h);
+
+        kernel_erode_h = xm::ocl::build_kernel(program_filter_conv, "erode_horizontal");
+        kernel_erode_v = xm::ocl::build_kernel(program_filter_conv, "erode_vertical");
+        erode_local_size = xm::ocl::optimal_local_size(device_id, kernel_erode_h);
+
+        kernel_range_hls = xm::ocl::build_kernel(program_color_space, "kernel_range_hls_mask");
+        range_hls_local_size = xm::ocl::optimal_local_size(device_id, kernel_range_hls);
+
+        kernel_mask_apply = xm::ocl::build_kernel(program_color_space, "kernel_simple_mask_apply");
+        mask_apply_local_size = xm::ocl::optimal_local_size(device_id, kernel_mask_apply);
+
         kernel_power_chroma = xm::ocl::build_kernel(program_power_chroma, "power_chromakey");
         kernel_power_apply = xm::ocl::build_kernel(program_power_chroma, "power_apply");
         kernel_power_mask = xm::ocl::build_kernel(program_power_chroma, "power_mask");
         power_chroma_local_size = xm::ocl::optimal_local_size(device_id, kernel_power_chroma);
 
-        program_flip_rotate = xm::ocl::build_program(ocl_context, device_id,
-                                                     ocl_kernel_flip_rotate_data,
-                                                     ocl_kernel_flip_rotate_data_size);
         kernel_flip_rotate = xm::ocl::build_kernel(program_flip_rotate, "flip_rotate");
         flip_rotate_local_size = xm::ocl::optimal_local_size(device_id, kernel_flip_rotate);
 
@@ -99,21 +99,15 @@ namespace xm::ocl {
 
         clReleaseKernel(kernel_blur_h);
         clReleaseKernel(kernel_blur_v);
-        clReleaseProgram(program_blur);
-
         clReleaseKernel(kernel_dilate_h);
         clReleaseKernel(kernel_dilate_v);
-        clReleaseProgram(program_dilate);
-
         clReleaseKernel(kernel_erode_h);
         clReleaseKernel(kernel_erode_v);
-        clReleaseProgram(program_erode);
+        clReleaseProgram(program_filter_conv);
 
         clReleaseKernel(kernel_range_hls);
-        clReleaseProgram(program_range_hls);
-
         clReleaseKernel(kernel_mask_apply);
-        clReleaseProgram(program_mask_apply);
+        clReleaseProgram(program_color_space);
 
         clReleaseKernel(kernel_power_chroma);
         clReleaseKernel(kernel_power_apply);

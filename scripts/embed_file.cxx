@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
+#include <regex>
 #include <sstream>
 #include <iomanip>
 #include <vector>
@@ -16,6 +17,28 @@ std::string XM_removeDirectoriesAndExtension(const std::string& filename) {
         }
     }
     return filename;
+}
+
+std::string XM_findFirstIdentifier(const std::string& input) {
+    std::regex pattern(R"(extern\s+const\s+char\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\[\]\s*;)");
+    std::smatch matches;
+
+    if (std::regex_search(input, matches, pattern)) {
+        return matches[1];
+    } else {
+        return "";
+    }
+}
+
+std::string XM_findFirstSizeIdentifier(const std::string& input) {
+    std::regex pattern(R"(extern\s+const\s+size_t\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*;)");
+    std::smatch matches;
+
+    if (std::regex_search(input, matches, pattern)) {
+        return matches[1];
+    } else {
+        return ""; // Return an empty string if no match is found
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -54,6 +77,27 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    std::ifstream header_file(h_path);
+    if (!header_file.is_open()) {
+        std::cerr << "Failed to open the file." << std::endl;
+        return 1;
+    }
+
+    std::string input((std::istreambuf_iterator<char>(header_file)), std::istreambuf_iterator<char>());
+    header_file.close();
+
+    const auto identifier = XM_findFirstIdentifier(input);
+    if (identifier.empty()) {
+        std::cerr << "Missing <extern const char $variable$[];>" << std::endl;
+        return 1;
+    }
+
+    const auto i_size = XM_findFirstSizeIdentifier(input);
+    if (i_size.empty()) {
+        std::cerr << "Missing <extern const size_t $variable$_size;>" << std::endl;
+        return 1;
+    }
+
     char c;
     std::ostringstream oss;
     while (input_file.get(c)) {
@@ -72,8 +116,8 @@ int main(int argc, char* argv[]) {
     }
 
     output_file << "#include \"" << absolute(h_path).string() << "\"\n\n";
-    output_file << "const char embedded_" << array_name << "_data[] = {" << array_content << "};\n";
-    output_file << "const size_t embedded_" << array_name << "_data_size = sizeof(embedded_" << array_name << "_data);\n";
+    output_file << "const char " << identifier << "[] = {" << array_content << "};\n";
+    output_file << "const size_t " << i_size << " = sizeof(" << identifier << ");\n";
 
     return 0;
 }

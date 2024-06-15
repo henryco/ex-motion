@@ -6,7 +6,7 @@
 #define XMOTION_BGS_H
 #include <cstddef>
 
-extern const char embedded_bgs_data[];
-extern const size_t embedded_bgs_data_size;
+extern const char ocl_kernel_bgs_data[];
+extern const size_t ocl_kernel_bgs_data_size;
 
 #endif //XMOTION_BGS_H

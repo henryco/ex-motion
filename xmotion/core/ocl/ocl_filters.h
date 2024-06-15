@@ -232,6 +232,16 @@ namespace xm::ocl {
             bool flip_y,
             bool rotate
     );
+
+    xm::ocl::iop::ClImagePromise local_binary_patterns(
+            cl_command_queue queue,
+            const xm::ocl::Image2D &in,
+            int window_size);
+
+    xm::ocl::iop::ClImagePromise local_binary_patterns(
+            const xm::ocl::Image2D &in,
+            int window_size,
+            int queue_index = -1);
 }
 
 #endif //XMOTION_OCL_FILTERS_H

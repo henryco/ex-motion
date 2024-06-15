@@ -162,6 +162,7 @@ set(SOURCE_FILES
         sources/core/ocl_interop.cpp
         sources/fbgtk/file_worker.cpp
         xmotion/core/ocl/ocl_kernels_flip.h
+        xmotion/core/ocl/ocl_kernels_bgs.h
 )
 
 if (UNIX AND NOT APPLE)

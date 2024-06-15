@@ -760,5 +760,14 @@ namespace xm::ocl {
                                             queue, flip_rotate_event);
     }
 
+    xm::ocl::iop::ClImagePromise local_binary_patterns(const Image2D &in, int window_size, int queue_index) {
+        return local_binary_patterns(Kernels::instance().retrieve_queue(queue_index), in, window_size);
+    }
+
+    xm::ocl::iop::ClImagePromise local_binary_patterns(cl_command_queue queue, const Image2D &in, int window_size) {
+        // TODO
+        return xm::ocl::iop::ClImagePromise();
+    }
+
 }
 #pragma clang diagnostic pop

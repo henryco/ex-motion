@@ -41,7 +41,6 @@ namespace xm::ocl {
 
         device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
         ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
-        svm_supported = check_svm_cap(device_id);
 
         ocl_command_queue = xm::ocl::create_queue_device(ocl_context, device_id, true, aux::DEBUG);
 

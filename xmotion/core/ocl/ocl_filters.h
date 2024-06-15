@@ -29,7 +29,6 @@ namespace xm::ocl {
     public:
         std::string thread_id;
 
-        bool svm_supported;
         cl_device_id device_id;
         cl_context ocl_context;
         cl_command_queue ocl_command_queue;

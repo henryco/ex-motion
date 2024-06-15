@@ -87,6 +87,30 @@ inline unsigned char mask_lbp(
     return ((float) d / (float) total_bits) >= threshold ? 255 : 0;
 }
 
+__kernel void kernel_lbp(
+        __global const unsigned char *frame_image,
+        __global unsigned char *output,
+        const int c_input_size,  // numbers of color channels in image
+        const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
+        const int kernel_size,   // actually should be <= 15
+        const int width,
+        const int height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    unsigned char lbp[32]; // up to 256 bits
+    compute_lbp(frame_image, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
+
+    const int idx = (y * width + x) * c_code_size;
+    for (int i = 0; i < c_code_size; i++)
+        output[idx + i] = lbp[i];
+}
+
+
 __kernel void kernel_mask_only(
         __global const unsigned char *frame_image,
         __global const unsigned char *frame_lbp,
@@ -150,14 +174,20 @@ __kernel void kernel_mask_apply(
         output[idx_pix + i] = colors[i];
 }
 
-__kernel void kernel_lbp(
+__kernel void kernel_lbp_mask_apply(
         __global const unsigned char *frame_image,
-        __global unsigned char *output,
+        __global const unsigned char *frame_lbp,
+        __global unsigned char* output,
         const int c_input_size,  // numbers of color channels in image
         const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
         const int kernel_size,   // actually should be <= 15
+        const int total_bits,    // pow(kernel_size, 2) - 1
+        const float threshold,   // [0 ... 1]
         const int width,
-        const int height
+        const int height,
+        const unsigned char color_b,
+        const unsigned char color_g,
+        const unsigned char color_r
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -165,11 +195,26 @@ __kernel void kernel_lbp(
     if (x >= width || y >= height)
         return;
 
-    unsigned char lbp[32]; // up to 256 bits
-    compute_lbp(frame_image, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
+    const unsigned char mask = mask_lbp(
+        frame_image,
+        frame_lbp,
+        c_input_size,
+        c_code_size,
+        kernel_size,
+        total_bits,
+        threshold,
+        width,
+        height,
+        x, y);
 
-    const int idx = (y * width + x) * c_code_size;
-    for (int i = 0; i < c_code_size; i++)
-        output[idx + i] = lbp[i];
+    const int idx = (y * width + x) * c_input_size;
+    if (mask > 0) {
+        for (int i = 0; i < c_input_size; i++)
+            output[idx + i] = frame_image[idx + i];
+        return;
+    }
+
+    const unsigned char colors[3] = { color_b, color_g, color_r };
+    for (int i = 0; i < c_input_size; i++)
+        output[idx + i] = colors[i];
 }
-

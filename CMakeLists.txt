@@ -60,35 +60,35 @@ endif ()
 
 
 # =================== OpenCL kernels generation =====================
-add_executable(convert_to_c_array gen_kernel_source.cxx)
+add_executable(convert_to_c_array scripts/embed_cl_kernel.cxx)
 set(GENERATED_CL_SOURCES)
 set(KERNEL_FILES
          kernels/bgs.h
         # todo more
 )
 
-function(add_kernel_conversion input_file)
+foreach(input_file IN LISTS KERNEL_FILES)
+    get_filename_component(output_path ${input_file} DIRECTORY)
     get_filename_component(output_name ${input_file} NAME_WE)
-    set(output_name "${PROJECT_BINARY_DIR}/${output_name}.cpp")
-    message(STATUS "generating cl kernel file: ${input_file} -> ${output_name}")
+    set(output_name "${PROJECT_BINARY_DIR}/${output_path}/${output_name}.cpp")
+
     add_custom_command(
             OUTPUT ${output_name}
-            COMMAND convert_to_c_array ${input_file} ${output_name}
-            DEPENDS ${CMAKE_SOURCE_DIR}/${input_file} convert_to_c_array
-            COMMENT "Generating ${output_name} from ${input_file}"
+            COMMAND convert_to_c_array ${PROJECT_SOURCE_DIR}/${input_file} ${output_name}
+            DEPENDS convert_to_c_array ${PROJECT_SOURCE_DIR}/${input_file}
+            COMMENT "Converting: ${input_file} -> ${output_name}"
             VERBATIM
     )
-    list(APPEND GENERATED_CL_SOURCES ${output_name})
-    set(GENERATED_CL_SOURCES ${GENERATED_CL_SOURCES} PARENT_SCOPE)
-endfunction()
 
-foreach(kernel_file IN LISTS KERNEL_FILES)
-    message(STATUS "processing cl kernel file: ${kernel_file}")
-    add_kernel_conversion(${kernel_file})
+    list(APPEND GENERATED_CL_SOURCES ${output_name})
 endforeach()
 
 add_custom_target(generate_cl_sources
-        DEPENDS ${GENERATED_CL_SOURCES})
+        ALL DEPENDS ${GENERATED_CL_SOURCES})
+
+#add_custom_target(generate_cl_sources
+#        DEPENDS ${PROJECT_BINARY_DIR}/test.file)
+
 # =================== OpenCL kernels generation =====================
 
 
@@ -219,6 +219,8 @@ set(RESULT_SOURCES
 
 add_executable(xmotion
         ${RESULT_SOURCES})
+
+message(STATUS "FILES: ${RESULT_SOURCES}")
 
 add_dependencies(xmotion
         generate_cl_sources)

@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
     const auto output_filename = std::string(argv[2]);
     const auto array_name = XM_removeDirectoriesAndExtension(input_filename);
 
+    std::filesystem::path h_path = input_filename;
     std::filesystem::path f_path = output_filename;
     std::filesystem::path dir_path = f_path.parent_path();
 
@@ -36,6 +37,10 @@ int main(int argc, char* argv[]) {
             std::cout << "Created directories: " << dir_path << '\n';
         else
             std::cout << "Directories already exist or failed to create" << '\n';
+    }
+
+    if (std::filesystem::exists(output_filename)) {
+        std::filesystem::remove(output_filename);
     }
 
     std::ifstream input_file(input_filename, std::ios::binary);
@@ -61,7 +66,7 @@ int main(int argc, char* argv[]) {
         array_content.pop_back();  // Remove the last comma
     }
 
-    output_file << "#include \"" << array_name << ".h\"\n\n";
+    output_file << "#include \"" << absolute(h_path).string() << "\"\n\n";
     output_file << "const char kernel_" << array_name << "_code[] = {" << array_content << "};\n";
     output_file << "const size_t kernel_" << array_name << "_code_size = sizeof(kernel_" << array_name << "_code);\n";
 

@@ -6,7 +6,7 @@
 #define XMOTION_BGS_H
 #include <cstddef>
 
-extern const char kernel_bgs_code[];
-extern const std::size_t kernel_bgs_code_size;
+extern const char embedded_bgs_data[];
+extern const size_t embedded_bgs_data_size;
 
 #endif //XMOTION_BGS_H

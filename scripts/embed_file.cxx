@@ -19,18 +19,27 @@ std::string XM_removeDirectoriesAndExtension(const std::string& filename) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <input_file> <output_file>" << std::endl;
+    if (argc != 4) {
+        std::cerr << "Usage: " << argv[0] << " <header_file> <data_file> <output_file>" << std::endl;
         return 1;
     }
 
-    const auto input_filename = std::string(argv[1]);
-    const auto output_filename = std::string(argv[2]);
-    const auto array_name = XM_removeDirectoriesAndExtension(input_filename);
+    const auto header_filename = std::string(argv[1]);
+    const auto data_filename = std::string(argv[2]);
+    const auto output_filename = std::string(argv[3]);
+    const auto array_name = XM_removeDirectoriesAndExtension(header_filename);
 
-    std::filesystem::path h_path = input_filename;
-    std::filesystem::path f_path = output_filename;
-    std::filesystem::path dir_path = f_path.parent_path();
+    std::cout << header_filename << " | " << data_filename << " | " << output_filename << " | " << array_name << std::endl;
+
+    std::filesystem::path h_path = header_filename;
+    std::filesystem::path o_path = output_filename;
+    std::filesystem::path dir_path = o_path.parent_path();
+
+    std::cout << "DP: " << dir_path << std::endl;
+
+    if (std::filesystem::exists(output_filename)) {
+        std::filesystem::remove(output_filename);
+    }
 
     if (!std::filesystem::exists(dir_path)) {
         if (std::filesystem::create_directories(dir_path))
@@ -39,13 +48,9 @@ int main(int argc, char* argv[]) {
             std::cout << "Directories already exist or failed to create" << '\n';
     }
 
-    if (std::filesystem::exists(output_filename)) {
-        std::filesystem::remove(output_filename);
-    }
-
-    std::ifstream input_file(input_filename, std::ios::binary);
+    std::ifstream input_file(data_filename, std::ios::binary);
     if (!input_file.is_open()) {
-        std::cerr << "Failed to open input file: " << input_filename << std::endl;
+        std::cerr << "Failed to open input file: " << data_filename << std::endl;
         return 1;
     }
 
@@ -67,8 +72,8 @@ int main(int argc, char* argv[]) {
     }
 
     output_file << "#include \"" << absolute(h_path).string() << "\"\n\n";
-    output_file << "const char kernel_" << array_name << "_code[] = {" << array_content << "};\n";
-    output_file << "const size_t kernel_" << array_name << "_code_size = sizeof(kernel_" << array_name << "_code);\n";
+    output_file << "const char embedded_" << array_name << "_data[] = {" << array_content << "};\n";
+    output_file << "const size_t embedded_" << array_name << "_data_size = sizeof(embedded_" << array_name << "_data);\n";
 
     return 0;
 }

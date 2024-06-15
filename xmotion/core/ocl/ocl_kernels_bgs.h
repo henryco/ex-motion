@@ -129,6 +129,38 @@ __kernel void kernel_mask_only(
             x, y);
 }
 
+__kernel void mask_apply(
+        __global const unsigned char *frame,
+        __global const unsigned char *mask_bw,
+        __global unsigned char* output,
+        const int c_input_size,  // numbers of color channels in image
+        const int width,
+        const int height,
+        const unsigned char color_b,
+        const unsigned char color_g,
+        const unsigned char color_r
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int idx_raw = y * width + x;
+    const int idx_pix = idx_raw * c_input_size;
+    const unsigned char mask = mask_bw[idx_raw];
+
+    if (mask > 0) {
+        for (int i = 0; i < c_input_size; i++)
+            output[idx_pix + i] = frame[idx_pix + i];
+        return;
+    }
+
+    const unsigned char[3] colors = {color_b, color_g, color_r};
+    for (int i = 0; i < c_input_size; i++)
+        output[idx_pix + i] = colors[i];
+}
+
 __kernel void kernel_lbp(
         __global const unsigned char *input,
         __global unsigned char *output,

@@ -59,7 +59,7 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 set(KERNEL_FILES
-        kernels/bgs.h
+        kernels/background.h
         kernels/chroma_key.h
         kernels/flip_rotate.h
         kernels/color_space.h

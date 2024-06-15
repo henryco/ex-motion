@@ -14,6 +14,7 @@
 #include "../../kernels/flip_rotate.h"
 #include "../../kernels/color_space.h"
 #include "../../kernels/filter_conv.h"
+#include "../../kernels/background.h"
 
 #include <CL/cl.h>
 #include <opencv2/imgproc.hpp>
@@ -56,6 +57,9 @@ namespace xm::ocl {
         program_flip_rotate = xm::ocl::build_program(ocl_context, device_id,
                                                      ocl_kernel_flip_rotate_data,
                                                      ocl_kernel_flip_rotate_data_size);
+        program_background = xm::ocl::build_program(ocl_context, device_id,
+                                                    ocl_kernel_background_data,
+                                                    ocl_kernel_background_data_size);
 
         kernel_blur_h = xm::ocl::build_kernel(program_filter_conv, "gaussian_blur_horizontal");
         kernel_blur_v = xm::ocl::build_kernel(program_filter_conv, "gaussian_blur_vertical");
@@ -82,6 +86,12 @@ namespace xm::ocl {
 
         kernel_flip_rotate = xm::ocl::build_kernel(program_flip_rotate, "flip_rotate");
         flip_rotate_local_size = xm::ocl::optimal_local_size(device_id, kernel_flip_rotate);
+
+        kernel_lbp_texture = xm::ocl::build_kernel(program_background, "kernel_lbp");
+        kernel_lbp_mask_only = xm::ocl::build_kernel(program_background, "kernel_mask_only");
+        kernel_lbp_mask_apply = xm::ocl::build_kernel(program_background, "kernel_mask_apply");
+        kernel_lbp_power = xm::ocl::build_kernel(program_background, "kernel_lbp_mask_apply");
+        lbp_local_size = xm::ocl::optimal_local_size(device_id, kernel_lbp_power);
 
         for (int i = 1; i < ((31 - 1) / 2); i++) {
             cv::UMat kernel_mat;
@@ -115,6 +125,12 @@ namespace xm::ocl {
 
         clReleaseKernel(kernel_flip_rotate);
         clReleaseProgram(program_flip_rotate);
+
+        clReleaseKernel(kernel_lbp_texture);
+        clReleaseKernel(kernel_lbp_mask_only);
+        clReleaseKernel(kernel_lbp_mask_apply);
+        clReleaseKernel(kernel_lbp_power);
+        clReleaseProgram(program_background);
 
         for (auto &item: ocl_queue_map) {
             if (item.second == nullptr)

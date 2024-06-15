@@ -62,6 +62,13 @@ namespace xm::ocl {
         cl_kernel kernel_flip_rotate;
         size_t flip_rotate_local_size;
 
+        cl_program program_background;
+        cl_kernel kernel_lbp_texture;
+        cl_kernel kernel_lbp_mask_only;
+        cl_kernel kernel_lbp_mask_apply;
+        cl_kernel kernel_lbp_power;
+        size_t lbp_local_size;
+
         /* ==================== CACHE KERNELS ==================== */
         xm::ocl::Image2D blur_kernels[(31 - 1) / 2];
 

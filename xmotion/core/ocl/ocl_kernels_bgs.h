@@ -77,8 +77,8 @@ inline void compute_lbp(
 }
 
 inline unsigned char mask_lbp(
-        __global const unsigned char *input_bgr,
-        __global const unsigned char *static_lbp,
+        __global const unsigned char *frame_bgr,
+        __global const unsigned char *frame_lbp,
         const int c_input_size,  // numbers of color channels in image
         const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
         const int kernel_size,   // actually should be <= 15
@@ -90,12 +90,43 @@ inline unsigned char mask_lbp(
         const int y
 ) {
     unsigned char lbp[32]; // up to 256 bits
-    compute_lbp(input_bgr, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
+    compute_lbp(frame_bgr, lbp, c_input_size, c_code_size, kernel_size, width, height, x, y);
 
     const int idx_s = (y * width + x) * c_code_size;
-    const int d = hamming_distance(lbp, &(static_lbp[idx_s]), c_code_size);
+    const int d = hamming_distance(lbp, &(frame_lbp[idx_s]), c_code_size);
 
     return ((float) d / (float) total_bits) >= threshold ? 255 : 0;
+}
+
+__kernel void kernel_mask_only(
+        __global const unsigned char *frame_bgr,
+        __global const unsigned char *frame_lbp,
+        __global unsigned char *output_mask_bin,
+        const int c_input_size,  // numbers of color channels in image
+        const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
+        const int kernel_size,   // actually should be <= 15
+        const int total_bits,    // pow(kernel_size, 2) - 1
+        const float threshold,   // [0 ... 1]
+        const int width,
+        const int height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    output_mask_bin[y * width + x] = mask_lbp(
+            frame_bgr,
+            frame_lbp,
+            c_input_size,
+            c_code_size,
+            kernel_size,
+            total_bits,
+            threshold,
+            width,
+            height,
+            x, y);
 }
 
 __kernel void kernel_lbp(

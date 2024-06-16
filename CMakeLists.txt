@@ -66,11 +66,8 @@ set(KERNEL_FILES
         kernels/filter_conv.h
 )
 
-set(SOURCE_FILES
-        main.cpp
-
+set(HEADER_FILES
         platforms/agnostic_cap.h
-
         xmotion/core/utils/velocity_filter.h
         xmotion/core/utils/low_pass_filter.h
         xmotion/core/dnn/net/pose_detector.h
@@ -119,7 +116,10 @@ set(SOURCE_FILES
         xmotion/core/ocl/ocl_interop_ext.h
         xmotion/fbgtk/file_worker.h
         xmotion/core/ocl/ocl_data.h
+        xmotion/core/ocl/ocl_container.h
+)
 
+set(SOURCE_FILES
         sources/core/velocity_filter.cpp
         sources/core/low_pass_filter.cpp
         sources/core/pose_detector.cpp
@@ -166,6 +166,7 @@ set(SOURCE_FILES
         sources/core/ocl_data.cpp
         sources/core/ocl_interop.cpp
         sources/fbgtk/file_worker.cpp
+        sources/core/ocl_container.cpp
 )
 
 if (UNIX AND NOT APPLE)
@@ -206,6 +207,8 @@ add_custom_target(generate_cl_sources
 
 
 set(RESULT_SOURCES
+        main.cpp
+        ${HEADER_FILES}
         ${SOURCE_FILES}
         ${KERNEL_FILES}
         ${GENERATED_CL_SOURCES})

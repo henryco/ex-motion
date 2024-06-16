@@ -68,7 +68,7 @@ inline unsigned char mask_lbp(
         const unsigned char *frame_image,
         const unsigned char *frame_lbp,
         const int c_input_size,  // numbers of color channels in image
-        const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
+        const int c_code_size,   // ceil((pow(kernel_size, 2) - 1) / 8.f)
         const int kernel_size,   // actually should be <= 15
         const int total_bits,    // pow(kernel_size, 2) - 1
         const float threshold,   // [0 ... 1]

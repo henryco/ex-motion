@@ -5,6 +5,7 @@
 #include "../../xmotion/fbgtk/file_worker.h"
 #include "../../xmotion/core/filter/chroma_key.h"
 #include "../../xmotion/core/utils/cv_utils.h"
+#include "../../xmotion/core/filter/bg_lbp_subtract.h"
 
 namespace xm {
 
@@ -27,7 +28,7 @@ namespace xm {
             return;
 
         // background filter
-        opt_filter_chroma();
+//        opt_filter_chroma();
         opt_filter_delta();
     }
 
@@ -52,8 +53,21 @@ namespace xm {
     }
 
     void FileWorker::opt_filter_delta() {
-        if (!config.filters.background.delta._present)
-            return;
-        // TODO
+//        if (!config.filters.background.delta._present)
+//            return;
+
+        const auto &conf = config.filters.background.delta;
+        auto filter = std::make_unique<xm::filters::BgLbpSubtract>();
+        filter->init({
+            .color = xm::ds::Color4u::bgr(0, 255, 0),
+            .threshold = 0.5f,
+            .delay = 5000,
+            .window = 1,
+            .refine = 0,
+            .fine = 0,
+            .blur = 0,
+        });
+
+        filters.push_back(std::move(filter));
     }
 }

@@ -34,9 +34,10 @@ namespace xm::filters {
             const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::high_resolution_clock::now().time_since_epoch());
             if (now - t0 >= std::chrono::milliseconds(delay)) {
-                reference_lbp = ocl::local_binary_patterns(frame_in, lbp_kernel, q_idx)
-                        .waitFor() // blocking operation here, but this is ok
-                        .getImage2D();
+                auto promise = ocl::local_binary_patterns(frame_in, lbp_kernel, q_idx);
+
+                // blocking operation here, but this is ok
+                reference_lbp = promise.waitFor().getImage2D();
                 ready = true;
             }
             return frame_in;

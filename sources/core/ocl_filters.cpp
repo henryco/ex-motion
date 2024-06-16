@@ -785,7 +785,7 @@ namespace xm::ocl {
         if (window_size > 15)
             throw std::invalid_argument("window_size > 15");
 
-        auto c_size = (int) std::ceil((float) std::pow(window_size, 2) / 8.f);
+        auto c_size = (int) std::ceil((float) (std::pow(window_size, 2) - 1) / 8.f);
 
         if (c_size < 1)
             throw std::invalid_argument("output channels size < 1");
@@ -843,7 +843,7 @@ namespace xm::ocl {
         if (window_size > 15)
             throw std::invalid_argument("window_size > 15");
 
-        auto c_size = (int) std::ceil((float) std::pow(window_size, 2) / 8.f);
+        auto c_size = (int) std::ceil((float) (std::pow(window_size, 2) - 1) / 8.f);
 
         if (c_size < 1)
             throw std::invalid_argument("output channels size < 1");
@@ -894,7 +894,9 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
-        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(frame, buffer_out), queue, lbp_power_event);
+        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(frame, buffer_out),
+                                            queue,
+                                            lbp_power_event);
     }
 
 }

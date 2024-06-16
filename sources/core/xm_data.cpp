@@ -37,11 +37,12 @@ namespace xm::ds {
         return bgr(h, s, l);
     }
 
-    Color4u Color4u::bgr(int b, int g, int r) {
+    Color4u Color4u::bgr(int b, int g, int r, int a) {
         return {
                 .b = (unsigned char) b,
                 .g = (unsigned char) g,
-                .r = (unsigned char) r
+                .r = (unsigned char) r,
+                .a = (unsigned char) a
         };
     }
 

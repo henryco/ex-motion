@@ -48,6 +48,8 @@ namespace xm::ocl::iop {
 
         ClImagePromise &withCleanup(std::function<void()> *cb_ptr);
 
+        ClImagePromise &withCleanup(const ClImagePromise &other);
+
         /**
          * Often you should call waitFor() first
          */

@@ -60,7 +60,7 @@ namespace xm {
         auto filter = std::make_unique<xm::filters::BgLbpSubtract>();
         filter->init({
             .color = xm::ds::Color4u::bgr(0, 255, 0),
-            .threshold = 0.5f,
+            .threshold = 0.8f,
             .delay = 2000,
             .window = 1,
             .refine = 0,

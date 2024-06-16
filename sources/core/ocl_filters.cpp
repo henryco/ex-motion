@@ -165,67 +165,64 @@ namespace xm::ocl {
         return ocl_queue_map[index];
     }
 
-    void blur(const cv::UMat &in, cv::UMat &out, const int kernel_size, int queue_index) {
+
+    xm::ocl::iop::ClImagePromise blur(const Image2D &in, int kernel_size, int queue_index) {
+        return blur(Kernels::instance().retrieve_queue(queue_index), in, kernel_size);
+    }
+
+    xm::ocl::iop::ClImagePromise blur(cl_command_queue queue, const Image2D &in, int kernel_size) {
         if (kernel_size < 3 || kernel_size % 2 == 0 || kernel_size > 31)
             throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
-        cv::UMat result_1(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
-        cv::UMat result_2(in.rows, in.cols, CV_8UC3, cv::USAGE_ALLOCATE_DEVICE_MEMORY);
 
-        auto kernel_mat_buffer = (cl_mem) Kernels::instance().blur_kernels[(kernel_size - 1) / 2].handle;
-        auto kh_size = (int) (kernel_size / 2);
-
-        const auto queue = Kernels::instance().retrieve_queue(queue_index);
+        const auto context = Kernels::instance().ocl_context;
         const auto pref_size = Kernels::instance().blur_local_size;
         size_t l_size[2] = {pref_size, pref_size};
-        size_t g_size[2] = {xm::ocl::optimal_global_size(in.cols, pref_size),
-                            xm::ocl::optimal_global_size(in.rows, pref_size)};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) in.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) in.rows, pref_size)};
 
-        {
-            auto kernel = Kernels::instance().kernel_blur_h;
-            auto input_buffer = (cl_mem) in.handle(cv::ACCESS_READ);
-            auto result_1_buffer = (cl_mem) result_1.handle(cv::ACCESS_WRITE);
+        cl_int err;
 
-            auto width = (uint) in.cols;
-            auto height = (uint) in.rows;
+        cl_mem buffer_in = in.handle;
+        cl_mem kernel_mat_buffer = Kernels::instance().blur_kernels[(kernel_size - 1) / 2].handle;
+        cl_mem buffer_1 = clCreateBuffer(context, CL_MEM_READ_WRITE, in.size(), NULL, &err);
+        cl_mem buffer_2 = clCreateBuffer(context, CL_MEM_READ_WRITE, in.size(), NULL, &err);
 
-            xm::ocl::set_kernel_arg(kernel, 0, sizeof(cl_mem), &input_buffer);
-            xm::ocl::set_kernel_arg(kernel, 1, sizeof(cl_mem), &kernel_mat_buffer);
-            xm::ocl::set_kernel_arg(kernel, 2, sizeof(cl_mem), &result_1_buffer);
-            xm::ocl::set_kernel_arg(kernel, 3, sizeof(uint), &width);
-            xm::ocl::set_kernel_arg(kernel, 4, sizeof(uint), &height);
-            xm::ocl::set_kernel_arg(kernel, 5, sizeof(int), &kh_size);
+        auto width = (uint) in.cols;
+        auto height = (uint) in.rows;
+        auto kh_size = (int) (kernel_size / 2);
 
-            const auto time = xm::ocl::enqueue_kernel_sync(
-                    queue, kernel, 2,
-                    g_size,
-                    l_size,
-                    aux::DEBUG);
-            Kernels::instance().print_time(time, "blur_h");
-        }
+        auto kernel_h = Kernels::instance().kernel_blur_h;
+        auto kernel_v = Kernels::instance().kernel_blur_v;
 
-        {
-            auto kernel = Kernels::instance().kernel_blur_v;
-            auto result_1_buffer = (cl_mem) result_1.handle(cv::ACCESS_READ);
-            auto result_2_buffer = (cl_mem) result_2.handle(cv::ACCESS_WRITE);
-            auto width = (uint) in.cols;
-            auto height = (uint) in.rows;
+        xm::ocl::set_kernel_arg(kernel_h, 0, sizeof(cl_mem), &buffer_in);
+        xm::ocl::set_kernel_arg(kernel_h, 1, sizeof(cl_mem), &kernel_mat_buffer);
+        xm::ocl::set_kernel_arg(kernel_h, 2, sizeof(cl_mem), &buffer_1);
+        xm::ocl::set_kernel_arg(kernel_h, 3, sizeof(uint), &width);
+        xm::ocl::set_kernel_arg(kernel_h, 4, sizeof(uint), &height);
+        xm::ocl::set_kernel_arg(kernel_h, 5, sizeof(int), &kh_size);
 
-            xm::ocl::set_kernel_arg(kernel, 0, sizeof(cl_mem), &result_1_buffer);
-            xm::ocl::set_kernel_arg(kernel, 1, sizeof(cl_mem), &kernel_mat_buffer);
-            xm::ocl::set_kernel_arg(kernel, 2, sizeof(cl_mem), &result_2_buffer);
-            xm::ocl::set_kernel_arg(kernel, 3, sizeof(uint), &width);
-            xm::ocl::set_kernel_arg(kernel, 4, sizeof(uint), &height);
-            xm::ocl::set_kernel_arg(kernel, 5, sizeof(int), &kh_size);
+        xm::ocl::set_kernel_arg(kernel_v, 0, sizeof(cl_mem), &buffer_1);
+        xm::ocl::set_kernel_arg(kernel_v, 1, sizeof(cl_mem), &kernel_mat_buffer);
+        xm::ocl::set_kernel_arg(kernel_v, 2, sizeof(cl_mem), &buffer_2);
+        xm::ocl::set_kernel_arg(kernel_v, 3, sizeof(uint), &width);
+        xm::ocl::set_kernel_arg(kernel_v, 4, sizeof(uint), &height);
+        xm::ocl::set_kernel_arg(kernel_v, 5, sizeof(int), &kh_size);
 
-            const auto time = xm::ocl::enqueue_kernel_sync(
-                    queue, kernel, 2,
-                    g_size,
-                    l_size,
-                    aux::DEBUG);
-            Kernels::instance().print_time(time, "blur_v");
-        }
+        xm::ocl::enqueue_kernel_fast(
+                queue, kernel_h, 2,
+                g_size,
+                l_size);
 
-        out = std::move(result_2);
+        xm::ocl::enqueue_kernel_fast(
+                queue, kernel_v, 2,
+                g_size,
+                l_size);
+
+        xm::ocl::Image2D image(in, buffer_2);
+        return xm::ocl::iop::ClImagePromise(image, queue)
+        .withCleanup(new std::function<void()>([buffer_1]() {
+            clReleaseMemObject(buffer_1);
+        }));
     }
 
     void bgr_in_range_hls(const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::UMat &in, cv::UMat &out, int queue_index) {
@@ -577,7 +574,7 @@ namespace xm::ocl {
                 2,
                 g_size,
                 l_size,
-                aux::DEBUG);
+                false);
 
         for (int i = 0; i < refine; i++) {
             xm::ocl::enqueue_kernel_fast(
@@ -586,14 +583,14 @@ namespace xm::ocl {
                     2,
                     g_size,
                     l_size,
-                    aux::DEBUG);
+                    false);
             xm::ocl::enqueue_kernel_fast(
                     queue,
                     kernel_erode_v,
                     2,
                     g_size,
                     l_size,
-                    aux::DEBUG);
+                    false);
         }
 
         for (int i = 0; i < refine; i++) {
@@ -603,14 +600,14 @@ namespace xm::ocl {
                     2,
                     g_size,
                     l_size,
-                    aux::DEBUG);
+                    false);
             xm::ocl::enqueue_kernel_fast(
                     queue,
                     kernel_dilate_v,
                     2,
                     g_size,
                     l_size,
-                    aux::DEBUG);
+                    false);
         }
 
         xm::ocl::enqueue_kernel_fast(
@@ -619,7 +616,7 @@ namespace xm::ocl {
                 2,
                 g_size,
                 l_size,
-                aux::DEBUG);
+                false);
 
         return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue)
         .withCleanup(new std::function<void()>([buffer_io_1, buffer_io_2]() {
@@ -897,6 +894,5 @@ namespace xm::ocl {
                                             queue,
                                             lbp_power_event);
     }
-
 }
 #pragma clang diagnostic pop

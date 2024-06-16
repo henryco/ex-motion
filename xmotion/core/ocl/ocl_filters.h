@@ -97,13 +97,24 @@ namespace xm::ocl {
     /**
      * Gaussian blur with separate horizontal and vertical pass
      * @param in input image in BGR color space (3 channels uchar)
-     * @param out output image in BGR color space (3 channels uchar)
+     * @param kernel_size should be odd: 3, 5, 7, 9 ... etc
+     * @param queue_index index of command queue (optional)
+     */
+    xm::ocl::iop::ClImagePromise blur(
+            const xm::ocl::Image2D &in,
+            int kernel_size,
+            int queue_index = -1);
+
+    /**
+     * Gaussian blur with separate horizontal and vertical pass
+     * @param queue opencl command queue
+     * @param in input image in BGR color space (3 channels uchar)
      * @param kernel_size should be odd: 3, 5, 7, 9 ... etc
      */
-    void blur(const cv::UMat &in,
-              cv::UMat &out,
-              int kernel_size = 5,
-              int queue_index = -1);
+    xm::ocl::iop::ClImagePromise blur(
+            cl_command_queue queue,
+            const xm::ocl::Image2D &in,
+            int kernel_size);
 
     /**
      * Returns mask that satisfies HLS range. This function supports HUE wrapping (!)
@@ -157,18 +168,6 @@ namespace xm::ocl {
                                const cv::UMat &mask,
                                cv::UMat &out,
                                int queue_index = -1);
-
-    void chroma_key(const cv::UMat &in, cv::UMat &out,
-                    const cv::Scalar &hls_low,
-                    const cv::Scalar &hls_up,
-                    const cv::Scalar &color,
-                    bool linear,
-                    int mask_size, // 256, 512, ...
-                    int blur, // 3, 5, 7, 9, 11, ...
-                    int fine, // 3, 5, 7, 9, 11, ...
-                    int refine, // 0, 1, 2, ...
-                    int queue_index = -1
-    );
 
     xm::ocl::iop::ClImagePromise chroma_key(
             cl_command_queue queue,

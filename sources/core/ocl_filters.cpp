@@ -782,8 +782,50 @@ namespace xm::ocl {
     }
 
     xm::ocl::iop::ClImagePromise local_binary_patterns(cl_command_queue queue, const Image2D &in, int window_size) {
-        // TODO
-        return xm::ocl::iop::ClImagePromise();
+        if (window_size > 15)
+            throw std::invalid_argument("window_size > 15");
+
+        auto c_size = (int) std::ceil((float) std::pow(window_size, 2) / 8.f);
+
+        if (c_size < 1)
+            throw std::invalid_argument("output channels size < 1");
+
+        const auto context = in.context;
+        const auto inter_size = in.cols * in.rows * c_size;
+        const auto pref_size = Kernels::instance().lbp_local_size;
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) in.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) in.rows, pref_size)};
+
+        cl_int err;
+
+        cl_mem buffer_in = in.handle;
+        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
+
+        auto kernel_lbp = Kernels::instance().kernel_lbp_texture;
+
+        auto i_size = (int) in.channels;
+        auto k_size = (int) window_size;
+        auto width = (uint) in.rows;
+        auto height = (uint) in.cols;
+
+        xm::ocl::set_kernel_arg(kernel_lbp, 0, sizeof(cl_mem), &buffer_in);
+        xm::ocl::set_kernel_arg(kernel_lbp, 1, sizeof(cl_mem), &buffer_out);
+        xm::ocl::set_kernel_arg(kernel_lbp, 2, sizeof(int), &i_size);
+        xm::ocl::set_kernel_arg(kernel_lbp, 3, sizeof(int), &c_size);
+        xm::ocl::set_kernel_arg(kernel_lbp, 4, sizeof(int), &k_size);
+        xm::ocl::set_kernel_arg(kernel_lbp, 5, sizeof(int), &width);
+        xm::ocl::set_kernel_arg(kernel_lbp, 6, sizeof(int), &height);
+
+        cl_event lbp_event = xm::ocl::enqueue_kernel_fast(
+                queue,
+                kernel_lbp,
+                2,
+                g_size,
+                l_size,
+                aux::DEBUG);
+
+        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, lbp_event);
     }
 
 }

@@ -806,8 +806,8 @@ namespace xm::ocl {
 
         auto i_size = (int) in.channels;
         auto k_size = (int) window_size;
-        auto width = (uint) in.rows;
-        auto height = (uint) in.cols;
+        auto width = (int) in.rows;
+        auto height = (int) in.cols;
 
         xm::ocl::set_kernel_arg(kernel_lbp, 0, sizeof(cl_mem), &buffer_in);
         xm::ocl::set_kernel_arg(kernel_lbp, 1, sizeof(cl_mem), &buffer_out);
@@ -825,7 +825,74 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
-        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, lbp_event);
+        return xm::ocl::iop::ClImagePromise(
+                xm::ocl::Image2D(in.cols, in.rows, c_size, 1, buffer_out, in.context, in.device, xm::ocl::ACCESS::RW),
+                queue, lbp_event);
+    }
+
+    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
+            const Image2D &lbp_texture, const Image2D &frame, const ds::Color4u &color,
+            float threshold, int window_size, int queue_index) {
+        return subtract_bg_lbp_single_pass(Kernels::instance().retrieve_queue(queue_index), lbp_texture, frame, color,
+                                           threshold, window_size);
+    }
+
+    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
+            cl_command_queue queue, const Image2D &lbp_texture, const Image2D &frame,
+            const ds::Color4u &color, float threshold, int window_size) {
+
+        auto c_size = (int) std::ceil((float) std::pow(window_size, 2) / 8.f);
+
+        if (c_size < 1)
+            throw std::invalid_argument("output channels size < 1");
+
+        const auto context = frame.context;
+        const auto inter_size = lbp_texture.size();
+        const auto pref_size = Kernels::instance().lbp_local_size;
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) frame.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) frame.rows, pref_size)};
+
+        cl_int err;
+
+        cl_mem buffer_in = frame.handle;
+        cl_mem buffer_tex = lbp_texture.handle;
+        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
+
+        auto kernel_lbp_power = Kernels::instance().kernel_lbp_power;
+
+        auto i_size = (int) frame.channels;
+        auto k_size = (int) window_size;
+        auto width = (int) frame.rows;
+        auto height = (int) frame.cols;
+        auto total = (int) std::pow(window_size, 2) - 1;
+        auto color_b = (uint) color.b;
+        auto color_g = (uint) color.g;
+        auto color_r = (uint) color.r;
+
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 0, sizeof(cl_mem), &buffer_in);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 1, sizeof(cl_mem), &buffer_tex);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 2, sizeof(cl_mem), &buffer_out);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 3, sizeof(int), &i_size);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 4, sizeof(int), &c_size);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 5, sizeof(int), &k_size);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 6, sizeof(int), &total);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 7, sizeof(float), &threshold);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 8, sizeof(int), &width);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 9, sizeof(int), &height);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 10, sizeof(uchar), &color_b);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 11, sizeof(uchar), &color_g);
+        xm::ocl::set_kernel_arg(kernel_lbp_power, 12, sizeof(uchar), &color_r);
+
+        cl_event lbp_power_event = xm::ocl::enqueue_kernel_fast(
+                queue,
+                kernel_lbp_power,
+                2,
+                g_size,
+                l_size,
+                aux::DEBUG);
+
+        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(frame, buffer_out), queue, lbp_power_event);
     }
 
 }

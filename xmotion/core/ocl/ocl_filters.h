@@ -246,13 +246,23 @@ namespace xm::ocl {
             int queue_index = -1
     );
 
-//    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
-//            const xm::ocl::Image2D &lbp_texture,
-//            const xm::ocl::Image2D &frame,
-//            float threshold,
-//            int window_size,
-//            int queue_index = -1
-//    );
+    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
+            cl_command_queue queue,
+            const xm::ocl::Image2D &lbp_texture,
+            const xm::ocl::Image2D &frame,
+            const xm::ds::Color4u &color,
+            float threshold,
+            int window_size
+    );
+
+    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
+            const xm::ocl::Image2D &lbp_texture,
+            const xm::ocl::Image2D &frame,
+            const xm::ds::Color4u &color,
+            float threshold,
+            int window_size,
+            int queue_index = -1
+    );
 }
 
 #endif //XMOTION_OCL_FILTERS_H

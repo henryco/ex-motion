@@ -335,4 +335,50 @@ namespace xm::ocl::iop {
     cl_command_queue ClImagePromise::queue() const {
         return ocl_queue;
     }
+
+    void ClImagePromise::finalizeAll(std::vector<ClImagePromise> &promises, bool force) {
+        int n = 0;
+        auto list = new cl_command_queue[promises.size()];
+        // this is narrow/naive map implementation, but for not reasonably small input size
+        // this would be much faster then proper nlog(n) map/set due to much smaller overhead,
+        // which is exactly the case here
+        for (auto &p: promises) {
+            if (p.completed && !force)
+                continue;
+
+            p.completed = true;
+
+            bool found = false;
+            for (int i = 0; i < n; i++) {
+                if (list[i] != p.ocl_queue) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                list[n++] = p.ocl_queue;
+                goto waiting_room;
+            }
+
+            if (p.cleanup_cb)
+                (*p.cleanup_cb)();
+
+            continue;
+            
+            waiting_room:
+            {
+                cl_int err;
+                err = clFinish(p.ocl_queue);
+                if (err != CL_SUCCESS) {
+                    delete[] list;
+                    throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
+                }
+                if (p.cleanup_cb)
+                    (*p.cleanup_cb)();
+            }
+        }
+
+        delete[] list;
+    }
 }

@@ -89,6 +89,13 @@ namespace xm::ocl::iop {
         const cl_event &event() const;
 
         cl_command_queue queue() const;
+
+        /**
+         * BLOCKING OPERATION, waits for result and cleanup resources
+         * @param promises list of unique promises
+         * @param force wait for completed promises too
+         */
+        static void finalizeAll(std::vector<ClImagePromise> &promises, bool force = false);
     };
 
     cv::AccessFlag access_to_cv(ACCESS access);

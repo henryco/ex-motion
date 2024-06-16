@@ -11,16 +11,17 @@ namespace xm::ocl {
 
     ResourceContainer::ResourceContainer(std::function<void()> *cb_ptr) {
         cleanup_cb = cb_ptr;
-        released = false;
     }
 
     void ResourceContainer::release() {
-        if (released)
-            return;
-        released = true;
         if (cleanup_cb) {
             (*cleanup_cb)();
             delete cleanup_cb;
+            cleanup_cb = nullptr;
         }
+    }
+
+    void ResourceContainer::operator()() {
+        release();
     }
 }

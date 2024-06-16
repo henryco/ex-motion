@@ -263,14 +263,16 @@ namespace xm::ocl::iop {
                 throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
             completed = true;
 
-            if (cleanup_cb)
-                (*cleanup_cb)();
+            if (cleanup_container) {
+                (*cleanup_container)();
+                cleanup_container = nullptr;
+            }
         }
         return *this;
     }
 
     ClImagePromise &ClImagePromise::withCleanup(std::function<void()> *cb_ptr) {
-        cleanup_cb = std::shared_ptr<std::function<void()>>(cb_ptr);
+        cleanup_container = std::make_shared<ResourceContainer>(cb_ptr);
         return *this;
     }
 
@@ -283,7 +285,7 @@ namespace xm::ocl::iop {
     }
 
     ClImagePromise::ClImagePromise(ClImagePromise &&other) noexcept {
-        cleanup_cb = std::move(other.cleanup_cb);
+        cleanup_container = std::move(other.cleanup_container);
         completed = other.completed;
         ocl_event = other.ocl_event;
         ocl_queue = other.ocl_queue;
@@ -294,7 +296,7 @@ namespace xm::ocl::iop {
     }
 
     ClImagePromise::ClImagePromise(const ClImagePromise &other) {
-        cleanup_cb = other.cleanup_cb;
+        cleanup_container = other.cleanup_container;
         completed = other.completed;
         ocl_queue = other.ocl_queue;
         ocl_event = other.ocl_event;
@@ -307,7 +309,7 @@ namespace xm::ocl::iop {
             return *this;
         if (ocl_event != nullptr)
             clReleaseEvent(ocl_event);
-        cleanup_cb = std::move(other.cleanup_cb);
+        cleanup_container = std::move(other.cleanup_container);
         completed = other.completed;
         ocl_queue = other.ocl_queue;
         ocl_event = other.ocl_event;
@@ -323,7 +325,7 @@ namespace xm::ocl::iop {
             return *this;
         if (ocl_event != nullptr)
             clReleaseEvent(ocl_event);
-        cleanup_cb = other.cleanup_cb;
+        cleanup_container = other.cleanup_container;
         completed = other.completed;
         ocl_event = other.ocl_event;
         ocl_queue = other.ocl_queue;
@@ -361,8 +363,10 @@ namespace xm::ocl::iop {
                 goto waiting_room;
             }
 
-            if (p.cleanup_cb)
-                (*p.cleanup_cb)();
+            if (p.cleanup_container) {
+                (*p.cleanup_container)();
+                p.cleanup_container = nullptr;
+            }
 
             continue;
             
@@ -374,8 +378,10 @@ namespace xm::ocl::iop {
                     delete[] list;
                     throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
                 }
-                if (p.cleanup_cb)
-                    (*p.cleanup_cb)();
+                if (p.cleanup_container) {
+                    (*p.cleanup_container)();
+                    p.cleanup_container = nullptr;
+                }
             }
         }
 

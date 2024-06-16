@@ -10,6 +10,7 @@
 
 #include "ocl_data.h"
 #include "ocl_interop_ext.h"
+#include "ocl_container.h"
 
 namespace xm::ocl::iop {
 
@@ -19,7 +20,7 @@ namespace xm::ocl::iop {
      */
     class ClImagePromise {
     private:
-        std::shared_ptr<std::function<void()>> cleanup_cb;
+        std::shared_ptr<ResourceContainer> cleanup_container;
         cl_command_queue ocl_queue = nullptr;
         cl_event ocl_event = nullptr;
         xm::ocl::Image2D image;

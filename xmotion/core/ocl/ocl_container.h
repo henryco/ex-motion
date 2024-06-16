@@ -11,7 +11,6 @@ namespace xm::ocl {
     class ResourceContainer {
     private:
         std::function<void()> *cleanup_cb;
-        bool released = false;
     public:
         explicit ResourceContainer(std::function<void()> *cb_ptr);
 
@@ -24,6 +23,8 @@ namespace xm::ocl {
         ResourceContainer &operator=(const ResourceContainer &other) = delete;
 
         ~ResourceContainer();
+
+        void operator()();
 
         void release();
     };

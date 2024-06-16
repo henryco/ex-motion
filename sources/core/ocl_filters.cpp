@@ -447,8 +447,8 @@ namespace xm::ocl {
         out = result;
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key(cl_command_queue queue, const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                            const cv::Scalar &color, bool linear, int mask_size, int blur, int fine, int refine) {
+    xm::ocl::iop::ClImagePromise chroma_key(cl_command_queue queue, const Image2D &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up,
+                                            const xm::ds::Color4u &color, bool linear, int mask_size, int blur, int fine, int refine) {
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (int) ((float) n_w / ratio);
@@ -490,15 +490,15 @@ namespace xm::ocl {
         auto out_width = (uint) in.cols;
         auto scale_h = (float) in.rows / (float) n_h;
         auto scale_w = (float) in.cols / (float) n_w;
-        auto lower_h = (uchar) hls_low[0];
-        auto lower_l = (uchar) hls_low[1];
-        auto lower_s = (uchar) hls_low[2];
-        auto upper_h = (uchar) hls_up[0];
-        auto upper_l = (uchar) hls_up[1];
-        auto upper_s = (uchar) hls_up[2];
-        auto color_b = (uchar) color[0];
-        auto color_g = (uchar) color[1];
-        auto color_r = (uchar) color[2];
+        auto lower_h = (uchar) hls_low.h;
+        auto lower_l = (uchar) hls_low.l;
+        auto lower_s = (uchar) hls_low.s;
+        auto upper_h = (uchar) hls_up.h;
+        auto upper_l = (uchar) hls_up.l;
+        auto upper_s = (uchar) hls_up.s;
+        auto color_b = (uchar) color.b;
+        auto color_g = (uchar) color.g;
+        auto color_r = (uchar) color.r;
         auto is_linear = (uchar) linear ? 1 : 0;
         auto is_blur = (uchar) (blur >= 3);
         auto dx = (uint) std::ceil(scale_w);
@@ -628,13 +628,13 @@ namespace xm::ocl {
         }));
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up, const cv::Scalar &color,
+    xm::ocl::iop::ClImagePromise chroma_key(const Image2D &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up, const xm::ds::Color4u &color,
                     bool linear, int mask_size, int blur, int fine, int refine, int queue_index) {
         return chroma_key(Kernels::instance().retrieve_queue(queue_index), in, hls_low, hls_up, color, linear, mask_size, blur, fine, refine);
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key_single_pass(cl_command_queue queue, const Image2D &in, const cv::Scalar &hls_low,
-                                                        const cv::Scalar &hls_up, const cv::Scalar &color, bool linear, int mask_size,
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(cl_command_queue queue, const Image2D &in, const xm::ds::Color4u &hls_low,
+                                                        const xm::ds::Color4u &hls_up, const xm::ds::Color4u &color, bool linear, int mask_size,
                                                         int blur) {
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         const auto ratio = (float) in.cols / (float) in.rows;
@@ -664,15 +664,15 @@ namespace xm::ocl {
         auto out_width = (uint) in.cols;
         auto scale_h = (float) in.rows / (float) n_h;
         auto scale_w = (float) in.cols / (float) n_w;
-        auto lower_h = (uchar) hls_low[0];
-        auto lower_l = (uchar) hls_low[1];
-        auto lower_s = (uchar) hls_low[2];
-        auto upper_h = (uchar) hls_up[0];
-        auto upper_l = (uchar) hls_up[1];
-        auto upper_s = (uchar) hls_up[2];
-        auto color_b = (uchar) color[0];
-        auto color_g = (uchar) color[1];
-        auto color_r = (uchar) color[2];
+        auto lower_h = (uchar) hls_low.h;
+        auto lower_l = (uchar) hls_low.l;
+        auto lower_s = (uchar) hls_low.s;
+        auto upper_h = (uchar) hls_up.h;
+        auto upper_l = (uchar) hls_up.l;
+        auto upper_s = (uchar) hls_up.s;
+        auto color_b = (uchar) color.b;
+        auto color_g = (uchar) color.g;
+        auto color_r = (uchar) color.r;
         auto is_linear = (uchar) linear ? 1 : 0;
         auto is_blur = (uchar) (blur >= 3);
         auto dx = (uint) std::ceil(scale_w);
@@ -718,8 +718,8 @@ namespace xm::ocl {
         return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event);
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const Image2D &in, const cv::Scalar &hls_low, const cv::Scalar &hls_up,
-                                                        const cv::Scalar &color, bool linear, int mask_size, int blur,
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const Image2D &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up,
+                                                        const xm::ds::Color4u &color, bool linear, int mask_size, int blur,
                                                         int queue_index) {
         return chroma_key_single_pass(Kernels::instance().retrieve_queue(queue_index),
                                       in, hls_low, hls_up, color, linear, mask_size, blur);

@@ -15,6 +15,7 @@
 #include "cl_kernel.h"
 #include "ocl_data.h"
 #include "ocl_interop.h"
+#include "../utils/xm_data.h"
 
 namespace xm::ocl {
 
@@ -172,9 +173,9 @@ namespace xm::ocl {
     xm::ocl::iop::ClImagePromise chroma_key(
             cl_command_queue queue,
             const xm::ocl::Image2D &in,
-            const cv::Scalar &hls_low,
-            const cv::Scalar &hls_up,
-            const cv::Scalar &color,
+            const xm::ds::Color4u &hls_low,
+            const xm::ds::Color4u &hls_up,
+            const xm::ds::Color4u &color,
             bool linear,
             int mask_size, // 256, 512, ...
             int blur, // 3, 5, 7, 9, 11, ...
@@ -184,9 +185,9 @@ namespace xm::ocl {
 
     xm::ocl::iop::ClImagePromise chroma_key(
             const xm::ocl::Image2D &in,
-            const cv::Scalar &hls_low,
-            const cv::Scalar &hls_up,
-            const cv::Scalar &color,
+            const xm::ds::Color4u &hls_low,
+            const xm::ds::Color4u &hls_up,
+            const xm::ds::Color4u &color,
             bool linear,
             int mask_size, // 256, 512, ...
             int blur, // 3, 5, 7, 9, 11, ...
@@ -197,9 +198,9 @@ namespace xm::ocl {
 
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(
             const xm::ocl::Image2D &in,
-            const cv::Scalar &hls_low,
-            const cv::Scalar &hls_up,
-            const cv::Scalar &color,
+            const xm::ds::Color4u &hls_low,
+            const xm::ds::Color4u &hls_up,
+            const xm::ds::Color4u &color,
             bool linear,
             int mask_size, // 256, 512, ...
             int blur, // 3, 5, 7, 9, 11, ...
@@ -209,9 +210,9 @@ namespace xm::ocl {
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(
             cl_command_queue queue,
             const xm::ocl::Image2D &in,
-            const cv::Scalar &hls_low,
-            const cv::Scalar &hls_up,
-            const cv::Scalar &color,
+            const xm::ds::Color4u &hls_low,
+            const xm::ds::Color4u &hls_up,
+            const xm::ds::Color4u &color,
             bool linear,
             int mask_size, // 256, 512, ...
             int blur // 3, 5, 7, 9, 11, ...
@@ -236,12 +237,22 @@ namespace xm::ocl {
     xm::ocl::iop::ClImagePromise local_binary_patterns(
             cl_command_queue queue,
             const xm::ocl::Image2D &in,
-            int window_size);
+            int window_size
+    );
 
     xm::ocl::iop::ClImagePromise local_binary_patterns(
             const xm::ocl::Image2D &in,
             int window_size,
-            int queue_index = -1);
+            int queue_index = -1
+    );
+
+//    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
+//            const xm::ocl::Image2D &lbp_texture,
+//            const xm::ocl::Image2D &frame,
+//            float threshold,
+//            int window_size,
+//            int queue_index = -1
+//    );
 }
 
 #endif //XMOTION_OCL_FILTERS_H

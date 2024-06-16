@@ -43,9 +43,9 @@ namespace xm {
         const auto &conf = config.filters.background.chroma;
         auto filter = std::make_unique<xm::chroma::ChromaKey>();
         filter->init({
-            .range = cv::Scalar(conf.range.h, conf.range.s, conf.range.l),
-            .color = xm::ocv::parse_hex_to_bgr(conf.replace),
-            .key = xm::ocv::parse_hex_to_bgr(conf.key),
+            .range = xm::ds::Color4u::hls((int) (conf.range.h * 255.f), (int) (conf.range.l * 255.f), (int) (conf.range.s * 255.f)),
+            .color = xm::ocv::parse_hex_to_bgr_4u(conf.replace),
+            .key = xm::ocv::parse_hex_to_bgr_4u(conf.key),
             .refine = conf.refine,
             .fine = conf.fine,
             .blur = conf.blur,

@@ -11,16 +11,16 @@ namespace xm::chroma {
     void ChromaKey::init(const Conf &conf) {
         const auto key_hls = xm::ocv::bgr_to_hls(conf.key);
 
-        const int bot_h = key_hls[0] - (int) (conf.range[0] * 255.f);
-        const int bot_s = std::clamp(key_hls[2] - (int) (conf.range[1] * 255.f), 0, 255);
-        const int bot_l = std::clamp(key_hls[1] - (int) (conf.range[2] * 255.f), 0, 255);
+        const int bot_h = (int) key_hls.h - (int) conf.range.h;
+        const int bot_s = std::clamp((int) key_hls.s - (int) conf.range.s, 0, 255);
+        const int bot_l = std::clamp((int) key_hls.l - (int) conf.range.l, 0, 255);
 
-        const int top_h = key_hls[0] + (int) (conf.range[0] * 255.f);
-        const int top_s = std::clamp(key_hls[2] + (int) (conf.range[1] * 255.f), 0, 255);
-        const int top_l = std::clamp(key_hls[1] + (int) (conf.range[2] * 255.f), 0, 255);
+        const int top_h = (int) key_hls.h + (int) conf.range.h;
+        const int top_s = std::clamp((int) key_hls.s + (int) conf.range.s, 0, 255);
+        const int top_l = std::clamp((int) key_hls.l + (int) conf.range.l, 0, 255);
 
-        hls_key_lower = cv::Scalar(bot_h < 0 ? 255 + bot_h : bot_h, bot_l, bot_s);
-        hls_key_upper = cv::Scalar(top_h > 255 ? top_h - 255 : top_h, top_l, top_s);
+        hls_key_lower = xm::ds::Color4u::hls(bot_h < 0 ? 255 + bot_h : bot_h, bot_l, bot_s);
+        hls_key_upper = xm::ds::Color4u::hls(top_h > 255 ? top_h - 255 : top_h, top_l, top_s);
 
         linear_interpolation = conf.linear;
         mask_size = (conf.power + 1) * 256;

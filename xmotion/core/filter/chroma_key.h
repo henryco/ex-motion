@@ -6,6 +6,7 @@
 #define XMOTION_CHROMA_KEY_H
 
 #include "i_filter.h"
+#include "../utils/xm_data.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -16,17 +17,17 @@ namespace xm::chroma {
         /**
          * Normalized [0-1] HSL range
          */
-        cv::Scalar range;
+        xm::ds::Color4u range;
 
         /**
          * New background color (BGR)
          */
-        cv::Scalar color;
+        xm::ds::Color4u color;
 
         /**
          * Chromakey color (BGR)
          */
-        cv::Scalar key;
+        xm::ds::Color4u key;
 
         /**
          * Mask refinement iterations
@@ -65,7 +66,7 @@ namespace xm::chroma {
          * Should use linear interpolation
          * (mask is slower but smoother)
          */
-        bool linear;
+        bool linear = false;
     };
 
     class ChromaKey : public xm::Filter {
@@ -74,8 +75,9 @@ namespace xm::chroma {
                 spdlog::stdout_color_mt("filter_chroma_key");
 
     private:
-        cv::Scalar hls_key_lower, hls_key_upper;
-        cv::Scalar bgr_bg_color;
+        xm::ds::Color4u hls_key_lower;
+        xm::ds::Color4u hls_key_upper;
+        xm::ds::Color4u bgr_bg_color;
 
         bool linear_interpolation = false;
         int mask_iterations = 0;

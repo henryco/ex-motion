@@ -117,6 +117,7 @@ set(HEADER_FILES
         xmotion/fbgtk/file_worker.h
         xmotion/core/ocl/ocl_data.h
         xmotion/core/ocl/ocl_container.h
+        xmotion/core/utils/xm_data.h
 )
 
 set(SOURCE_FILES
@@ -167,6 +168,7 @@ set(SOURCE_FILES
         sources/core/ocl_interop.cpp
         sources/fbgtk/file_worker.cpp
         sources/core/ocl_container.cpp
+        sources/core/xm_data.cpp
 )
 
 if (UNIX AND NOT APPLE)

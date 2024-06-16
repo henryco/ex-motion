@@ -150,12 +150,26 @@ namespace xm::ocv {
         return cv::Scalar(b, g, r); // NOLINT(*-return-braced-init-list)
     }
 
+    xm::ds::Color4u parse_hex_to_bgr_4u(const std::string &hex) {
+        if (hex[0] != '#' || hex.length() != 7)
+            throw std::invalid_argument("Invalid hex color format");
+        const auto r = hex_to_int(hex.substr(1, 2));
+        const auto g = hex_to_int(hex.substr(3, 2));
+        const auto b = hex_to_int(hex.substr(5, 2));
+        return xm::ds::Color4u::bgr(b, g, r);
+    }
+
     cv::Scalar_<int> bgr_to_hsv(const cv::Scalar &bgr) {
         cv::Mat tmp_in(1, 1, CV_8UC3, bgr);
         cv::Mat tmp_out;
         cv::cvtColor(tmp_in, tmp_out, cv::COLOR_BGR2HSV_FULL);
         cv::Vec3b pixel = tmp_out.at<cv::Vec3b>(0, 0);
         return cv::Scalar_<int>(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
+    }
+
+    xm::ds::Color4u bgr_to_hsv(const ds::Color4u &bgr) {
+        auto hsv = bgr_to_hsv(cv::Scalar(bgr.b, bgr.g, bgr.r));
+        return ds::Color4u::hsv(hsv[0], hsv[1], hsv[2]);
     }
 
     cv::Scalar_<int> bgr_to_hls(const cv::Scalar &bgr) {
@@ -166,6 +180,11 @@ namespace xm::ocv {
         return cv::Scalar_<int>(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
+    xm::ds::Color4u bgr_to_hls(const ds::Color4u &bgr) {
+        auto hls = bgr_to_hls(cv::Scalar(bgr.b, bgr.g, bgr.r));
+        return ds::Color4u::hls(hls[0], hls[1], hls[2]);
+    }
+
     cv::Scalar_<int> hsv_to_bgr(const cv::Scalar &hsv) {
         cv::Mat tmp_in(1, 1, CV_8UC3, hsv);
         cv::Mat tmp_out;
@@ -174,12 +193,27 @@ namespace xm::ocv {
         return cv::Scalar_<int>(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
     }
 
-    cv::Scalar_<int> hls_to_bgr(const cv::Scalar &hsv) {
-        cv::Mat tmp_in(1, 1, CV_8UC3, hsv);
+    xm::ds::Color4u hsv_to_bgr(const ds::Color4u &hsv) {
+        auto bgr = hsv_to_bgr(cv::Scalar(hsv.h, hsv.s, hsv.v));
+        return ds::Color4u::bgr(bgr[0], bgr[1], bgr[2]);
+    }
+
+    cv::Scalar_<int> hls_to_bgr(const cv::Scalar &hls) {
+        cv::Mat tmp_in(1, 1, CV_8UC3, hls);
         cv::Mat tmp_out;
         cv::cvtColor(tmp_in, tmp_out, cv::COLOR_HLS2BGR_FULL);
         cv::Vec3b pixel = tmp_out.at<cv::Vec3b>(0, 0);
         return cv::Scalar_<int>(pixel[0], pixel[1], pixel[2]); // NOLINT(*-return-braced-init-list)
+    }
+
+    xm::ds::Color4u hls_to_bgr(const ds::Color4u &hls) {
+        auto bgr = hls_to_bgr(cv::Scalar(hls.h, hls.l, hls.s));
+        return ds::Color4u::bgr(bgr[0], bgr[1], bgr[2]);
+    }
+
+    xm::ds::Color4u bgr_to_hsl(const ds::Color4u &bgr) {
+        auto hls = bgr_to_hls(cv::Scalar(bgr.b, bgr.g, bgr.r));
+        return ds::Color4u::hsl(hls[0], hls[2], hls[1]);
     }
 
 }

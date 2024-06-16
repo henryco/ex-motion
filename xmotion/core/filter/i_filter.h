@@ -5,7 +5,6 @@
 #ifndef XMOTION_I_FILTER_H
 #define XMOTION_I_FILTER_H
 
-#include <opencv2/core/mat.hpp>
 #include "../ocl/ocl_data.h"
 #include "../ocl/ocl_interop.h"
 

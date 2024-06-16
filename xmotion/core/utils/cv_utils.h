@@ -7,6 +7,8 @@
 
 #include <vector>
 #include <opencv2/core/mat.hpp>
+#include "../ocl/ocl_data.h"
+#include "xm_data.h"
 
 namespace xm::ocv {
 
@@ -129,7 +131,20 @@ namespace xm::ocv {
 
     cv::Scalar_<int> hsv_to_bgr(const cv::Scalar &hsv);
 
-    cv::Scalar_<int> hls_to_bgr(const cv::Scalar &hsv);
+    cv::Scalar_<int> hls_to_bgr(const cv::Scalar &hls);
+
+
+    xm::ds::Color4u parse_hex_to_bgr_4u(const std::string &hex);
+
+    xm::ds::Color4u bgr_to_hsv(const xm::ds::Color4u &bgr);
+
+    xm::ds::Color4u bgr_to_hsl(const xm::ds::Color4u &bgr);
+
+    xm::ds::Color4u bgr_to_hls(const xm::ds::Color4u &bgr);
+
+    xm::ds::Color4u hsv_to_bgr(const xm::ds::Color4u &hsv);
+
+    xm::ds::Color4u hls_to_bgr(const xm::ds::Color4u &hls);
 }
 
 

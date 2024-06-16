@@ -12,7 +12,9 @@ namespace xm {
 
     class Filter {
     public:
-        virtual xm::ocl::iop::ClImagePromise filter(const xm::ocl::Image2D &in) = 0;
+        virtual xm::ocl::iop::ClImagePromise filter(const xm::ocl::Image2D &in, int q_idx) = 0;
+
+        xm::ocl::iop::ClImagePromise filter(const xm::ocl::Image2D &in) {return filter(in, -1);}
 
         virtual ~Filter() = default;
     };

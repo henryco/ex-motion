@@ -6,9 +6,9 @@
 #include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../xmotion/core/utils/cv_utils.h"
 
-namespace xm::chroma {
+namespace xm::filters {
 
-    void ChromaKey::init(const Conf &conf) {
+    void ChromaKey::init(const chroma::Conf &conf) {
         const auto key_hls = xm::ocv::bgr_to_hls(conf.key);
 
         const int bot_h = (int) key_hls.h - (int) conf.range.h;
@@ -35,7 +35,7 @@ namespace xm::chroma {
         ready = true;
     }
 
-    xm::ocl::iop::ClImagePromise ChromaKey::filter(const ocl::Image2D &in) {
+    xm::ocl::iop::ClImagePromise ChromaKey::filter(const ocl::Image2D &in, int q_idx) {
         if (!ready)
             throw std::logic_error("Filter is not initialized");
         if (mask_iterations > 0 && fine_kernel >= 3)
@@ -48,7 +48,8 @@ namespace xm::chroma {
                     mask_size,
                     blur_kernel,
                     fine_kernel,
-                    mask_iterations);
+                    mask_iterations,
+                    q_idx);
         return xm::ocl::chroma_key_single_pass(
                 in,
                 hls_key_lower,
@@ -56,7 +57,8 @@ namespace xm::chroma {
                 bgr_bg_color,
                 linear_interpolation,
                 mask_size,
-                blur_kernel);
+                blur_kernel,
+                q_idx);
     }
 
 } // xm

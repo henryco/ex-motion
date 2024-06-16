@@ -840,6 +840,8 @@ namespace xm::ocl {
     xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
             cl_command_queue queue, const Image2D &lbp_texture, const Image2D &frame,
             const ds::Color4u &color, float threshold, int window_size) {
+        if (window_size > 15)
+            throw std::invalid_argument("window_size > 15");
 
         auto c_size = (int) std::ceil((float) std::pow(window_size, 2) / 8.f);
 

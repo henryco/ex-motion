@@ -118,6 +118,7 @@ set(HEADER_FILES
         xmotion/core/ocl/ocl_data.h
         xmotion/core/ocl/ocl_container.h
         xmotion/core/utils/xm_data.h
+        xmotion/core/filter/bg_lbp_subtract.h
 )
 
 set(SOURCE_FILES
@@ -169,6 +170,7 @@ set(SOURCE_FILES
         sources/fbgtk/file_worker.cpp
         sources/core/ocl_container.cpp
         sources/core/xm_data.cpp
+        sources/core/bg_lbp_subtract.cpp
 )
 
 if (UNIX AND NOT APPLE)

@@ -36,7 +36,7 @@ namespace xm {
             return;
 
         const auto &conf = config.filters.background.chroma;
-        auto filter = std::make_unique<xm::chroma::ChromaKey>();
+        auto filter = std::make_unique<xm::filters::ChromaKey>();
         filter->init({
             .range = xm::ds::Color4u::hls((int) (conf.range.h * 255.f), (int) (conf.range.l * 255.f), (int) (conf.range.s * 255.f)),
             .color = xm::ocv::parse_hex_to_bgr_4u(conf.replace),

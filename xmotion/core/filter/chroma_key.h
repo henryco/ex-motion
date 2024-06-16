@@ -11,63 +11,65 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-namespace xm::chroma {
+namespace xm::filters {
 
-    using Conf = struct Conf {
-        /**
-         * Normalized [0-1] HSL range
-         */
-        xm::ds::Color4u range;
+    namespace chroma {
+        using Conf = struct Conf {
+            /**
+             * Normalized [0-1] HSL range
+             */
+            xm::ds::Color4u range;
 
-        /**
-         * New background color (BGR)
-         */
-        xm::ds::Color4u color;
+            /**
+             * New background color (BGR)
+             */
+            xm::ds::Color4u color;
 
-        /**
-         * Chromakey color (BGR)
-         */
-        xm::ds::Color4u key;
+            /**
+             * Chromakey color (BGR)
+             */
+            xm::ds::Color4u key;
 
-        /**
-         * Mask refinement iterations
-         */
-        int refine = 0;
+            /**
+             * Mask refinement iterations
+             */
+            int refine = 0;
 
-        /**
-         * Mask refinement kernel
-         *
-         * \code
-         * (CxC): C = max(3, (fine * 2) + 1)
-         * \endcode
-         */
-        int fine = 0;
+            /**
+             * Mask refinement kernel
+             *
+             * \code
+             * (CxC): C = max(3, (fine * 2) + 1)
+             * \endcode
+             */
+            int fine = 0;
 
-        /**
-         * Blur intensity,
-         * used to calculate gaussian blur kernel
-         *
-         * \code
-         * (CxC): C = (blur * 2) + 1
-         * \endcode
-         */
-        int blur = 0;
+            /**
+             * Blur intensity,
+             * used to calculate gaussian blur kernel
+             *
+             * \code
+             * (CxC): C = (blur * 2) + 1
+             * \endcode
+             */
+            int blur = 0;
 
-        /**
-         * Mask size, multiple of 256
-         *
-         * \code
-         * (TxT): T = (1 + power) * 256
-         * \endcode
-         */
-        int power = 0;
+            /**
+             * Mask size, multiple of 256
+             *
+             * \code
+             * (TxT): T = (1 + power) * 256
+             * \endcode
+             */
+            int power = 0;
 
-        /**
-         * Should use linear interpolation
-         * (mask is slower but smoother)
-         */
-        bool linear = false;
-    };
+            /**
+             * Should use linear interpolation
+             * (mask is slower but smoother)
+             */
+            bool linear = false;
+        };
+    }
 
     class ChromaKey : public xm::Filter {
 
@@ -87,9 +89,9 @@ namespace xm::chroma {
         bool ready = false;
 
     public:
-        void init(const Conf &conf);
+        void init(const chroma::Conf &conf);
 
-        xm::ocl::iop::ClImagePromise filter(const ocl::Image2D &in) override;
+        xm::ocl::iop::ClImagePromise filter(const ocl::Image2D &in, int q_idx) override;
 
     };
 

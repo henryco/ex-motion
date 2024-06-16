@@ -14,7 +14,7 @@ namespace xm::ocl::iop {
     template <typename T>
     class CLPromise {
     protected:
-        std::shared_ptr<ResourceContainer> cleanup_container;
+        std::shared_ptr<ResourceContainer> cleanup_container = nullptr;
         cl_command_queue ocl_queue = nullptr;
         cl_event ocl_event = nullptr;
         bool completed = false;

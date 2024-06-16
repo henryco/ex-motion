@@ -83,7 +83,6 @@ namespace xm::filters {
         long delay;
 
         bool initialized = false;
-        bool active = false;
         bool ready = false;
 
     public:

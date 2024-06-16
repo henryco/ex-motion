@@ -10,6 +10,7 @@ namespace xm::filters {
     void BgLbpSubtract::reset() {
         t0 = std::chrono::duration_cast<std::chrono::milliseconds>(
                 std::chrono::high_resolution_clock::now().time_since_epoch());
+        ready = false;
     }
 
     void BgLbpSubtract::init(const bgs::Conf &conf) {

@@ -825,9 +825,8 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
-        return xm::ocl::iop::ClImagePromise(
-                xm::ocl::Image2D(in.cols, in.rows, c_size, 1, buffer_out, in.context, in.device, xm::ocl::ACCESS::RW),
-                queue, lbp_event);
+        xm::ocl::Image2D image(in.cols, in.rows, c_size, 1, buffer_out, in.context, in.device, xm::ocl::ACCESS::RW);
+        return xm::ocl::iop::ClImagePromise(image, queue, lbp_event);
     }
 
     xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(

@@ -15,7 +15,7 @@ inline int hamming_distance(
 
 inline void compute_lbp(
         const unsigned char *input,
-        unsigned char* out,
+        unsigned char *out,
         const int c_input_size,  // numbers of color channels in image
         const int kernel_size,   // actually should be <= 15
         const int width,
@@ -25,10 +25,10 @@ inline void compute_lbp(
 ) {
     out[0] = 0;
 
-    unsigned char mid = 0;
+    int mid = 0;
     const int idx_mid = (y * width + x) * c_input_size;
     for (int i = 0; i < c_input_size; i++)
-        mid += input[idx_mid + i];
+        mid += (int) input[idx_mid + i];
     mid /= c_input_size;
 
     int c = 0, b = 0;
@@ -40,19 +40,17 @@ inline void compute_lbp(
             const int i_x = x + kx;
             const int i_y = y + ky;
 
-            unsigned char p = 0;
-            const int idx_p = (i_y * width + i_x) * c_input_size;
-            for (int i = 0; i < c_input_size; i++)
-                p += input[idx_p + i];
-            p /= c_input_size;
+            if (i_x >= 0 && i_y >= 0 && i_x < width && i_y < height) {
+                int p = 0;
+                const int idx_p = (i_y * width + i_x) * c_input_size;
+                for (int i = 0; i < c_input_size; i++)
+                    p += (int) input[idx_p + i];
+                p /= c_input_size;
 
-            const bool value = i_x >= 0
-                               && i_y >= 0
-                               && i_x < width
-                               && i_y < height
-                               && p >= mid;
-
-            out[c] |= value << b;
+                if (p >= mid) {
+                    out[c] |= ((unsigned char) 1) << b;
+                }
+            }
 
             b++;
             if (b >= 8) {

@@ -93,6 +93,7 @@ namespace xm::filters {
 
         xm::ocl::iop::ClImagePromise filter(const ocl::Image2D &in, int q_idx) override;
 
+        void reset() override;
     };
 
 } // xm

@@ -16,6 +16,8 @@ namespace xm {
 
         xm::ocl::iop::ClImagePromise filter(const xm::ocl::Image2D &in) {return filter(in, -1);}
 
+        virtual void reset() = 0;
+
         virtual ~Filter() = default;
     };
 

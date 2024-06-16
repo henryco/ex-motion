@@ -72,16 +72,26 @@ namespace xm::filters {
     private:
         xm::ds::Color4u bgr_bg_color;
 
+        std::chrono::milliseconds t0;
+        ocl::Image2D reference_lbp;
+
         int fine_iterations = 0;
         int fine_kernel = 0;
         int blur_kernel = 0;
+        int lbp_kernel = 0;
         float threshold = .5f;
+        long delay;
+
+        bool initialized = false;
+        bool active = false;
         bool ready = false;
 
     public:
         void init(const bgs::Conf &conf);
 
         xm::ocl::iop::ClImagePromise filter(const ocl::Image2D &in, int q_idx) override;
+
+        void reset() override;
     };
 }
 

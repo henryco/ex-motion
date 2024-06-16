@@ -61,4 +61,8 @@ namespace xm::filters {
                 q_idx);
     }
 
+    void ChromaKey::reset() {
+        // TODO?
+    }
+
 } // xm

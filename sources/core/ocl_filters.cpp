@@ -806,8 +806,8 @@ namespace xm::ocl {
 
         auto i_size = (int) in.channels;
         auto k_size = (int) window_size;
-        auto width = (int) in.rows;
-        auto height = (int) in.cols;
+        auto width = (int) in.cols;
+        auto height = (int) in.rows;
 
         xm::ocl::set_kernel_arg(kernel_lbp, 0, sizeof(cl_mem), &buffer_in);
         xm::ocl::set_kernel_arg(kernel_lbp, 1, sizeof(cl_mem), &buffer_out);
@@ -848,7 +848,7 @@ namespace xm::ocl {
             throw std::invalid_argument("output channels size < 1");
 
         const auto context = frame.context;
-        const auto inter_size = lbp_texture.size();
+        const auto inter_size = frame.size();
         const auto pref_size = Kernels::instance().lbp_local_size;
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) frame.cols, pref_size),
@@ -864,8 +864,8 @@ namespace xm::ocl {
 
         auto i_size = (int) frame.channels;
         auto k_size = (int) window_size;
-        auto width = (int) frame.rows;
-        auto height = (int) frame.cols;
+        auto width = (int) frame.cols;
+        auto height = (int) frame.rows;
         auto total = (int) std::pow(window_size, 2) - 1;
         auto color_b = (uint) color.b;
         auto color_g = (uint) color.g;

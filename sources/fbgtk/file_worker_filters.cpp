@@ -61,7 +61,7 @@ namespace xm {
         filter->init({
             .color = xm::ds::Color4u::bgr(0, 255, 0),
             .threshold = 0.5f,
-            .delay = 5000,
+            .delay = 2000,
             .window = 1,
             .refine = 0,
             .fine = 0,

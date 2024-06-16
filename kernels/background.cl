@@ -174,7 +174,7 @@ __kernel void kernel_mask_apply(
 __kernel void kernel_lbp_mask_apply(
         __global const unsigned char *frame_image,
         __global const unsigned char *frame_lbp,
-        __global unsigned char* output,
+        __global unsigned char *output,
         const int c_input_size,  // numbers of color channels in image
         const int c_code_size,   // ceil(pow(kernel_size, 2) / 8.f)
         const int kernel_size,   // actually should be <= 15

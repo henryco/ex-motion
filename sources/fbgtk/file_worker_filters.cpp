@@ -28,8 +28,8 @@ namespace xm {
             return;
 
         // background filter
-//        opt_filter_chroma();
-        opt_filter_delta();
+        opt_filter_chroma();
+//        opt_filter_delta();
     }
 
     void FileWorker::opt_filter_chroma() {

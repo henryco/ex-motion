@@ -168,7 +168,38 @@ namespace xm::ocl::iop {
         }
 
         CLPromise<T> &withCleanup(std::function<void()> *cb_ptr) {
-            cleanup_container = std::make_shared<ResourceContainer>(cb_ptr);
+            if (!cleanup_container) {
+                cleanup_container = std::make_shared<ResourceContainer>(cb_ptr);
+                return *this;
+            }
+
+            auto current = cleanup_container;
+            auto another = std::make_shared<ResourceContainer>(cb_ptr);
+            cleanup_container = std::make_shared<ResourceContainer>(new std::function<void()>(
+                    [current, another]() {
+                        (*current)();
+                        (*another)();
+                    }));
+
+            return *this;
+        }
+
+        CLPromise<T> &withCleanup(const CLPromise<T> &other) {
+            if (this == &other)
+                return *this;
+
+            if (!cleanup_container) {
+                cleanup_container = other.cleanup_container;
+                return *this;
+            }
+
+            auto current = cleanup_container;
+            cleanup_container = std::make_shared<ResourceContainer>(new std::function<void()>(
+                    [current, another = other.cleanup_container]() {
+                        (*current)();
+                        (*another)();
+                    }));
+
             return *this;
         }
 

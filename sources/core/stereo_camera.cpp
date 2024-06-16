@@ -124,7 +124,7 @@ namespace xm {
 
             // there is no assigned executors, create one
             executor = std::make_shared<eox::util::ThreadPool>();
-            executor->start(captures.size());
+            executor->start(captures.size() + 1);
         }
 
         std::vector<cv::VideoCapture> cameras;

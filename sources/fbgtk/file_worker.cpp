@@ -24,11 +24,6 @@ namespace xm {
         prepare_logic();
         prepare_cam();
         prepare_gui();
-
-//        thread_pool->start(config.camera.capture.size());
-        thread_pool = std::make_shared<eox::util::ThreadPool>();
-        thread_pool->start(10);
-        camera->setThreadPool(thread_pool);
     }
 
     void xm::FileWorker::update(float dt, float latency, float fps) {

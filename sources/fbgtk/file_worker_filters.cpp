@@ -11,16 +11,11 @@ namespace xm {
     void FileWorker::filter_frames(std::vector<xm::ocl::Image2D> &frames) {
 //        const auto t0 = std::chrono::system_clock::now();
 
-//        std::vector<std::future<cv::UMat>> futures;
         for (const auto &filter: filters) {
             for (auto &frame: frames) {
                 filter->filter(frame).waitFor().toImage2D(frame);
             }
         }
-
-//        for (auto &future: futures) {
-//            auto r = future.get();
-//        }
 
 //        const auto t1 = std::chrono::system_clock::now();
 //        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();

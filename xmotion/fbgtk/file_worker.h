@@ -30,7 +30,6 @@ namespace xm {
         xm::SimpleImageWindow *window;
         // ==== pointers managed externally ====
 
-        std::shared_ptr<eox::util::ThreadPool> thread_pool;
         std::vector<std::unique_ptr<xm::Filter>> filters;
         std::unique_ptr<xm::StereoCamera> camera;
         std::unique_ptr<xm::Logic> logic;

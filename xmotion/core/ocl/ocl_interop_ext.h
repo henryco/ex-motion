@@ -168,6 +168,9 @@ namespace xm::ocl::iop {
         }
 
         CLPromise<T> &withCleanup(std::function<void()> *cb_ptr) {
+            if (!cb_ptr)
+                return *this;
+
             if (!cleanup_container) {
                 cleanup_container = std::make_shared<ResourceContainer>(cb_ptr);
                 return *this;
@@ -186,6 +189,9 @@ namespace xm::ocl::iop {
 
         CLPromise<T> &withCleanup(const CLPromise<T> &other) {
             if (this == &other)
+                return *this;
+
+            if (!other.cleanup_container)
                 return *this;
 
             if (!cleanup_container) {

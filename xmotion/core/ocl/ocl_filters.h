@@ -101,7 +101,7 @@ namespace xm::ocl {
      * @param queue_index index of command queue (optional)
      */
     xm::ocl::iop::ClImagePromise blur(
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             int kernel_size,
             int queue_index = -1);
 
@@ -113,7 +113,7 @@ namespace xm::ocl {
      */
     xm::ocl::iop::ClImagePromise blur(
             cl_command_queue queue,
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             int kernel_size);
 
     /**
@@ -171,7 +171,7 @@ namespace xm::ocl {
 
     xm::ocl::iop::ClImagePromise chroma_key(
             cl_command_queue queue,
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             const xm::ds::Color4u &hls_low,
             const xm::ds::Color4u &hls_up,
             const xm::ds::Color4u &color,
@@ -183,7 +183,7 @@ namespace xm::ocl {
     );
 
     xm::ocl::iop::ClImagePromise chroma_key(
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             const xm::ds::Color4u &hls_low,
             const xm::ds::Color4u &hls_up,
             const xm::ds::Color4u &color,
@@ -196,7 +196,7 @@ namespace xm::ocl {
     );
 
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             const xm::ds::Color4u &hls_low,
             const xm::ds::Color4u &hls_up,
             const xm::ds::Color4u &color,
@@ -208,7 +208,7 @@ namespace xm::ocl {
 
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(
             cl_command_queue queue,
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             const xm::ds::Color4u &hls_low,
             const xm::ds::Color4u &hls_up,
             const xm::ds::Color4u &color,
@@ -218,7 +218,7 @@ namespace xm::ocl {
     );
 
     xm::ocl::iop::ClImagePromise flip_rotate(
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             bool flip_x,
             bool flip_y,
             bool rotate,
@@ -227,7 +227,7 @@ namespace xm::ocl {
 
     xm::ocl::iop::ClImagePromise flip_rotate(
             cl_command_queue queue,
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             bool flip_x,
             bool flip_y,
             bool rotate
@@ -235,28 +235,28 @@ namespace xm::ocl {
 
     xm::ocl::iop::ClImagePromise local_binary_patterns(
             cl_command_queue queue,
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             int window_size
     );
 
     xm::ocl::iop::ClImagePromise local_binary_patterns(
-            const xm::ocl::Image2D &in,
+            const xm::ocl::iop::ClImagePromise &in,
             int window_size,
             int queue_index = -1
     );
 
     xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
             cl_command_queue queue,
-            const xm::ocl::Image2D &lbp_texture,
-            const xm::ocl::Image2D &frame,
+            const xm::ocl::iop::ClImagePromise &lbp_texture,
+            const xm::ocl::iop::ClImagePromise &frame,
             const xm::ds::Color4u &color,
             float threshold,
             int window_size
     );
 
     xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
-            const xm::ocl::Image2D &lbp_texture,
-            const xm::ocl::Image2D &frame,
+            const xm::ocl::iop::ClImagePromise &lbp_texture,
+            const xm::ocl::iop::ClImagePromise &frame,
             const xm::ds::Color4u &color,
             float threshold,
             int window_size,

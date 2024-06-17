@@ -51,41 +51,41 @@ namespace xm::ocl::iop {
         ClImagePromise &withCleanup(const ClImagePromise &other);
 
         /**
-         * Often you should call waitFor() first
-         */
-        void toImage2D(xm::ocl::Image2D &img);
-
-        /**
-         * Often you should call waitFor() first
-         */
-        xm::ocl::Image2D getImage2D();
-
-        /**
-         * Often you should call waitFor() first
-         */
-        void toUMat(cv::UMat &mat);
-
-        /**
-         * Often you should call waitFor() first
-         */
-        cv::UMat getUMat();
-
-        /**
-         * Often you should call waitFor() first.
-         * Also Painfully slow and inefficient!
-         */
-        void toMat(cv::Mat &mat);
-
-        /**
-         * Often you should call waitFor() first.
-         * Also Painfully slow and inefficient!
-         */
-        cv::Mat getMat();
-
-        /**
-         * Waits for data to be ready
-         */
+          * Waits for data to be ready
+          */
         ClImagePromise &waitFor();
+
+        /**
+         * Often you should call waitFor() first
+         */
+        void toImage2D(xm::ocl::Image2D &img) const;
+
+        /**
+         * Often you should call waitFor() first
+         */
+        xm::ocl::Image2D getImage2D() const;
+
+        /**
+         * Often you should call waitFor() first
+         */
+        void toUMat(cv::UMat &mat) const;
+
+        /**
+         * Often you should call waitFor() first
+         */
+        cv::UMat getUMat() const;
+
+        /**
+         * Often you should call waitFor() first.
+         * Also Painfully slow and inefficient!
+         */
+        void toMat(cv::Mat &mat) const;
+
+        /**
+         * Often you should call waitFor() first.
+         * Also Painfully slow and inefficient!
+         */
+        cv::Mat getMat() const;
 
         bool resolved() const;
 

@@ -223,15 +223,15 @@ namespace xm::ocl::iop {
             clReleaseEvent(ocl_event);
     }
 
-    void ClImagePromise::toUMat(cv::UMat &mat) {
+    void ClImagePromise::toUMat(cv::UMat &mat) const {
         xm::ocl::iop::to_cv_umat(image, mat);
     }
 
-    cv::UMat ClImagePromise::getUMat() {
+    cv::UMat ClImagePromise::getUMat() const {
         return xm::ocl::iop::to_cv_umat(image);
     }
 
-    cv::Mat ClImagePromise::getMat() {
+    cv::Mat ClImagePromise::getMat() const {
         cv::UMat u_mat;
         xm::ocl::iop::to_cv_umat(image, u_mat);
         cv::Mat mat;
@@ -239,17 +239,17 @@ namespace xm::ocl::iop {
         return mat;
     }
 
-    void ClImagePromise::toMat(cv::Mat &mat) {
+    void ClImagePromise::toMat(cv::Mat &mat) const {
         cv::UMat u_mat;
         xm::ocl::iop::to_cv_umat(image, u_mat);
         u_mat.copyTo(mat);
     }
 
-    xm::ocl::Image2D ClImagePromise::getImage2D() {
+    xm::ocl::Image2D ClImagePromise::getImage2D() const {
         return image;
     }
 
-    void ClImagePromise::toImage2D(Image2D &img) {
+    void ClImagePromise::toImage2D(Image2D &img) const {
         img = image;
     }
 

@@ -87,7 +87,7 @@ namespace xm::ocl::iop {
         /**
          * Often you should call waitFor() first
          */
-        T get() {
+        T get() const {
             return data;
         }
 

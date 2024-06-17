@@ -165,13 +165,15 @@ namespace xm::ocl {
     }
 
 
-    xm::ocl::iop::ClImagePromise blur(const Image2D &in, int kernel_size, int queue_index) {
+    xm::ocl::iop::ClImagePromise blur(const iop::ClImagePromise &in, int kernel_size, int queue_index) {
         return blur(Kernels::instance().retrieve_queue(queue_index), in, kernel_size);
     }
 
-    xm::ocl::iop::ClImagePromise blur(cl_command_queue queue, const Image2D &in, int kernel_size) {
+    xm::ocl::iop::ClImagePromise blur(cl_command_queue queue, const iop::ClImagePromise &in_p, int kernel_size) {
         if (kernel_size < 3 || kernel_size % 2 == 0 || kernel_size > 31)
             throw std::runtime_error("Invalid kernel size: " + std::to_string(kernel_size));
+
+        const auto &in = in_p.getImage2D();
 
         const auto context = Kernels::instance().ocl_context;
         const auto pref_size = Kernels::instance().blur_local_size;
@@ -443,8 +445,10 @@ namespace xm::ocl {
         out = result;
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key(cl_command_queue queue, const Image2D &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up,
+    xm::ocl::iop::ClImagePromise chroma_key(cl_command_queue queue, const iop::ClImagePromise &in_p, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up,
                                             const xm::ds::Color4u &color, bool linear, int mask_size, int blur, int fine, int refine) {
+        const auto &in = in_p.getImage2D();
+
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
         const auto n_h = (int) ((float) n_w / ratio);
@@ -624,14 +628,23 @@ namespace xm::ocl {
         }));
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key(const Image2D &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up, const xm::ds::Color4u &color,
+    xm::ocl::iop::ClImagePromise chroma_key(const iop::ClImagePromise &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up, const xm::ds::Color4u &color,
                     bool linear, int mask_size, int blur, int fine, int refine, int queue_index) {
         return chroma_key(Kernels::instance().retrieve_queue(queue_index), in, hls_low, hls_up, color, linear, mask_size, blur, fine, refine);
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key_single_pass(cl_command_queue queue, const Image2D &in, const xm::ds::Color4u &hls_low,
-                                                        const xm::ds::Color4u &hls_up, const xm::ds::Color4u &color, bool linear, int mask_size,
-                                                        int blur) {
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(
+            cl_command_queue queue,
+            const iop::ClImagePromise &in_p,
+            const xm::ds::Color4u &hls_low,
+            const xm::ds::Color4u &hls_up,
+            const xm::ds::Color4u &color,
+            bool linear,
+            int mask_size,
+            int blur
+    ) {
+        const auto &in = in_p.getImage2D();
+
         const auto kernel_blur_buffer = Kernels::instance().blur_kernels[(blur - 1) / 2];
         const auto ratio = (float) in.cols / (float) in.rows;
         const auto n_w = mask_size;
@@ -714,18 +727,20 @@ namespace xm::ocl {
         return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event);
     }
 
-    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const Image2D &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up,
+    xm::ocl::iop::ClImagePromise chroma_key_single_pass(const iop::ClImagePromise &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up,
                                                         const xm::ds::Color4u &color, bool linear, int mask_size, int blur,
                                                         int queue_index) {
         return chroma_key_single_pass(Kernels::instance().retrieve_queue(queue_index),
                                       in, hls_low, hls_up, color, linear, mask_size, blur);
     }
 
-    xm::ocl::iop::ClImagePromise flip_rotate(const Image2D &in, bool flip_x, bool flip_y, bool rotate, int queue_index) {
+    xm::ocl::iop::ClImagePromise flip_rotate(const iop::ClImagePromise &in, bool flip_x, bool flip_y, bool rotate, int queue_index) {
         return flip_rotate(Kernels::instance().retrieve_queue(queue_index), in, flip_x, flip_y, rotate);
     }
 
-    xm::ocl::iop::ClImagePromise flip_rotate(cl_command_queue queue, const Image2D &in, bool flip_x, bool flip_y, bool rotate) {
+    xm::ocl::iop::ClImagePromise flip_rotate(cl_command_queue queue, const iop::ClImagePromise &in_p, bool flip_x, bool flip_y, bool rotate) {
+        const auto &in = in_p.getImage2D();
+
         const auto context = in.context;
         const auto kernel = Kernels::instance().kernel_flip_rotate;
         const auto pref_size = Kernels::instance().flip_rotate_local_size;
@@ -773,13 +788,15 @@ namespace xm::ocl {
                                             queue, flip_rotate_event);
     }
 
-    xm::ocl::iop::ClImagePromise local_binary_patterns(const Image2D &in, int window_size, int queue_index) {
+    xm::ocl::iop::ClImagePromise local_binary_patterns(const iop::ClImagePromise &in, int window_size, int queue_index) {
         return local_binary_patterns(Kernels::instance().retrieve_queue(queue_index), in, window_size);
     }
 
-    xm::ocl::iop::ClImagePromise local_binary_patterns(cl_command_queue queue, const Image2D &in, int window_size) {
+    xm::ocl::iop::ClImagePromise local_binary_patterns(cl_command_queue queue, const iop::ClImagePromise &in_p, int window_size) {
         if (window_size > 15)
             throw std::invalid_argument("window_size > 15");
+
+        const auto &in = in_p.getImage2D();
 
         auto c_size = (int) std::ceil((float) (std::pow(window_size, 2) - 1) / 8.f);
 
@@ -826,15 +843,25 @@ namespace xm::ocl {
     }
 
     xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
-            const Image2D &lbp_texture, const Image2D &frame, const ds::Color4u &color,
-            float threshold, int window_size, int queue_index) {
+            const iop::ClImagePromise &lbp_texture,
+            const iop::ClImagePromise &frame,
+            const ds::Color4u &color,
+            float threshold,
+            int window_size,
+            int queue_index
+    ) {
         return subtract_bg_lbp_single_pass(Kernels::instance().retrieve_queue(queue_index), lbp_texture, frame, color,
                                            threshold, window_size);
     }
 
     xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
-            cl_command_queue queue, const Image2D &lbp_texture, const Image2D &frame,
-            const ds::Color4u &color, float threshold, int window_size) {
+            cl_command_queue queue,
+            const iop::ClImagePromise &lbp_texture_p,
+            const iop::ClImagePromise &frame_p,
+            const ds::Color4u &color,
+            float threshold,
+            int window_size
+    ) {
         if (window_size > 15)
             throw std::invalid_argument("window_size > 15");
 
@@ -842,6 +869,9 @@ namespace xm::ocl {
 
         if (c_size < 1)
             throw std::invalid_argument("output channels size < 1");
+
+        const auto &frame = frame_p.getImage2D();
+        const auto &lbp_texture = lbp_texture_p.getImage2D();
 
         const auto context = frame.context;
         const auto inter_size = frame.size();

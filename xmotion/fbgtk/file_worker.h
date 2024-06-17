@@ -37,6 +37,7 @@ namespace xm {
         xm::data::JsonConfig config;
         std::string project_file;
 
+        bool do_filter = false;
         bool bypass = false;
 
     public:

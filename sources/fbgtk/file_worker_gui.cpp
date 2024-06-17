@@ -66,6 +66,12 @@ namespace xm {
                 button_bypass->proxy().set_label(bypass ? "(B)" : "B");
             });
 
+            auto button_filter = Gtk::make_managed<xm::SmallButton>("F");
+            button_filter->proxy().signal_clicked().connect([this, button_filter]() {
+                do_filter = !do_filter;
+                button_filter->proxy().set_label(do_filter ? "(F)" : "F");
+            });
+
             const auto &cam = config.camera;
             const auto &gui = config.gui;
 
@@ -87,6 +93,7 @@ namespace xm {
             window->add_one(*button_conf);
             window->add_one(*button_start);
             window->add_one(*button_bypass);
+            window->add_one(*button_filter);
             window->set_resizable(false);
             window->show_all_children();
 

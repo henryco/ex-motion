@@ -13,6 +13,11 @@ namespace xm {
 //        const auto t0 = std::chrono::system_clock::now();
 
         for (const auto &filter: filters) {
+            if (!do_filter) {
+                filter->reset();
+                continue;
+            }
+
             for (auto &frame: frames) {
                 filter->filter(frame).waitFor().toImage2D(frame);
             }

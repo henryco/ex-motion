@@ -278,7 +278,7 @@ __kernel void kernel_color_diff(
 
     const int d_sat = abs(hls_img[2] - hls_ref[2]);
 
-    const int diff = d_hue;
+    const int diff = max(d_hue, d_sat);
 
     for (int i = 0; i < c_input_size; i++) {
         output[idx + i] = diff;

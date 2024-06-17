@@ -221,6 +221,7 @@ namespace xm::ocl {
 
         xm::ocl::Image2D image(in, buffer_2);
         return xm::ocl::iop::ClImagePromise(image, queue)
+        .withCleanup(in_p)
         .withCleanup(new std::function<void()>([buffer_1]() {
             clReleaseMemObject(buffer_1);
         }));
@@ -622,6 +623,7 @@ namespace xm::ocl {
                 false);
 
         return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue)
+        .withCleanup(in_p)
         .withCleanup(new std::function<void()>([buffer_io_1, buffer_io_2]() {
             clReleaseMemObject(buffer_io_1);
             clReleaseMemObject(buffer_io_2);
@@ -724,7 +726,8 @@ namespace xm::ocl {
                 l_size,
                 aux::DEBUG);
 
-        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event);
+        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(in, buffer_out), queue, chroma_event)
+        .withCleanup(in_p);
     }
 
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(const iop::ClImagePromise &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up,
@@ -785,7 +788,7 @@ namespace xm::ocl {
                                                     rotate ? width : height,
                                                     in.channels, in.channel_size,
                                                     buffer_out, in.context, in.device, xm::ocl::ACCESS::RW),
-                                            queue, flip_rotate_event);
+                                            queue, flip_rotate_event).withCleanup(in_p);
     }
 
     xm::ocl::iop::ClImagePromise local_binary_patterns(const iop::ClImagePromise &in, int window_size, int queue_index) {
@@ -839,7 +842,7 @@ namespace xm::ocl {
                 aux::DEBUG);
 
         xm::ocl::Image2D image(in.cols, in.rows, c_size, 1, buffer_out, in.context, in.device, xm::ocl::ACCESS::RW);
-        return xm::ocl::iop::ClImagePromise(image, queue, lbp_event);
+        return xm::ocl::iop::ClImagePromise(image, queue, lbp_event).withCleanup(in_p);
     }
 
     xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
@@ -921,7 +924,9 @@ namespace xm::ocl {
 
         return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(frame, buffer_out),
                                             queue,
-                                            lbp_power_event);
+                                            lbp_power_event)
+                                            .withCleanup(lbp_texture_p)
+                                            .withCleanup(frame_p);
     }
 }
 #pragma clang diagnostic pop

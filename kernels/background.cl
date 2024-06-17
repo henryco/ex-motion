@@ -1,4 +1,35 @@
 
+inline void bgr_to_hls(
+        const unsigned char *in_bgr,
+        unsigned char *out_hls
+) {
+    // https://docs.opencv.org/4.9.0/de/d25/imgproc_color_conversions.html
+    const float b = ((float) in_bgr[0]) / 255.f;
+    const float g = ((float) in_bgr[1]) / 255.f;
+    const float r = ((float) in_bgr[2]) / 255.f;
+
+    const float c_max = fmax(b, fmax(g, r));
+    const float c_min = fmin(b, fmin(g, r));
+    const float c_dif = c_max - c_min;
+    const float c_sum = c_max + c_min;
+    const float c_fac = 60.f / c_dif;
+    const float L = (c_sum / 2.f);
+
+    float H = 0.f;
+    if (c_max == r)
+        H = c_fac * (g - b) ;
+    else if (c_max == g)
+        H = 120.f + (c_fac * (b - r));
+    else if (c_max == b)
+        H = 240.f + (c_fac * (r - g));
+    if (H < 0)
+        H += 360.f;
+
+    out_hls[0] = (unsigned char) (H * 0.708333f); // 255 / 360
+    out_hls[1] = (unsigned char) (L * 255.f);
+    out_hls[2] = (unsigned char) ((L < 0.5f ? (c_dif / c_sum) : (c_dif / (2.f - c_sum))) * 255.f);
+}
+
 inline int hamming_distance(
         const unsigned char *one,
         const unsigned char *two,
@@ -217,8 +248,8 @@ __kernel void kernel_lbp_mask_apply(
 }
 
 __kernel void kernel_color_diff(
-        __global const unsigned char *frame_image,
-        __global const unsigned char *frame_reference,
+        __global const unsigned char *frame_img,
+        __global const unsigned char *frame_ref,
         __global unsigned char *output,
         const int c_input_size,  // numbers of color channels in image
         const float threshold,   // [0 ... 1]
@@ -236,27 +267,20 @@ __kernel void kernel_color_diff(
 
     const int idx = (y * width + x) * c_input_size;
 
-    int avg_img = 0;
-    int avg_ref = 0;
-    for (int i = 0; i < c_input_size; i++){
-        avg_img += (int) frame_image[idx + i];
-        avg_ref += (int) frame_reference[idx + i];
-    }
-    avg_img /= c_input_size;
-    avg_ref /= c_input_size;
+    unsigned char hls_img[3];
+    unsigned char hls_ref[3];
 
-//    const float diff = (float) abs(avg_img - avg_ref) / 255.f;
-//    if (diff >= threshold) {
-//        const unsigned char colors[3] = {color_b, color_g, color_r};
-//        const int lim = min(c_input_size, (int) 3);
-//        for (int i = 0; i < lim; i++)
-//            output[idx + i] = colors[i];
-//        return;
-//    }
-//
-//    for (int i = 0; i < c_input_size; i++)
-//        output[idx + i] = frame_image[i];
-    const int diff = abs(avg_img - avg_ref);
-    for (int i = 0; i < c_input_size; i++)
+    bgr_to_hls(&frame_img[idx], hls_img);
+    bgr_to_hls(&frame_ref[idx], hls_ref);
+
+    const int d_abs = abs(hls_img[0] - hls_ref[0]);
+    const int d_hue = min(d_abs, (int)255 - d_abs);
+
+    const int d_sat = abs(hls_img[2] - hls_ref[2]);
+
+    const int diff = d_hue;
+
+    for (int i = 0; i < c_input_size; i++) {
         output[idx + i] = diff;
+    }
 }

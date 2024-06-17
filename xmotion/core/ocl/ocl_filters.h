@@ -67,6 +67,7 @@ namespace xm::ocl {
         cl_kernel kernel_lbp_texture;
         cl_kernel kernel_lbp_mask_only;
         cl_kernel kernel_lbp_mask_apply;
+        cl_kernel kernel_color_diff;
         cl_kernel kernel_lbp_power;
         size_t lbp_local_size;
 
@@ -260,6 +261,22 @@ namespace xm::ocl {
             const xm::ds::Color4u &color,
             float threshold,
             int window_size,
+            int queue_index = -1
+    );
+
+    xm::ocl::iop::ClImagePromise subtract_bg_color_diff(
+            cl_command_queue queue,
+            const xm::ocl::iop::ClImagePromise &reference,
+            const xm::ocl::iop::ClImagePromise &frame,
+            const xm::ds::Color4u &color,
+            float threshold
+    );
+
+    xm::ocl::iop::ClImagePromise subtract_bg_color_diff(
+            const xm::ocl::iop::ClImagePromise &reference,
+            const xm::ocl::iop::ClImagePromise &frame,
+            const xm::ds::Color4u &color,
+            float threshold,
             int queue_index = -1
     );
 }

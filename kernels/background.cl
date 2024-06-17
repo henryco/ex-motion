@@ -215,3 +215,48 @@ __kernel void kernel_lbp_mask_apply(
     for (int i = 0; i < c_input_size; i++)
         output[idx + i] = colors[i];
 }
+
+__kernel void kernel_color_diff(
+        __global const unsigned char *frame_image,
+        __global const unsigned char *frame_reference,
+        __global unsigned char *output,
+        const int c_input_size,  // numbers of color channels in image
+        const float threshold,   // [0 ... 1]
+        const int width,
+        const int height,
+        const unsigned char color_b,
+        const unsigned char color_g,
+        const unsigned char color_r
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int idx = (y * width + x) * c_input_size;
+
+    int avg_img = 0;
+    int avg_ref = 0;
+    for (int i = 0; i < c_input_size; i++){
+        avg_img += (int) frame_image[idx + i];
+        avg_ref += (int) frame_reference[idx + i];
+    }
+    avg_img /= c_input_size;
+    avg_ref /= c_input_size;
+
+//    const float diff = (float) abs(avg_img - avg_ref) / 255.f;
+//    if (diff >= threshold) {
+//        const unsigned char colors[3] = {color_b, color_g, color_r};
+//        const int lim = min(c_input_size, (int) 3);
+//        for (int i = 0; i < lim; i++)
+//            output[idx + i] = colors[i];
+//        return;
+//    }
+//
+//    for (int i = 0; i < c_input_size; i++)
+//        output[idx + i] = frame_image[i];
+    const int diff = abs(avg_img - avg_ref);
+    for (int i = 0; i < c_input_size; i++)
+        output[idx + i] = diff;
+}

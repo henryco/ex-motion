@@ -34,22 +34,29 @@ namespace xm::filters {
             const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                     std::chrono::high_resolution_clock::now().time_since_epoch());
             if (now - t0 >= std::chrono::milliseconds(delay)) {
-                auto promise = ocl::local_binary_patterns(frame_in, lbp_kernel, q_idx);
-
-                // blocking operation here, but this is ok
-                reference_lbp = promise.waitFor().getImage2D();
+//                reference_lbp = xm::ocl::local_binary_patterns(frame_in, lbp_kernel, q_idx)
+//                        .waitFor()
+//                        .getImage2D();
+                reference_buffer = frame_in;
                 ready = true;
             }
             return frame_in;
         }
 
         // TODO mask refinement
-        return xm::ocl::subtract_bg_lbp_single_pass(
-                reference_lbp,
+//        return xm::ocl::subtract_bg_lbp_single_pass(
+//                reference_buffer,
+//                frame_in,
+//                bgr_bg_color,
+//                threshold,
+//                lbp_kernel,
+//                q_idx);
+
+        return xm::ocl::subtract_bg_color_diff(
+                reference_buffer,
                 frame_in,
                 bgr_bg_color,
                 threshold,
-                lbp_kernel,
                 q_idx);
     }
 

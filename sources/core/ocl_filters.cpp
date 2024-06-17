@@ -90,6 +90,7 @@ namespace xm::ocl {
         kernel_lbp_mask_only = xm::ocl::build_kernel(program_background, "kernel_mask_only");
         kernel_lbp_mask_apply = xm::ocl::build_kernel(program_background, "kernel_mask_apply");
         kernel_lbp_power = xm::ocl::build_kernel(program_background, "kernel_lbp_mask_apply");
+        kernel_color_diff = xm::ocl::build_kernel(program_background, "kernel_color_diff");
         lbp_local_size = xm::ocl::optimal_local_size(device_id, kernel_lbp_power);
 
         for (int i = 1; i < ((31 - 1) / 2); i++) {
@@ -128,6 +129,7 @@ namespace xm::ocl {
         clReleaseKernel(kernel_lbp_texture);
         clReleaseKernel(kernel_lbp_mask_only);
         clReleaseKernel(kernel_lbp_mask_apply);
+        clReleaseKernel(kernel_color_diff);
         clReleaseKernel(kernel_lbp_power);
         clReleaseProgram(program_background);
 
@@ -928,5 +930,70 @@ namespace xm::ocl {
                                             .withCleanup(lbp_texture_p)
                                             .withCleanup(frame_p);
     }
+
+    xm::ocl::iop::ClImagePromise subtract_bg_color_diff(const iop::ClImagePromise &reference, const iop::ClImagePromise &frame,
+                                                        const ds::Color4u &color, float threshold, int queue_index) {
+        return subtract_bg_color_diff(Kernels::instance().retrieve_queue(queue_index), reference, frame, color,
+                                      threshold);
+    }
+
+    xm::ocl::iop::ClImagePromise subtract_bg_color_diff(
+            cl_command_queue queue,
+            const iop::ClImagePromise &reference_p,
+            const iop::ClImagePromise &frame_p,
+            const ds::Color4u &color,
+            float threshold
+    ) {
+        const auto &reference = reference_p.getImage2D();
+        const auto &frame = frame_p.getImage2D();
+
+        const auto context = frame.context;
+        const auto inter_size = frame.size();
+        const auto pref_size = Kernels::instance().lbp_local_size;
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) frame.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) frame.rows, pref_size)};
+
+        cl_int err;
+
+        cl_mem buffer_image = frame.handle;
+        cl_mem buffer_reference = reference.handle;
+        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
+
+        auto kernel_color_diff = Kernels::instance().kernel_color_diff;
+
+        auto i_size = (int) frame.channels;
+        auto width = (int) frame.cols;
+        auto height = (int) frame.rows;
+        auto color_b = (uint) color.b;
+        auto color_g = (uint) color.g;
+        auto color_r = (uint) color.r;
+
+        xm::ocl::set_kernel_arg(kernel_color_diff, 0, sizeof(cl_mem), &buffer_image);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 1, sizeof(cl_mem), &buffer_reference);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 2, sizeof(cl_mem), &buffer_out);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 3, sizeof(int), &i_size);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 4, sizeof(float), &threshold);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 5, sizeof(int), &width);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 6, sizeof(int), &height);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 7, sizeof(uchar), &color_b);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 8, sizeof(uchar), &color_g);
+        xm::ocl::set_kernel_arg(kernel_color_diff, 9, sizeof(uchar), &color_r);
+
+        cl_event color_diff_event = xm::ocl::enqueue_kernel_fast(
+                queue,
+                kernel_color_diff,
+                2,
+                g_size,
+                l_size,
+                aux::DEBUG);
+
+        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(frame, buffer_out),
+                                            queue,
+                                            color_diff_event)
+                .withCleanup(reference_p)
+                .withCleanup(frame_p);
+    }
+
 }
 #pragma clang diagnostic pop

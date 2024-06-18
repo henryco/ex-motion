@@ -81,6 +81,16 @@ namespace xm::ocl {
 
         void release();
 
+        static Image2D allocate(size_t cols,
+                                size_t rows,
+                                size_t channels,
+                                size_t channel_size,
+                                cl_context context,
+                                cl_device_id device,
+                                ACCESS access = ACCESS::RW);
+
+        static Image2D allocate_from(const Image2D &_template,
+                                     ACCESS access = ACCESS::RW);
     private:
         void copy_from(const Image2D &other);
 

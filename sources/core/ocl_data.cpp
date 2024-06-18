@@ -2,6 +2,7 @@
 // Created by henryco on 11/06/24.
 //
 
+#include <stdexcept>
 #include "../../xmotion/core/ocl/ocl_data.h"
 
 namespace xm::ocl {
@@ -133,5 +134,23 @@ namespace xm::ocl {
 
     Image2D::Image2D() {
         reset_state(*this);
+    }
+
+    Image2D Image2D::allocate(size_t cols, size_t rows, size_t channels, size_t channel_size, cl_context context,
+                              cl_device_id device, ACCESS access) {
+        cl_mem_flags flags;
+        if (access == ACCESS::RO) flags = CL_MEM_READ_ONLY;
+        else if (access == ACCESS::WO) flags = CL_MEM_WRITE_ONLY;
+        else flags = CL_MEM_READ_WRITE;
+
+        cl_int err;
+        cl_mem buffer = clCreateBuffer(context, flags, cols * rows * channels * channel_size, NULL, &err);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot create cl buffer: " + std::to_string(err));
+        return Image2D(cols, rows, channels, channel_size, buffer, context, device, access);
+    }
+
+    Image2D Image2D::allocate_from(const Image2D &t, ACCESS access) {
+        return allocate(t.cols, t.rows, t.channels, t.channel_size, t.context, t.device, access);
     }
 }

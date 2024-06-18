@@ -1,3 +1,5 @@
+#define U8_NF_2 0.707107f
+#define U8_NF_3 0.577350f
 
 inline void bgr_to_hls(
         const unsigned char *in_bgr,
@@ -78,7 +80,7 @@ inline void compute_lbp(
                     p += (int) input[idx_p + i];
                 p /= c_input_size;
 
-                if (p >= mid) {
+                if (p > mid * 1.1f) {
                     out[c] |= ((unsigned char) 1) << b;
                 }
             }
@@ -273,16 +275,78 @@ __kernel void kernel_color_diff(
     bgr_to_hls(&frame_img[idx], hls_img);
     bgr_to_hls(&frame_ref[idx], hls_ref);
 
+    unsigned char lbp_img[32]; // up to 256 bits
+    unsigned char lbp_ref[32]; // up to 256 bits
+    compute_lbp(frame_img, lbp_img, 3, 9, width, height, x, y); // -> 11
+    compute_lbp(frame_ref, lbp_ref, 3, 9, width, height, x, y); // -> 11
+    const int d_lbp = (float) hamming_distance(lbp_img, lbp_ref, 11) / 80.f * 255.f;
+
     const int d_abs = abs(hls_img[0] - hls_ref[0]);
+    const int d_lgt = abs(hls_img[1] - hls_ref[1]);
+    const int d_sat = abs(hls_img[2] - hls_ref[2]);
     const int d_hue = min(d_abs, (int)255 - d_abs);
 
-    const int d_sat = abs(hls_img[2] - hls_ref[2]);
+    const int i_b = frame_img[idx + 0];
+    const int i_g = frame_img[idx + 1];
+    const int i_r = frame_img[idx + 2];
 
-    const int d_lgt = abs(hls_img[1] - hls_ref[1]);
+    const int r_b = frame_ref[idx + 0];
+    const int r_g = frame_ref[idx + 1];
+    const int r_r = frame_ref[idx + 2];
 
-    const int diff = max(max(d_hue, d_sat), d_lgt);
+    const int sum_i = (i_b + i_g + i_r);
+    const int sum_r = (r_b + r_g + r_r);
+    if (sum_i <= 0 || sum_r <= 0)
+        return;
 
-    for (int i = 0; i < c_input_size; i++) {
-        output[idx + i] = diff;
+    const int ic_b = 255.f * (float) i_b / (float) sum_i;
+    const int ic_g = 255.f * (float) i_g / (float) sum_i;
+    const int ic_r = 255.f * (float) i_r / (float) sum_i;
+
+    const int rc_b = 255.f * (float) r_b / (float) sum_r;
+    const int rc_g = 255.f * (float) r_g / (float) sum_r;
+    const int rc_r = 255.f * (float) r_r / (float) sum_r;
+
+    const int diff_b = (U8_NF_2 * sqrt(
+        pow((float) d_hue, 2) +
+        pow((float) d_sat, 2)
+    ));
+
+    const int diff_g = (U8_NF_3 * sqrt(
+        pow((float) (i_b - r_b), 2) +
+        pow((float) (i_g - r_g), 2) +
+        pow((float) (i_r - r_r), 2)
+    ));
+
+    const int diff_r = (U8_NF_2 * sqrt(
+        pow((float) (ic_g - rc_g), 2) +
+        pow((float) (ic_r - rc_r), 2)
+    ));
+
+    int b = 0, g = 0, r = 0, a = 0;
+    if (d_lbp >= (255.f * 0.5)) {
+        a = 255;
+    }
+
+    if (diff_g >= (255.f * 0.1)) {// maybe take into account luminance/lightness
+        g = 255;
+    }
+
+    if (diff_r >= (255.f * 0.05)) {
+        r = 255;
+    }
+
+    if (diff_b >= (255.f * 0.5)) {
+        b = 255;
+    }
+
+    if (g + b + r + a >= 255 * 1) {
+        output[idx + 0] = frame_img[idx + 0];
+        output[idx + 1] = frame_img[idx + 1];
+        output[idx + 2] = frame_img[idx + 2];
+    } else {
+         output[idx + 0] = color_b;
+         output[idx + 1] = color_g;
+         output[idx + 2] = color_r;
     }
 }

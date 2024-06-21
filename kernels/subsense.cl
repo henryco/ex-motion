@@ -313,9 +313,21 @@ __kernel void kernel_subsense(
 
     // update R(x)
     utility_1[ut1_idx + 1] = R_x < pow(1.f + new_D_m * 2.f, 2.f)
-        ? R_x + r_scale * (new_V_x - flicker_v_dec) // that "-flicker_v_dec" is heuristic, whatever
+        ? R_x + r_scale * (new_V_x - flicker_v_dec) // that " -flicker_v_dec " is heuristic, whatever
         : max(1.f, R_x - (r_scale / new_V_x));
 
-    // TODO adjust T(x)
+    // update T(x)
+    const short new_T_x = clamp(
+        (is_foreground
+            ? T_x + t_scale_inc * (1.f / (new_V_x * new_D_m))
+            : T_x - t_scale_dec * (new_V_x / new_D_m)
+        ),
+        t_lower,
+        t_upper);
+    utility_2[ut2_idx + 1] = new_T_x;
+
+    // update St-1(x)
+    utility_2[ut2_idx    ] = is_foreground ? 255 : 0;
+
     // TODO update B(x)
 }

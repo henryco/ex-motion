@@ -128,31 +128,31 @@ void compute_lbsp(
 
     /*
 
-      O   O   O
-        O O O
-      O O X O O
-        O O O
-      O   O   O
+        O   O   O
+          O O O
+        O O X O O
+          O O O
+        O   O   O
 
-      --- == --- offset  0
+    ------- = ------- offset  0
 
-      O   O   O
-        . . .
-      O . X . O
-        . . .
-      O   O   O
+        O   O   O
+          . . .
+        O . X . O
+          . . .
+        O   O   O
 
-    ----- + ----- offset 16
+    ------- + ------- offset 16
 
-        O . O
-        . X .
-        O . O
+          O . O
+          . X .
+          O . O
 
-    ----- + ----- offset 24
+    ------- + ------- offset 24
 
-          O
-        O X O
-          O
+            O
+          O X O
+            O
 
     */
 
@@ -193,7 +193,7 @@ __kernel void kernel_subsense(
     __global const uchar *image,           // Input image (current)  ch_n * 1
     __global const uchar *prev,            // Input image (previous) ch_n * 1
     __global uchar *bg_model,              // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]:
-    __global float *utility_1,             // 3 * 4: [ D_min(x), R(x), v(x) ]
+    __global float *utility_1,             // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
     __global short *utility_2,             // 2 * 2: [ St-1(x), T(x), Gt_acc(x) ]
     __global uchar *seg_mask,              // Output segmentation mask St(x)
 
@@ -252,7 +252,6 @@ __kernel void kernel_subsense(
 
     const bool St_1 = utility_2[ut2_idx] > 0;
     const short T_x = utility_2[ut2_idx + 1];
-    const short G_c = utility_2[ut2_idx + 2];
 
 #ifndef DISABLED_LBSP
     const float n_norm_alpha_inv = 1.f - n_norm_alpha;
@@ -313,9 +312,16 @@ __kernel void kernel_subsense(
             i = 0;
     }
 
-    // update moving average D_min(x)
+    // update G_c(x)
+    const float new_G_c = is_foreground && (abs(utility_1[ut1_idx + 3] - D_MIN_X) < ghost_t)
+        ? utility_2[ut2_idx + 2] + 1
+        : 0;
+    utility_2[ut2_idx + 2] = new_G_c;
+
+    // update moving average D_min(x) and dt-1(x)
     const float new_D_m = D_m * (1.f - d_min_alpha) + D_MIN_X * d_min_alpha;
-    utility_1[ut1_idx]  = new_D_m;
+    utility_1[ut1_idx    ] = new_D_m;
+    utility_1[ut1_idx + 3] = D_MIN_X;
 
     // update v(x)
     const float new_V_x = is_foreground != St_1
@@ -329,7 +335,7 @@ __kernel void kernel_subsense(
         : max(1.f, R_x - (r_scale / new_V_x));
 
     // update T(x)
-    const short new_T_x = clamp(
+    short new_T_x = clamp(
         (is_foreground
             ? T_x + t_scale_inc * (1.f / (new_V_x * new_D_m))
             : T_x - t_scale_dec * (new_V_x / new_D_m)
@@ -337,10 +343,14 @@ __kernel void kernel_subsense(
         t_lower,
         t_upper);
     utility_2[ut2_idx + 1] = new_T_x;
-    // TODO update GHOSTS
+
+    // Ghost detected
+    if (new_G_c > ghost_n) {
+        new_T_x = ghost_l;
+    }
 
     // update St-1(x)
-    utility_2[ut2_idx    ] = is_foreground ? 255 : 0;
+    utility_2[ut2_idx] = is_foreground ? 255 : 0;
 
     // update B(x)
     if (random_value <= 1 / new_T_x) {

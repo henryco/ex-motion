@@ -5,6 +5,10 @@ typedef uchar LbspKernelType;
 #define LBSP_KERNEL_SQUARE_8   2
 #define LBSP_KERNEL_DIAMOND_16 3
 
+#define L2_C3_NORM_DIV 441.6729559.f
+#define L2_C2_NORM_DIV 360.6244584.f
+#define L2_C1_NORM_DIV 255.f
+
 inline float xor_shift_rng(int x, int y, uint seed) {
     /* Xor-shift RNGs George Marsaglia
      *  https://www.jstatsoft.org/article/download/v008i14/916
@@ -57,15 +61,15 @@ inline float normalize_l1(int value, int channels_n) {
 }
 
 inline float normalize_l2_3(float value) {
-    return value / 441.67295593.f; // sqrt(3 * 255^2)
+    return value / L2_C3_NORM_DIV; // sqrt(3 * 255^2)
 }
 
 inline float normalize_l2_2(float value) {
-    return value / 360.62445841.f; // sqrt(2 * 255^2)
+    return value / L2_C2_NORM_DIV; // sqrt(2 * 255^2)
 }
 
 inline float normalize_l2_1(float value) {
-    return value / 255.f;
+    return value /L2_C1_NORM_DIV;
 }
 
 inline float normalize_l2(float value, int channels_n) {
@@ -192,17 +196,17 @@ __kernel void kernel_subsense(
     __global float *utility_1,             // 3 * 4: [ D_min(x), R(x), v(x) ]
     __global short *utility_2,             // 2 * 2: [ St-1(x), T(x), Gt_acc(x) ]
     __global uchar *seg_mask,              // Output segmentation mask St(x)
-    const ushort t_lower,                  // Lower bound for T(x) value
-    const ushort t_upper,                  // Upper bound for T(x) value
-    const ushort color_0,                  // Minimal color distance threshold for pixels to be marked as different
 
 #ifndef DISABLED_LBSP
-    const ushort lbsp_0,                   // Minimal LBSP distance threshold for pixels to be marked as different
     const uchar lbsp_kernel,               // LBSP kernel type: [ 0, 1, 2, 3 ]
     const uchar lbsp_threshold,            // Threshold value used for initial LBSP calculation
     const float n_norm_alpha,              // Normalization weight factor between color and lbsp distance [0...1]
+    const ushort lbsp_0,                   // Minimal LBSP distance threshold for pixels to be marked as different
 #endif
 
+    const ushort color_0,                  // Minimal color distance threshold for pixels to be marked as different
+    const ushort t_lower,                  // Lower bound for T(x) value
+    const ushort t_upper,                  // Upper bound for T(x) value
     const ushort ghost_n,                  // Number of frames after foreground marked as ghost ( see also Gt_acc(x) )
     const ushort ghost_t,                  // Ghost threshold for local variations between It and It-1
     const ushort ghost_l,                  // Temporary low value of T(x) for pixel marked as a ghost
@@ -330,4 +334,5 @@ __kernel void kernel_subsense(
     utility_2[ut2_idx    ] = is_foreground ? 255 : 0;
 
     // TODO update B(x)
+    // TODO update GHOSTS
 }

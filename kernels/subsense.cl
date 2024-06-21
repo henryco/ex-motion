@@ -245,6 +245,9 @@ __kernel void kernel_subsense(
     const float R_x = utility_1[ut1_idx + 1];
     const float V_x = utility_1[ut1_idx + 2];
 
+    const bool St_1 = utility_2[ut2_idx] > 0;
+    const short G_c = utility_2[ut2_idx + 1];
+
 #ifndef DISABLED_LBSP
     const float n_norm_alpha_inv = 1.f - n_norm_alpha;
     const int kernel_size = lbsp_k_size_bytes(lbsp_kernel);
@@ -300,8 +303,14 @@ __kernel void kernel_subsense(
     // update moving average D_min(x)
     utility_1[ut1_idx] = D_m * (1.f - d_min_alpha) + dtx * d_min_alpha;
 
-    // TODO adjust v(x)
+    // adjust v(x)
+    utility_1[ut1_idx + 2] = is_foreground != St_1
+        ? (V_x + flicker_v_inc)
+        : max(0.f, V_x - flicker_v_dec);
+
     // TODO adjust R(x)
+
+
     // TODO adjust T(x)
     // TODO update B(x)
 }

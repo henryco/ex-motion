@@ -194,7 +194,7 @@ __kernel void kernel_subsense(
     __global const uchar *prev,            // Input image (previous) ch_n * 1
     __global uchar *bg_model,              // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]:
     __global float *utility_1,             // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
-    __global short *utility_2,             // 2 * 2: [ St-1(x), T(x), Gt_acc(x) ]
+    __global short *utility_2,             // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
     __global uchar *seg_mask,              // Output segmentation mask St(x)
 
 #ifndef DISABLED_LBSP
@@ -219,8 +219,8 @@ __kernel void kernel_subsense(
     const uchar matches_req,               // Number of required matches of It(x) with B(x)
     const uchar model_size,                // Number of frames "N" in bg_model B(x)
     const uchar channels_n,                // Number of color channels in input image [1, 2, 3]
-    const uint rng_seed_1,                  // Seed for random number generator
-    const uint rng_seed_2,                  // Seed for random number generator
+    const uint rng_seed_1,                 // Seed for random number generator
+    const uint rng_seed_2,                 // Seed for random number generator
     const ushort width,
     const ushort height
 ) {
@@ -233,7 +233,7 @@ __kernel void kernel_subsense(
     const int idx = y * width + x;
 
 #ifndef DISABLED_EXCLUSION_MASK
-    // 0. Test for exclusion mask
+    // Test for exclusion mask
     if (exclusion > 0 && exclusion_mask[idx] > 0) {
         seg_mask[idx] = 255;
         return; // this is foreground from exclusion mask
@@ -295,15 +295,14 @@ __kernel void kernel_subsense(
 
         D_MIN_X = min(D_MIN_X, dtx);
 
-        if (d_color > color_0  // TODO: maybe replace with floating normalized threshold?
+        if (d_color > color_0 // maybe replace with floating normalized threshold?
 #ifndef DISABLED_LBSP
-            && d_lbsp > lbsp_0 // TODO: maybe replace with floating normalized threshold?
+          && d_lbsp > lbsp_0  // maybe replace with floating normalized threshold?
 #endif
         ) {
             if (++matches >= matches_req) {
                 // Foreground detected
                 is_foreground = true;
-                seg_mask[idx] = 255;
                 break;
             }
         }
@@ -311,6 +310,9 @@ __kernel void kernel_subsense(
         if (++i >= model_size)
             i = 0;
     }
+
+    // update out segmentation mask St(x)
+    seg_mask[idx] = is_foreground ? 255 : 0;
 
     // update G_c(x)
     const float new_G_c = is_foreground && (abs(utility_1[ut1_idx + 3] - D_MIN_X) < ghost_t)
@@ -354,7 +356,7 @@ __kernel void kernel_subsense(
 
     // update B(x)
     if (random_value <= 1 / new_T_x) {
-        const int random_frame_n   = (float) xor_shift_rng(x, y, rng_seed_1) * (model_size - 1);
+        const int random_frame_n   = (float) xor_shift_rng(x, y, rng_seed_2) * (model_size - 1);
         const int random_frame_idx = pos_3(x, y, random_frame_n, width, height, bgm_ch_size);
         for (int i = 0; i < channels_n; i++){
             bg_model[random_frame_idx + i] = image[img_idx + i]; // B, G, R

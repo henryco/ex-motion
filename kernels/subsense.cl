@@ -187,42 +187,42 @@ __kernel void kernel_subsense(
 
 #ifndef DISABLED_EXCLUSION_MASK
     __global const uchar *exclusion_mask,  // Single channel exclusion mask (optional, see: "exclusion" parameter)
-    const uchar exclusion,                 // Should perform foreground exclusion using exclusion mask [0 - false]
+             const uchar exclusion,        // Should perform foreground exclusion using exclusion mask [0 - false]
 #endif
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
     __global const uchar *prev,            // Input image (previous) ch_n * 1
-    __global uchar *bg_model,              // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]:
-    __global float *utility_1,             // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
-    __global short *utility_2,             // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
-    __global uchar *seg_mask,              // Output segmentation mask St(x)
+    __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
+    __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
+    __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
+    __global       uchar *seg_mask,        // Output segmentation mask St(x)
 
 #ifndef DISABLED_LBSP
-    const uchar lbsp_kernel,               // LBSP kernel type: [ 0, 1, 2, 3 ]
-    const uchar lbsp_threshold,            // Threshold value used for initial LBSP calculation
-    const float n_norm_alpha,              // Normalization weight factor between color and lbsp distance [0...1]
-    const ushort lbsp_0,                   // Minimal LBSP distance threshold for pixels to be marked as different
+             const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ]
+             const uchar lbsp_threshold,   // Threshold value used for initial LBSP calculation
+             const float n_norm_alpha,     // Normalization weight factor between color and lbsp distance [0...1]
+             const ushort lbsp_0,          // Minimal LBSP distance threshold for pixels to be marked as different
 #endif
 
-    const ushort color_0,                  // Minimal color distance threshold for pixels to be marked as different
-    const ushort t_lower,                  // Lower bound for T(x) value
-    const ushort t_upper,                  // Upper bound for T(x) value
-    const ushort ghost_n,                  // Number of frames after foreground marked as ghost ( see also Gt_acc(x) )
-    const ushort ghost_t,                  // Ghost threshold for local variations between It and It-1
-    const ushort ghost_l,                  // Temporary low value of T(x) for pixel marked as a ghost
-    const float d_min_alpha,               // Constant learning rate for D_min(x) [0...1]
-    const float flicker_v_inc,             // Increment v(x) value for flickering pixels
-    const float flicker_v_dec,             // Decrement v(x) value for flickering pixels
-    const float t_scale_inc,               // Scale for T(x) feedback increment
-    const float t_scale_dec,               // Scale for T(x) feedback decrement
-    const float r_scale,                   // Scale for R(x) feedback change (both directions)
-    const uchar matches_req,               // Number of required matches of It(x) with B(x)
-    const uchar model_size,                // Number of frames "N" in bg_model B(x)
-    const uchar channels_n,                // Number of color channels in input image [1, 2, 3]
-    const uint rng_seed_1,                 // Seed for random number generator
-    const uint rng_seed_2,                 // Seed for random number generator
-    const ushort width,
-    const ushort height
+             const ushort color_0,         // Minimal color distance threshold for pixels to be marked as different
+             const ushort t_lower,         // Lower bound for T(x) value
+             const ushort t_upper,         // Upper bound for T(x) value
+             const ushort ghost_n,         // Number of frames after foreground marked as ghost ( see also Gt_acc(x) )
+             const ushort ghost_t,         // Ghost threshold for local variations between It and It-1
+             const ushort ghost_l,         // Temporary low value of T(x) for pixel marked as a ghost
+             const float d_min_alpha,      // Constant learning rate for D_min(x) [0...1]
+             const float flicker_v_inc,    // Increment v(x) value for flickering pixels
+             const float flicker_v_dec,    // Decrement v(x) value for flickering pixels
+             const float t_scale_inc,      // Scale for T(x) feedback increment
+             const float t_scale_dec,      // Scale for T(x) feedback decrement
+             const float r_scale,          // Scale for R(x) feedback change (both directions)
+             const uchar matches_req,      // Number of required matches of It(x) with B(x)
+             const uchar model_size,       // Number of frames "N" in bg_model B(x)
+             const uchar channels_n,       // Number of color channels in input image [1, 2, 3]
+             const uint rng_seed_1,        // Seed for random number generator
+             const uint rng_seed_2,        // Seed for random number generator
+             const ushort width,
+             const ushort height
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -295,9 +295,9 @@ __kernel void kernel_subsense(
 
         D_MIN_X = min(D_MIN_X, dtx);
 
-        if (d_color > color_0 // maybe replace with floating normalized threshold?
+        if (d_color > r_color // maybe replace with floating normalized threshold?
 #ifndef DISABLED_LBSP
-          && d_lbsp > lbsp_0  // maybe replace with floating normalized threshold?
+          && d_lbsp > r_lbsp  // maybe replace with floating normalized threshold?
 #endif
         ) {
             if (++matches >= matches_req) {
@@ -369,4 +369,49 @@ __kernel void kernel_subsense(
 #endif
     }
 
+}
+
+__kernel void prepare_subsense_model(
+    __global const uchar *image,          // Input image (current)  ch_n * 1
+    __global       uchar *bg_model,       // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
+
+#ifndef DISABLED_LBSP
+             const uchar lbsp_kernel,     // LBSP kernel type: [ 0, 1, 2, 3 ]
+             const uchar lbsp_threshold,  // Threshold value used for initial LBSP calculation
+#endif
+             const uchar model_size,      // Number of frames "N" in bg_model B(x)
+             const uchar channels_n,      // Number of color channels in input image [1, 2, 3]
+             const uchar model_i,         // Current model index
+             const ushort width,
+             const ushort height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+#ifndef DISABLED_LBSP
+    const int kernel_size = lbsp_k_size_bytes(lbsp_kernel);
+    const int bgm_ch_size = channels_n * (1 + kernel_size);
+    uchar lbsp_img[6]; // (2 bytes = 16 bits) x (B+G+R = 3)
+    compute_lbsp(image, lbsp_img, lbsp_kernel, lbsp_threshold, channels_n, width, height, x, y);
+#else
+    const int bgm_ch_size = channels_n;
+#endif
+
+    const int idx     = y * width + x;
+    const int img_idx = idx * channels_n;
+    const int bgm_idx = pos_3(x, y, clamp(model_i, 0, model_size - 1), width, height, bgm_ch_size);
+
+    for (int i = 0; i < channels_n; i++) {
+        bg_model[bgm_idx + i] = image[img_idx + i]; // B, G, R
+    }
+
+#ifndef DISABLED_LBSP
+    const int bgm_idx_offset = bgm_idx + channels_n;
+    for (int i = 0; i < kernel_size; i++) {
+        bg_model[bgm_idx_offset + i] = lbsp_img[i]; // LBSP bit strings
+    }
+#endif
 }

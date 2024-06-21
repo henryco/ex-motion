@@ -281,8 +281,8 @@ __kernel void kernel_subsense(
 #endif
 
 #ifndef COLOR_NORM_l2
-        const int d_color = l1_distance(&image[img_idx], &bg_model[bgm_idx], channels_n);
-        const float d_c_n = normalize_l1(d_color, channels_n);
+        const int d_color   = l1_distance(&image[img_idx], &bg_model[bgm_idx], channels_n);
+        const float d_c_n   = normalize_l1(d_color, channels_n);
 #else
         const float d_color = l2_distance(&image[img_idx], &bg_model[bgm_idx], channels_n);
         const float d_c_n   = normalize_l2(d_color, channels_n);

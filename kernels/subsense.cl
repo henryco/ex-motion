@@ -52,6 +52,38 @@ inline float l2_distance(const uchar *one, const uchar *two, int n) {
     return sqrt(d);
 }
 
+inline float normalize_l1(int value, int channels_n) {
+    return (float) value / (255.f * (float) channels_n);
+}
+
+inline float normalize_l2_3(float value) {
+    return value / 441.67295593.f; // sqrt(3 * 255^2)
+}
+
+inline float normalize_l2_2(float value) {
+    return value / 360.62445841.f; // sqrt(2 * 255^2)
+}
+
+inline float normalize_l2_1(float value) {
+    return value / 255.f;
+}
+
+inline float normalize_l2(float value, int channels_n) {
+    return channels_n == 3
+        ? normalize_l2_3(value)
+        : channels_n == 2
+            ? normalize_l2_2(value)
+            : normalize_l2_1(value);
+}
+
+inline float normalize_hd(int value, LbspKernelType t) {
+    return t == LBSP_KERNEL_DIAMOND_16
+        ? (float) value / 16.f
+        : t == LBSP_KERNEL_SQUARE_8
+            ? (float) value / 8.f
+            : (float) value / 4.f;
+}
+
 void compute_lbsp(
         const uchar *input,
         uchar *out,
@@ -106,13 +138,13 @@ void compute_lbsp(
         . . .
       O   O   O
 
-    ------V------ offset 16
+    ----- + ----- offset 16
 
         O . O
         . X .
         O . O
 
-    ------V------ offset 24
+    ----- + ----- offset 24
 
           O
         O X O
@@ -159,6 +191,7 @@ __kernel void kernel_subsense(
     __global uchar *bg_model,              // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]:
     __global float *utility_1,             // 3 * 4: [ D_min(x), R(x), v(x) ]
     __global short *utility_2,             // 2 * 2: [ St-1(x), Gt_acc(x) ]
+    __global uchar *seg_mask,              // Output segmentation mask St(x)
     const ushort t_lower,                  // Lower bound for T(x) value
     const ushort t_upper,                  // Upper bound for T(x) value
     const ushort color_0,                  // Minimal color distance threshold for pixels to be marked as different
@@ -167,12 +200,13 @@ __kernel void kernel_subsense(
     const ushort lbsp_0,                   // Minimal LBSP distance threshold for pixels to be marked as different
     const uchar lbsp_kernel,               // LBSP kernel type: [ 0, 1, 2, 3 ]
     const uchar lbsp_threshold,            // Threshold value used for initial LBSP calculation
+    const float n_norm_alpha,              // Normalization weight factor between color and lbsp distance [0...1]
 #endif
 
     const ushort ghost_n,                  // Number of frames after foreground marked as ghost ( see also Gt_acc(x) )
     const ushort ghost_t,                  // Ghost threshold for local variations between It and It-1
     const ushort ghost_l,                  // Temporary low value of T(x) for pixel marked as a ghost
-    const float d_min_alpha,               // Constant learning rate for D_min(x)
+    const float d_min_alpha,               // Constant learning rate for D_min(x) [0...1]
     const float flicker_v_inc,             // Increment v(x) value for flickering pixels
     const float flicker_v_dec,             // Decrement v(x) value for flickering pixels
     const float t_scale_inc,               // Scale for T(x) feedback increment
@@ -180,7 +214,7 @@ __kernel void kernel_subsense(
     const float r_scale,                   // Scale for R(x) feedback change (both directions)
     const uchar matches_req,               // Number of required matches of It(x) with B(x)
     const uchar model_size,                // Number of frames "N" in bg_model B(x)
-    const uchar channels_n,                // Number of color channels in input image
+    const uchar channels_n,                // Number of color channels in input image [1, 2, 3]
     const uint rng_seed,                   // Seed for random number generator
     const ushort width,
     const ushort height
@@ -196,6 +230,7 @@ __kernel void kernel_subsense(
 #ifndef DISABLED_EXCLUSION_MASK
     // 0. Test for exclusion mask
     if (exclusion > 0 && exclusion_mask[idx] > 0) {
+        seg_mask[idx] = 255;
         return; // this is foreground from exclusion mask
     }
 #endif
@@ -206,38 +241,67 @@ __kernel void kernel_subsense(
     const int ut1_idx = idx * 3;
     const int ut2_idx = idx * 2;
 
-    const int kernel_size = lbsp_k_size_bytes(lbsp_kernel);
-    const int bgm_ch_size = channels_n * (1 + kernel_size);
-
     const float D_m = utility_1[ut1_idx    ];
     const float R_x = utility_1[ut1_idx + 1];
     const float V_x = utility_1[ut1_idx + 2];
 
-    // 1. First compare with bg model
-    const int bg_model_start = (int) (random_value * (model_size - 1));
-    const int r_color = (int) (R_x * color_0);
-
 #ifndef DISABLED_LBSP
+    const float n_norm_alpha_inv = 1.f - n_norm_alpha;
+    const int kernel_size = lbsp_k_size_bytes(lbsp_kernel);
+    const int bgm_ch_size = channels_n * (1 + kernel_size);
     const int r_lbsp  = (int) (pow(2.f, R_x) + lbsp_0);
     uchar lbsp_img[6]; // (2 bytes = 16 bits) x (B+G+R = 3)
     compute_lbsp(image, lbsp_img, lbsp_kernel, lbsp_threshold, channels_n, width, height, x, y);
 #endif
 
+    const int bg_model_start = (int) (random_value * (model_size - 1));
+    const int r_color = (int) (R_x * color_0);
+
+    bool is_foreground = false;
+    float D_MIN_X = 1.f;
+    int matches = 0;
+
     for (int i = bg_model_start, k = model_size; k >= 0; k--) {
         const int bgm_idx = pos_3(x, y, i, width, height, bgm_ch_size);
 
 #ifndef DISABLED_LBSP
-        int d_lbsp = hamming_distance(lbsp_img, &bg_model[bgm_idx + 3], kernel_size);
+        const int d_lbsp  = hamming_distance(lbsp_img, &bg_model[bgm_idx + 3], kernel_size);
+        const float d_l_n = normalize_hd(d_lbsp, lbsp_kernel);
 #endif
 
-        float d_color = l1_distance(&image[img_idx], &bg_model[bgm_idx], channels_n);
+        const int d_color = l1_distance(&image[img_idx], &bg_model[bgm_idx], channels_n);
+        const float d_c_n = normalize_l1(d_color, channels_n);
 
-        // TODO NORMALIZE ETC
+#ifndef DISABLED_LBSP
+        const float dtx = n_norm_alpha * d_c_n + n_norm_alpha_inv * d_l_n;
+#else
+        const float dtx = d_c_n;
+#endif
+
+        D_MIN_X = min(D_MIN_X, dtx);
+
+        if (d_color > color_0
+#ifndef DISABLED_LBSP
+            && d_lbsp > lbsp_0
+#endif
+        ) {
+            if (++matches >= matches_req) {
+                // Foreground detected
+                is_foreground = true;
+                seg_mask[idx] = 255;
+                break;
+            }
+        }
 
         if (++i >= model_size)
             i = 0;
     }
 
+    // update moving average D_min(x)
+    utility_1[ut1_idx] = D_m * (1.f - d_min_alpha) + dtx * d_min_alpha;
 
-
+    // TODO adjust v(x)
+    // TODO adjust R(x)
+    // TODO adjust T(x)
+    // TODO update B(x)
 }

@@ -190,7 +190,7 @@ __kernel void kernel_subsense(
     __global const uchar *prev,            // Input image (previous) ch_n * 1
     __global uchar *bg_model,              // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]:
     __global float *utility_1,             // 3 * 4: [ D_min(x), R(x), v(x) ]
-    __global short *utility_2,             // 2 * 2: [ St-1(x), Gt_acc(x) ]
+    __global short *utility_2,             // 2 * 2: [ St-1(x), T(x), Gt_acc(x) ]
     __global uchar *seg_mask,              // Output segmentation mask St(x)
     const ushort t_lower,                  // Lower bound for T(x) value
     const ushort t_upper,                  // Upper bound for T(x) value
@@ -246,7 +246,8 @@ __kernel void kernel_subsense(
     const float V_x = utility_1[ut1_idx + 2];
 
     const bool St_1 = utility_2[ut2_idx] > 0;
-    const short G_c = utility_2[ut2_idx + 1];
+    const short T_x = utility_2[ut2_idx + 1];
+    const short G_c = utility_2[ut2_idx + 2];
 
 #ifndef DISABLED_LBSP
     const float n_norm_alpha_inv = 1.f - n_norm_alpha;
@@ -301,15 +302,19 @@ __kernel void kernel_subsense(
     }
 
     // update moving average D_min(x)
-    utility_1[ut1_idx] = D_m * (1.f - d_min_alpha) + dtx * d_min_alpha;
+    const float new_D_m = D_m * (1.f - d_min_alpha) + dtx * d_min_alpha;
+    utility_1[ut1_idx]  = new_D_m;
 
-    // adjust v(x)
-    utility_1[ut1_idx + 2] = is_foreground != St_1
+    // update v(x)
+    const float new_V_x = is_foreground != St_1
         ? (V_x + flicker_v_inc)
-        : max(0.f, V_x - flicker_v_dec);
+        : max(flicker_v_dec, V_x - flicker_v_dec);
+    utility_1[ut1_idx + 2] = new_V_x;
 
-    // TODO adjust R(x)
-
+    // update R(x)
+    utility_1[ut1_idx + 1] = R_x < pow(1.f + new_D_m * 2.f, 2.f)
+        ? R_x + r_scale * (new_V_x - flicker_v_dec) // that "-flicker_v_dec" is heuristic, whatever
+        : max(1.f, R_x - (r_scale / new_V_x));
 
     // TODO adjust T(x)
     // TODO update B(x)

@@ -296,9 +296,9 @@ __kernel void kernel_subsense(
 
         D_MIN_X = min(D_MIN_X, dtx);
 
-        if (d_color > color_0
+        if (d_color > color_0  // TODO: maybe replace with floating normalized threshold?
 #ifndef DISABLED_LBSP
-            && d_lbsp > lbsp_0
+            && d_lbsp > lbsp_0 // TODO: maybe replace with floating normalized threshold?
 #endif
         ) {
             if (++matches >= matches_req) {
@@ -314,7 +314,7 @@ __kernel void kernel_subsense(
     }
 
     // update moving average D_min(x)
-    const float new_D_m = D_m * (1.f - d_min_alpha) + dtx * d_min_alpha;
+    const float new_D_m = D_m * (1.f - d_min_alpha) + D_MIN_X * d_min_alpha;
     utility_1[ut1_idx]  = new_D_m;
 
     // update v(x)

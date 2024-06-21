@@ -219,7 +219,8 @@ __kernel void kernel_subsense(
     const uchar matches_req,               // Number of required matches of It(x) with B(x)
     const uchar model_size,                // Number of frames "N" in bg_model B(x)
     const uchar channels_n,                // Number of color channels in input image [1, 2, 3]
-    const uint rng_seed,                   // Seed for random number generator
+    const uint rng_seed_1,                  // Seed for random number generator
+    const uint rng_seed_2,                  // Seed for random number generator
     const ushort width,
     const ushort height
 ) {
@@ -239,7 +240,7 @@ __kernel void kernel_subsense(
     }
 #endif
 
-    const float random_value = xor_shift_rng(x, y, rng_seed);
+    const float random_value = xor_shift_rng(x, y, rng_seed_1);
 
     const int img_idx = idx * channels_n;
     const int ut1_idx = idx * 3;
@@ -260,6 +261,8 @@ __kernel void kernel_subsense(
     const int r_lbsp  = (int) (pow(2.f, R_x) + lbsp_0);
     uchar lbsp_img[6]; // (2 bytes = 16 bits) x (B+G+R = 3)
     compute_lbsp(image, lbsp_img, lbsp_kernel, lbsp_threshold, channels_n, width, height, x, y);
+#else
+    const int bgm_ch_size = channels_n;
 #endif
 
     const int bg_model_start = (int) (random_value * (model_size - 1));
@@ -273,7 +276,7 @@ __kernel void kernel_subsense(
         const int bgm_idx = pos_3(x, y, i, width, height, bgm_ch_size);
 
 #ifndef DISABLED_LBSP
-        const int d_lbsp  = hamming_distance(lbsp_img, &bg_model[bgm_idx + 3], kernel_size);
+        const int d_lbsp  = hamming_distance(lbsp_img, &bg_model[bgm_idx + channels_n], kernel_size);
         const float d_l_n = normalize_hd(d_lbsp, lbsp_kernel);
 #endif
 
@@ -329,10 +332,24 @@ __kernel void kernel_subsense(
         t_lower,
         t_upper);
     utility_2[ut2_idx + 1] = new_T_x;
+    // TODO update GHOSTS
 
     // update St-1(x)
     utility_2[ut2_idx    ] = is_foreground ? 255 : 0;
 
-    // TODO update B(x)
-    // TODO update GHOSTS
+    // update B(x)
+    if (random_value <= 1 / new_T_x) {
+        const int random_frame_n   = (float) xor_shift_rng(x, y, rng_seed_1) * (model_size - 1);
+        const int random_frame_idx = pos_3(x, y, random_frame_n, width, height, bgm_ch_size);
+        for (int i = 0; i < channels_n; i++){
+            bg_model[random_frame_idx + i] = image[img_idx + i]; // B, G, R
+        }
+#ifndef DISABLED_LBSP
+        const int random_frame_idx_offset = random_frame_idx + channels_n;
+        for (int i = 0; i < kernel_size; i++) {
+            bg_model[random_frame_idx_offset + i] = lbsp_img[i]; // LBSP bit strings
+        }
+#endif
+    }
+
 }

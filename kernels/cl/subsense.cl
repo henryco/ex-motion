@@ -37,9 +37,9 @@ inline int pos_3(int x, int y, int z, int w, int h, int c_sz) {
 }
 
 inline int hamming_distance(
-        const uchar *one,
-        const uchar *two,
-              int n
+    __global const uchar *one,
+             const uchar *two,
+                   int n
 ) {
     int d = 0;
     for (int i = 0; i < n; i++) {
@@ -51,9 +51,9 @@ inline int hamming_distance(
 }
 
 inline int l1_distance(
-        const uchar *one,
-        const uchar *two,
-              int n
+    __global const uchar *one,
+    __global const uchar *two,
+                   int n
 ) {
     int d = 0;
     for (int i = 0; i < n; i++)
@@ -62,10 +62,10 @@ inline int l1_distance(
 }
 
 inline float l2_distance(
-        const uchar *one,
-        const uchar *two,
-              int n
- ) {
+    __global const uchar *one,
+    __global const uchar *two,
+                   int n
+) {
     float d = 0;
     for (int i = 0; i < n; i++)
         d += pow((float) one[i] - (float) two[i], 2.f);
@@ -105,15 +105,15 @@ inline float normalize_hd(int value, KernelType t) {
 }
 
 void compute_lbsp(
-        const uchar *input,
-              uchar *out,
-        const KernelType kernel_type,
-        const uchar threshold,
-        const int channels_n,
-        const int width,
-        const int height,
-        const int x,
-        const int y
+    __global const uchar *input,
+    uchar *out,
+    const KernelType kernel_type,
+    const uchar threshold,
+    const int channels_n,
+    const int width,
+    const int height,
+    const int x,
+    const int y
 ) {
     const int offset = kernel_type == KERNEL_TYPE_CROSS_4
         ? 24
@@ -197,29 +197,28 @@ void compute_lbsp(
 }
 
 void downscale(
-        const uchar *in_img_bgr,         // from
-              uchar *out_pix_bgr,        // to
-        const ushort img_w,              // from
-        const ushort img_h,              // from
-        const float scale_w,             // [from : to], ie: [2 : 1]
-        const float scale_h,             // [from : to], ie: [2 : 1]
-        const int pix_x,                 // to
-        const int pix_y,                 // to
-        const uchar channels_n,          // number of color channels, ie: 1/2/3/4
-        const bool linear                // linear or nearest interpolation
+    __global const uchar *in_img,    // from
+    uchar *out_pix,                  // to
+    const ushort img_w,              // from
+    const ushort img_h,              // from
+    const float scale_w,             // [from : to], ie: [2 : 1]
+    const float scale_h,             // [from : to], ie: [2 : 1]
+    const int pix_x,                 // to
+    const int pix_y,                 // to
+    const uchar channels_n,          // number of color channels, ie: 1/2/3/4
+    const bool linear                // linear or nearest interpolation
 ) {
     if (!linear) {
         const int img_x = clamp((int) (pix_x * scale_w), (int) 0, (int) (img_w - 1));
         const int img_y = clamp((int) (pix_y * scale_h), (int) 0, (int) (img_h - 1));
         const int pos = ((img_y * img_w) + img_x) * channels_n;
         for (int i = 0; i < channels_n; i++)
-            out_pix_bgr[i] = in_img_bgr[pos + i];
+            out_pix[i] = in_img[pos + i];
         return;
     }
 
     const float img_x = pix_x * scale_w;
     const float img_y = pix_y * scale_h;
-    const int pos = ((img_y * img_w) + img_x) * channels_n;
 
     const int x0 = (int) img_x;
     const int y0 = (int) img_y;
@@ -230,30 +229,30 @@ void downscale(
     const int y1 = min((int) (y0 + 1), (int) (img_h - 1));
 
     for (int i = 0; i < channels_n; i++) {
-        float p00 = in_img_bgr[(y0 * img_w + x0) * 3 + i];
-        float p10 = in_img_bgr[(y0 * img_w + x1) * 3 + i];
-        float p01 = in_img_bgr[(y1 * img_w + x0) * 3 + i];
-        float p11 = in_img_bgr[(y1 * img_w + x1) * 3 + i];
+        float p00 = in_img[(y0 * img_w + x0) * 3 + i];
+        float p10 = in_img[(y0 * img_w + x1) * 3 + i];
+        float p01 = in_img[(y1 * img_w + x0) * 3 + i];
+        float p11 = in_img[(y1 * img_w + x1) * 3 + i];
 
         float p0 = p00 + (p10 - p00) * dx;
         float p1 = p01 + (p11 - p01) * dx;
         float p = p0 + (p1 - p0) * dy;
-        out_pix_bgr[i] = (unsigned char) p;
+        out_pix[i] = (unsigned char) p;
     }
 }
 
 void upscale(
-        const uchar *input_pix,          // Input color pixel [From]
-              uchar *output,             // Output image [To]
-        const ushort output_w,           // To width
-        const ushort output_h,           // To height
-        const float scale_w,             // [to : from], ie: [2 : 1]
-        const float scale_h,             // [to : from], ie: [2 : 1]
-        const uchar ceil_scale_w,        // ceil(scale_w)
-        const uchar ceil_scale_h,        // ceil(scale_h)
-        const uchar channels_n,          // number of color channels, ie: 1/2/3/4
-        const int pix_x,                 // From x
-        const int pix_y                  // From y
+    __global const uchar *input_pix,          // Input color pixel [From]
+    __global uchar *output,             // Output image [To]
+    const ushort output_w,           // To width
+    const ushort output_h,           // To height
+    const float scale_w,             // [to : from], ie: [2 : 1]
+    const float scale_h,             // [to : from], ie: [2 : 1]
+    const uchar ceil_scale_w,        // ceil(scale_w)
+    const uchar ceil_scale_h,        // ceil(scale_h)
+    const uchar channels_n,          // number of color channels, ie: 1/2/3/4
+    const int pix_x,                 // From x
+    const int pix_y                  // From y
 ) {
     const float img_x = pix_x * scale_w;
     const float img_y = pix_y * scale_h;
@@ -271,19 +270,19 @@ void upscale(
 }
 
 void upscale_apply(
-        const uchar *color_pix,          // Color value for background area
-        const uchar *input,              // Input image (larger)
-              uchar *output,             // Output image [To] (larger)
-        const ushort output_w,           // To width
-        const ushort output_h,           // To height
-        const float scale_w,             // [to : from], ie: [2 : 1]
-        const float scale_h,             // [to : from], ie: [2 : 1]
-        const uchar ceil_scale_w,        // ceil(scale_w)
-        const uchar ceil_scale_h,        // ceil(scale_h)
-        const uchar channels_n,          // number of color channels, ie: 1/2/3/4
-        const uchar mask,                // Background segmentation mask
-        const int pix_x,                 // From x
-        const int pix_y                  // From y
+    const uchar *color_pix,          // Color value for background area
+    __global const uchar *input,     // Input image (larger)
+    __global       uchar *output,    // Output image [To] (larger)
+    const ushort output_w,           // To width
+    const ushort output_h,           // To height
+    const float scale_w,             // [to : from], ie: [2 : 1]
+    const float scale_h,             // [to : from], ie: [2 : 1]
+    const uchar ceil_scale_w,        // ceil(scale_w)
+    const uchar ceil_scale_h,        // ceil(scale_h)
+    const uchar channels_n,          // number of color channels, ie: 1/2/3/4
+    const uchar mask,                // Background segmentation mask
+    const int pix_x,                 // From x
+    const int pix_y                  // From y
 ) {
     const float img_x = pix_x * scale_w;
     const float img_y = pix_y * scale_h;
@@ -308,8 +307,8 @@ void upscale_apply(
 }
 
 void morph_operation(
-    const uchar *input,           // Input image
-          uchar *output,          // Output image
+    __global const uchar *input,  // Input image
+    __global       uchar *output, // Output image
     const MorphType morph_type,   // Erode - 0, Dilate - 1, see (MorphType)
     const KernelType kernel_type, // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
     const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
@@ -320,9 +319,24 @@ void morph_operation(
 ) {
     const int img_idx = (y * width + x) * channels_n;
     const char KER_ARR[32] = {
-        -2,-2,  -2, 2,  2,-2,  2, 2,  -2, 0,  0,-2,  2, 0,  0, 2,  // offset  0
-        -1,-1,  -1, 1,  1,-1,  1, 1,                               // offset 16
-        -1, 0,   0,-1,  1, 0,  0, 1                                // offset 24
+        -2, -2,
+        -2,  2,
+        2, -2,
+        2,  2,
+        -2,  0,
+        0, -2,
+        2,  0,
+        0,  2,
+
+        -1, -1,
+        -1,  1,
+        1, -1,
+        1,  1,
+
+        -1,  0,
+        0, -1,
+        1,  0,
+        0,  1
     };
     const int offset = kernel_type == KERNEL_TYPE_CROSS_4
         ? 24
@@ -446,7 +460,7 @@ __kernel void kernel_subsense(
         const int bgm_idx   = pos_3(x, y, i, width, height, bgm_ch_size);
 
 #ifndef DISABLED_LBSP
-        const int d_lbsp    = hamming_distance(lbsp_img, &bg_model[bgm_idx + channels_n], kernel_size);
+        const int d_lbsp    = hamming_distance(&bg_model[bgm_idx + channels_n], lbsp_img, kernel_size);
         const float d_l_n   = normalize_hd(d_lbsp, lbsp_kernel);
 #endif
 
@@ -486,7 +500,7 @@ __kernel void kernel_subsense(
     seg_mask[idx] = is_foreground ? 255 : 0;
 
     // update G_c(x)
-    const float new_G_c = is_foreground && (abs(utility_1[ut1_idx + 3] - D_MIN_X) < ghost_t)
+    const float new_G_c = is_foreground && (fabs(utility_1[ut1_idx + 3] - D_MIN_X) < ghost_t)
         ? utility_2[ut2_idx + 2] + 1
         : 0;
     utility_2[ut2_idx + 2] = new_G_c;
@@ -509,7 +523,7 @@ __kernel void kernel_subsense(
 
     // update T(x)
     short new_T_x = clamp(
-        (is_foreground
+        (ushort) (is_foreground
             ? T_x + t_scale_inc * (1.f / (new_V_x * new_D_m))
             : T_x - t_scale_dec * (new_V_x / new_D_m)
         ),
@@ -581,7 +595,7 @@ __kernel void prepare_subsense_model(
     const int ut1_idx = idx * 4;
     const int ut2_idx = idx * 3;
     const int img_idx = idx * channels_n;
-    const int bgm_idx = pos_3(x, y, clamp(model_i, 0, model_size - 1), width, height, bgm_ch_size);
+    const int bgm_idx = pos_3(x, y, clamp((int) model_i, 0, model_size - 1), width, height, bgm_ch_size);
 
     utility_1[ut1_idx    ] = .5f;       // D_min(x)
     utility_1[ut1_idx + 1] = 1;         // R(x)

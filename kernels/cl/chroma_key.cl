@@ -1,15 +1,15 @@
 inline void downscale(
-        const unsigned char *in_img_bgr, // from
-        unsigned char *out_pix_bgr,      // to
+    __global const unsigned char *in_img_bgr, // from
+    unsigned char *out_pix_bgr,      // to
 
-        const unsigned int img_w,        // from
-        const unsigned int img_h,        // from
-        const float scale_w,             // [from : to] ie: [2 : 1]
-        const float scale_h,             // [from : to] ie: [2 : 1]
-        const int pix_x,                 // to
-        const int pix_y,                 // to
+    const unsigned int img_w,        // from
+    const unsigned int img_h,        // from
+    const float scale_w,             // [from : to] ie: [2 : 1]
+    const float scale_h,             // [from : to] ie: [2 : 1]
+    const int pix_x,                 // to
+    const int pix_y,                 // to
 
-        const bool linear                // linear or nearest
+    const bool linear                // linear or nearest
 ) {
     if (!linear) {
         const int img_x = clamp((int) (pix_x * scale_w), (int) 0, (int) (img_w - 1));
@@ -47,8 +47,8 @@ inline void downscale(
 }
 
 inline void bgr_to_hls(
-        const unsigned char *in_bgr,
-        unsigned char *out_hls
+    const unsigned char *in_bgr,
+    unsigned char *out_hls
 ) {
     // https://docs.opencv.org/4.9.0/de/d25/imgproc_color_conversions.html
     const float b = ((float) in_bgr[0]) / 255.f;
@@ -78,25 +78,25 @@ inline void bgr_to_hls(
 }
 
 inline unsigned char downscale_blur_hls_threshold(
-        const unsigned char *input,
-        const float *gaussian_kernel,
-        const int half_kernel_size,
-        const bool blur,
-        const bool linear,
-        const unsigned int input_w,
-        const unsigned int input_h,
-        const unsigned int mask_w,
-        const unsigned int mask_h,
-        const float scale_w,
-        const float scale_h,
-        const unsigned char lower_h,
-        const unsigned char lower_l,
-        const unsigned char lower_s,
-        const unsigned char upper_h,
-        const unsigned char upper_l,
-        const unsigned char upper_s,
-        const int x,
-        const int y
+    __global const unsigned char *input,
+    __global const float *gaussian_kernel,
+    const int half_kernel_size,
+    const bool blur,
+    const bool linear,
+    const unsigned int input_w,
+    const unsigned int input_h,
+    const unsigned int mask_w,
+    const unsigned int mask_h,
+    const float scale_w,
+    const float scale_h,
+    const unsigned char lower_h,
+    const unsigned char lower_l,
+    const unsigned char lower_s,
+    const unsigned char upper_h,
+    const unsigned char upper_l,
+    const unsigned char upper_s,
+    const int x,
+    const int y
 ) {
     unsigned char pix_bgr[3] = {0, 0, 0}; // working pixel
 
@@ -136,7 +136,6 @@ inline unsigned char downscale_blur_hls_threshold(
     unsigned char hls[3];
     bgr_to_hls(pix_bgr, hls);
 
-    unsigned char mask = 0;
     if (lower_h < upper_h) { // Dont wrap
         if (hls[0] >= lower_h &&
             hls[1] >= lower_l &&
@@ -164,20 +163,20 @@ inline unsigned char downscale_blur_hls_threshold(
 }
 
 inline void upscale_apply(
-        const unsigned char *input,
-        unsigned char *output,
-        const unsigned int output_w,
-        const unsigned int output_h,
-        const float scale_x,
-        const float scale_y,
-        const unsigned char color_b,
-        const unsigned char color_g,
-        const unsigned char color_r,
-        const unsigned char mask,
-        const unsigned int d_x,
-        const unsigned int d_y,
-        const int x,
-        const int y
+    __global const unsigned char *input,
+    __global unsigned char *output,
+    const unsigned int output_w,
+    const unsigned int output_h,
+    const float scale_x,
+    const float scale_y,
+    const unsigned char color_b,
+    const unsigned char color_g,
+    const unsigned char color_r,
+    const unsigned char mask,
+    const unsigned int d_x,
+    const unsigned int d_y,
+    const int x,
+    const int y
 ) {
     const float ox = x * scale_x;
     const float oy = y * scale_y;
@@ -248,25 +247,25 @@ __kernel void power_mask(
 }
 
 __kernel void power_apply(
-        // IMAGES
-        __global const unsigned char *input,
-        __global const unsigned char *mask,
-        __global unsigned char *output,
+    // IMAGES
+    __global const unsigned char *input,
+    __global const unsigned char *mask,
+    __global unsigned char *output,
 
-        // SCALING
-        const unsigned int mask_w,
-        const unsigned int mask_h,
-        const unsigned int output_w,
-        const unsigned int output_h,
-        const float scale_x,
-        const float scale_y,
-        const unsigned int d_x,
-        const unsigned int d_y,
+    // SCALING
+    const unsigned int mask_w,
+    const unsigned int mask_h,
+    const unsigned int output_w,
+    const unsigned int output_h,
+    const float scale_x,
+    const float scale_y,
+    const unsigned int d_x,
+    const unsigned int d_y,
 
-        // KEY
-        const unsigned char color_b,
-        const unsigned char color_g,
-        const unsigned char color_r
+    // KEY
+    const unsigned char color_b,
+    const unsigned char color_g,
+    const unsigned char color_r
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -287,40 +286,40 @@ __kernel void power_apply(
 }
 
 __kernel void power_chromakey(
-        // IMAGES
-        __global const unsigned char *input,
-        __global unsigned char *output,
+    // IMAGES
+    __global const unsigned char *input,
+    __global unsigned char *output,
 
-        // BLUR
-        __global const float *gaussian_kernel,
-        const int half_kernel_size,
-        const unsigned char blur,   // aka BOOL
+    // BLUR
+    __global const float *gaussian_kernel,
+    const int half_kernel_size,
+    const unsigned char blur,   // aka BOOL
 
-        // SCALING
-        const unsigned char linear, // aka BOOL
-        const unsigned int input_w,
-        const unsigned int input_h,
-        const unsigned int mask_w,
-        const unsigned int mask_h,
-        const float scale_x,
-        const float scale_y,
+    // SCALING
+    const unsigned char linear, // aka BOOL
+    const unsigned int input_w,
+    const unsigned int input_h,
+    const unsigned int mask_w,
+    const unsigned int mask_h,
+    const float scale_x,
+    const float scale_y,
 
-        // HLS MASK
-        const unsigned char lower_h,
-        const unsigned char lower_l,
-        const unsigned char lower_s,
-        const unsigned char upper_h,
-        const unsigned char upper_l,
-        const unsigned char upper_s,
+    // HLS MASK
+    const unsigned char lower_h,
+    const unsigned char lower_l,
+    const unsigned char lower_s,
+    const unsigned char upper_h,
+    const unsigned char upper_l,
+    const unsigned char upper_s,
 
-        // KEY
-        const unsigned char color_b,
-        const unsigned char color_g,
-        const unsigned char color_r,
+    // KEY
+    const unsigned char color_b,
+    const unsigned char color_g,
+    const unsigned char color_r,
 
-        // UPSCALE
-        const unsigned int d_x,
-        const unsigned int d_y
+    // UPSCALE
+    const unsigned int d_x,
+    const unsigned int d_y
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);

@@ -1,6 +1,6 @@
 inline void bgr_to_hls(
-        const unsigned char *in_bgr,
-        unsigned char *out_hls
+    __global const unsigned char *in_bgr,
+    unsigned char *out_hls
 ) {
     // https://docs.opencv.org/4.9.0/de/d25/imgproc_color_conversions.html
     const float b = ((float) in_bgr[0]) / 255.f;
@@ -101,18 +101,18 @@ __kernel void kernel_range_hls_mask(
 }
 
 __kernel void kernel_simple_mask_apply(
-        __global const unsigned char *mask_gray,
-        __global const unsigned char *front_bgr,
-        __global unsigned char *output_bgr,
-        const unsigned int mask_width,
-        const unsigned int mask_height,
-        const unsigned int width,
-        const unsigned int height,
-        const float scale_mask_w,
-        const float scale_mask_h,
-        const unsigned char color_b,
-        const unsigned char color_g,
-        const unsigned char color_r
+    __global const unsigned char *mask_gray,
+    __global const unsigned char *front_bgr,
+    __global unsigned char *output_bgr,
+    const unsigned int mask_width,
+    const unsigned int mask_height,
+    const unsigned int width,
+    const unsigned int height,
+    const float scale_mask_w,
+    const float scale_mask_h,
+    const unsigned char color_b,
+    const unsigned char color_g,
+    const unsigned char color_r
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);

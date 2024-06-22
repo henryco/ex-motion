@@ -2,8 +2,8 @@
 #define U8_NF_3 0.577350f
 
 inline void bgr_to_hls(
-        const unsigned char *in_bgr,
-        unsigned char *out_hls
+    __global const unsigned char *in_bgr,
+    unsigned char *out_hls
 ) {
     // https://docs.opencv.org/4.9.0/de/d25/imgproc_color_conversions.html
     const float b = ((float) in_bgr[0]) / 255.f;
@@ -33,9 +33,23 @@ inline void bgr_to_hls(
 }
 
 inline int hamming_distance(
-        const unsigned char *one,
-        const unsigned char *two,
-        const int n
+    __global const unsigned char *one,
+    const unsigned char *two,
+    const int n
+) {
+    int d = 0;
+    for (int i = 0; i < n; i++) {
+        const unsigned char c = one[i] ^ two[i];
+        for (int j = 0; j < 8; j++)
+            d += ((c >> j) & 1);
+    }
+    return d;
+}
+
+inline int hamming_distance_2(
+    const unsigned char *one,
+    const unsigned char *two,
+    const int n
 ) {
     int d = 0;
     for (int i = 0; i < n; i++) {
@@ -47,14 +61,14 @@ inline int hamming_distance(
 }
 
 inline void compute_lbp(
-        const unsigned char *input,
-        unsigned char *out,
-        const int c_input_size,  // numbers of color channels in image
-        const int kernel_size,   // actually should be <= 15
-        const int width,
-        const int height,
-        const int x,
-        const int y
+    __global const unsigned char *input,
+    unsigned char *out,
+    const int c_input_size,  // numbers of color channels in image
+    const int kernel_size,   // actually should be <= 15
+    const int width,
+    const int height,
+    const int x,
+    const int y
 ) {
     out[0] = 0;
 
@@ -96,8 +110,8 @@ inline void compute_lbp(
 }
 
 inline unsigned char mask_lbp(
-        const unsigned char *frame_image,
-        const unsigned char *frame_lbp,
+        __global const unsigned char *frame_image,
+        __global const unsigned char *frame_lbp,
         const int c_input_size,  // numbers of color channels in image
         const int c_code_size,   // ceil((pow(kernel_size, 2) - 1) / 8.f)
         const int kernel_size,   // actually should be <= 15
@@ -112,7 +126,7 @@ inline unsigned char mask_lbp(
     compute_lbp(frame_image, lbp, c_input_size, kernel_size, width, height, x, y);
 
     const int idx_s = (y * width + x) * c_code_size;
-    const int d = hamming_distance(lbp, &(frame_lbp[idx_s]), c_code_size);
+    const int d = hamming_distance(&(frame_lbp[idx_s]), lbp, c_code_size);
 
     return ((float) d / (float) total_bits) >= threshold ? 255 : 0;
 }
@@ -279,7 +293,7 @@ __kernel void kernel_color_diff(
     unsigned char lbp_ref[32]; // up to 256 bits
     compute_lbp(frame_img, lbp_img, 3, 9, width, height, x, y); // -> 11
     compute_lbp(frame_ref, lbp_ref, 3, 9, width, height, x, y); // -> 11
-    const int d_lbp = (float) hamming_distance(lbp_img, lbp_ref, 11) / 80.f * 255.f;
+    const int d_lbp = (float) hamming_distance_2(lbp_img, lbp_ref, 11) / 80.f * 255.f;
 
     const int d_abs = abs(hls_img[0] - hls_ref[0]);
     const int d_lgt = abs(hls_img[1] - hls_ref[1]);

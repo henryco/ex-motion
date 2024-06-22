@@ -238,6 +238,35 @@ void downscale(
     }
 }
 
+void upscale(
+        const uchar *input_pix,          // Input color pixel [From]
+              uchar *output,             // Output image [To]
+        const ushort output_w,           // To width
+        const ushort output_h,           // To height
+        const float scale_w,             // [to : from], ie: [2 : 1]
+        const float scale_h,             // [to : from], ie: [2 : 1]
+        const uchar ceil_scale_w,        // ceil(scale_w)
+        const uchar ceil_scale_h,        // ceil(scale_h)
+        const uchar channels_n,          // number of color channels, ie: 1/2/3/4
+        const int pix_x,                 // From x
+        const int pix_y                  // From y
+) {
+    const int i_idx = pix_y *
+    const float img_x = pix_x * scale_x;
+    const float img_y = pix_y * scale_y;
+
+    for (int ky = 0; ky < ceil_scale_h; ky++) {
+        for (int kx = 0; kx < ceil_scale_w; kx++) {
+            const int ix = clamp((int) (img_x + kx), (int) 0, (int) (output_w - 1));
+            const int iy = clamp((int) (img_y + ky), (int) 0, (int) (output_h - 1));
+            const int o_idx = (iy * output_w + ix) * channels_n;
+
+            for (int i = 0; i < channels_n; i++)
+                output[o_idx + i] = input_pix[i];
+        }
+    }
+}
+
 __kernel void kernel_subsense(
     /* Flexible Background Subtraction With Self-Balanced Local Sensitivity
      * https://www.cv-foundation.org/openaccess/content_cvpr_workshops_2014/W12/papers/St-Charles_Flexible_Background_Subtraction_2014_CVPR_paper.pdf
@@ -492,8 +521,8 @@ __kernel void prepare_subsense_model(
 
 __kernel void kernel_downscale(
 
-    __global const uchar *image,           // Input  image [From]
-    __global       uchar *output,          // Output image [To]
+    __global const uchar *image,           // Input  image [From] (larger)
+    __global       uchar *output,          // Output image [To]   (smaller)
              const ushort img_w,           // From width
              const ushort img_h,           // From height
              const ushort out_w,           // To   width
@@ -516,4 +545,33 @@ __kernel void kernel_downscale(
     const int idx = (y * out_w + x) * channels_n;
     for (int i = 0; i < channels_n; i++)
         output[idx + i] = color_pixel[i];
+}
+
+__kernel void kernel_upscale(
+
+    __global const uchar *image,           // Input  image [From] (smaller)
+    __global       uchar *output,          // Output image [To]   (larger)
+             const ushort img_w,           // From width
+             const ushort img_h,           // From height
+             const ushort out_w,           // To   width
+             const ushort out_h,           // To   height
+             const float scale_w,          // [To : From], ie: [2 : 1]
+             const float scale_h,          // [To : From], ie: [2 : 1]
+             const uchar d_x,              // ceil(scale_w)
+             const uchar d_y,              // ceil(scale_h)
+             const uchar channels_n        // Number of color channels, ie: 1/2/3/4
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= img_w || y >= img_h)
+        return;
+
+    upscale(
+        &image[(y * img_w + x) * channels_n], output,
+        out_w, out_h,
+        scale_w, scale_h,
+        d_x, d_y,
+        channels_n,
+        x, y);
 }

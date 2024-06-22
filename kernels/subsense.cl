@@ -195,27 +195,27 @@ void compute_lbsp(
 void downscale(
         const uchar *in_img_bgr,         // from
               uchar *out_pix_bgr,        // to
-        const uint img_w,                // from
-        const uint img_h,                // from
-        const float scale_w,             // [from : to] ie: [2 : 1]
-        const float scale_h,             // [from : to] ie: [2 : 1]
+        const ushort img_w,              // from
+        const ushort img_h,              // from
+        const float scale_w,             // [from : to], ie: [2 : 1]
+        const float scale_h,             // [from : to], ie: [2 : 1]
         const int pix_x,                 // to
         const int pix_y,                 // to
+        const uchar channels_n           // number of color channels, ie: 1/2/3/4
         const bool linear                // linear or nearest interpolation
 ) {
     if (!linear) {
         const int img_x = clamp((int) (pix_x * scale_w), (int) 0, (int) (img_w - 1));
         const int img_y = clamp((int) (pix_y * scale_h), (int) 0, (int) (img_h - 1));
-        const int pos = ((img_y * img_w) + img_x) * 3;
-        out_pix_bgr[0] = in_img_bgr[pos + 0];
-        out_pix_bgr[1] = in_img_bgr[pos + 1];
-        out_pix_bgr[2] = in_img_bgr[pos + 2];
+        const int pos = ((img_y * img_w) + img_x) * channels_n;
+        for (int i = 0; i < channels_n; i++)
+            out_pix_bgr[i] = in_img_bgr[pos + i];
         return;
     }
 
     const float img_x = pix_x * scale_w;
     const float img_y = pix_y * scale_h;
-    const int pos = ((img_y * img_w) + img_x) * 3;
+    const int pos = ((img_y * img_w) + img_x) * channels_n;
 
     const int x0 = (int) img_x;
     const int y0 = (int) img_y;
@@ -225,7 +225,7 @@ void downscale(
     const int x1 = min((int) (x0 + 1), (int) (img_w - 1));
     const int y1 = min((int) (y0 + 1), (int) (img_h - 1));
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < channels_n; i++) {
         float p00 = in_img_bgr[(y0 * img_w + x0) * 3 + i];
         float p10 = in_img_bgr[(y0 * img_w + x1) * 3 + i];
         float p01 = in_img_bgr[(y1 * img_w + x0) * 3 + i];
@@ -280,6 +280,7 @@ __kernel void kernel_subsense(
              const uint rng_seed_2,        // Seed for random number generator
              const ushort width,
              const ushort height
+
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -445,6 +446,7 @@ __kernel void prepare_subsense_model(
              const ushort t_lower,         // Lower bound for T(x) value
              const ushort width,
              const ushort height
+
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -486,4 +488,32 @@ __kernel void prepare_subsense_model(
         bg_model[bgm_idx_offset + i] = lbsp_img[i]; // LBSP bit strings
     }
 #endif
+}
+
+__kernel void kernel_downscale(
+
+    __global const uchar *image,           // Input  image [From]
+    __global       uchar *output,          // Output image [To]
+             const ushort img_w,           // From width
+             const ushort img_h,           // From height
+             const ushort out_w,           // To   width
+             const ushort out_h,           // To   height
+             const float scale_w,          // [From : To], ie: [2 : 1]
+             const float scale_h,          // [From : To], ie: [2 : 1]
+             const uchar channels_n        // Number of color channels, ie: 1/2/3/4
+             const uchar linear            // is linear interpolation used, [0 - false]
+
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= out_w || y >= out_h)
+        return;
+
+    uchar color_pixel[4];
+    downscale(image, color_pixel, img_w, img_h, scale_w, scale_h, x, y, channels_n, linear > 0);
+
+    const int idx = (y * out_w + x) * channels_n;
+    for (int i = 0; i < channels_n; i++)
+        output[idx + i] = color_pixel[i];
 }

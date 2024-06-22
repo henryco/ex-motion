@@ -191,7 +191,6 @@ __kernel void kernel_subsense(
 #endif
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
-    __global const uchar *prev,            // Input image (previous) ch_n * 1
     __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
@@ -243,8 +242,8 @@ __kernel void kernel_subsense(
     const float random_value = xor_shift_rng(x, y, rng_seed_1);
 
     const int img_idx = idx * channels_n;
-    const int ut1_idx = idx * 3;
-    const int ut2_idx = idx * 2;
+    const int ut1_idx = idx * 4;
+    const int ut2_idx = idx * 3;
 
     const float D_m = utility_1[ut1_idx    ];
     const float R_x = utility_1[ut1_idx + 1];
@@ -372,16 +371,20 @@ __kernel void kernel_subsense(
 }
 
 __kernel void prepare_subsense_model(
-    __global const uchar *image,          // Input image (current)  ch_n * 1
-    __global       uchar *bg_model,       // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
+
+    __global const uchar *image,           // Input image (current)  ch_n * 1
+    __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
+    __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
+    __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
 
 #ifndef DISABLED_LBSP
-             const uchar lbsp_kernel,     // LBSP kernel type: [ 0, 1, 2, 3 ]
-             const uchar lbsp_threshold,  // Threshold value used for initial LBSP calculation
+             const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ]
+             const uchar lbsp_threshold,   // Threshold value used for initial LBSP calculation
 #endif
-             const uchar model_size,      // Number of frames "N" in bg_model B(x)
-             const uchar channels_n,      // Number of color channels in input image [1, 2, 3]
-             const uchar model_i,         // Current model index
+             const uchar model_i,          // Current model index (z)
+             const uchar model_size,       // Number of frames "N" in bg_model B(x)
+             const uchar channels_n,       // Number of color channels in input image [1, 2, 3]
+             const ushort t_lower,         // Lower bound for T(x) value
              const ushort width,
              const ushort height
 ) {
@@ -401,8 +404,19 @@ __kernel void prepare_subsense_model(
 #endif
 
     const int idx     = y * width + x;
+    const int ut1_idx = idx * 4;
+    const int ut2_idx = idx * 3;
     const int img_idx = idx * channels_n;
     const int bgm_idx = pos_3(x, y, clamp(model_i, 0, model_size - 1), width, height, bgm_ch_size);
+
+    utility_1[ut1_idx    ] = .5f;       // D_min(x)
+    utility_1[ut1_idx + 1] = 1;         // R(x)
+    utility_1[ut1_idx + 2] = 1;         // v(x)
+    utility_1[ut1_idx + 3] = .5f;       // dt-1(x)
+
+    utility_2[ut2_idx    ] = 0;         // St-1(x)
+    utility_2[ut2_idx + 1] = t_lower;   // T(x)
+    utility_2[ut2_idx + 2] = 0;         // Gt_acc(x)
 
     for (int i = 0; i < channels_n; i++) {
         bg_model[bgm_idx + i] = image[img_idx + i]; // B, G, R

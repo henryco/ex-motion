@@ -255,7 +255,6 @@ void upscale(
         const int pix_x,                 // From x
         const int pix_y                  // From y
 ) {
-    const int i_idx = pix_y *
     const float img_x = pix_x * scale_x;
     const float img_y = pix_y * scale_y;
 
@@ -267,6 +266,43 @@ void upscale(
 
             for (int i = 0; i < channels_n; i++)
                 output[o_idx + i] = input_pix[i];
+        }
+    }
+}
+
+void upscale_apply(
+        const uchar *color_pix,          // Color value for background area
+        const uchar *input,              // Input image (larger)
+              uchar *output,             // Output image [To] (larger)
+        const ushort output_w,           // To width
+        const ushort output_h,           // To height
+        const float scale_w,             // [to : from], ie: [2 : 1]
+        const float scale_h,             // [to : from], ie: [2 : 1]
+        const uchar ceil_scale_w,        // ceil(scale_w)
+        const uchar ceil_scale_h,        // ceil(scale_h)
+        const uchar channels_n,          // number of color channels, ie: 1/2/3/4
+        const uchar mask,                // Background segmentation mask
+        const int pix_x,                 // From x
+        const int pix_y                  // From y
+) {
+    const float img_x = pix_x * scale_x;
+    const float img_y = pix_y * scale_y;
+
+    for (int ky = 0; ky < ceil_scale_h; ky++) {
+        for (int kx = 0; kx < ceil_scale_w; kx++) {
+            const int ix = clamp((int) (img_x + kx), (int) 0, (int) (output_w - 1));
+            const int iy = clamp((int) (img_y + ky), (int) 0, (int) (output_h - 1));
+            const int o_idx = (iy * output_w + ix) * channels_n;
+
+            if (mask > 0) {
+                // foreground
+                for (int i = 0; i < channels_n; i++)
+                    output[o_idx + i] = input[o_idx + i];
+            } else {
+                // background
+                for (int i = 0; i < channels_n; i++)
+                    output[o_idx + i] = color_pix[i];
+            }
         }
     }
 }
@@ -623,6 +659,47 @@ __kernel void kernel_upscale(
         scale_w, scale_h,
         d_x, d_y,
         channels_n,
+        x, y);
+}
+
+__kernel void kernel_upscale_apply(
+
+    __global const uchar *mask,            // Segmentation mask [From] (smaller) 1 channel
+    __global const uchar *image,           // Source image      [To]   (larger)  N channels
+    __global       uchar *output,          // Output image      [To]   (larger)  N channels
+             const ushort mask_w,          // From width
+             const ushort mask_h,          // From height
+             const ushort out_w,           // To   width
+             const ushort out_h,           // To   height
+             const float scale_w,          // [To : From], ie: [2 : 1]
+             const float scale_h,          // [To : From], ie: [2 : 1]
+             const uchar d_x,              // ceil(scale_w)
+             const uchar d_y,              // ceil(scale_h)
+             const uchar color_b,          // New background color B
+             const uchar color_g,          // New background color G
+             const uchar color_r,          // New background color R
+             const uchar channels_n        // Number of color channels, ie: 1/2/3/4
+
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= mask_w || y >= mask_h)
+        return;
+
+    const uchar colors[3] = {
+        color_b,
+        color_g,
+        color_r
+    };
+
+    upscale_apply(
+        colors, image, output,
+        output_w, output_h,
+        scale_w, scale_h,
+        d_x, d_y,
+        channels_n,
+        mask[y * mask_w + x],
         x, y);
 }
 

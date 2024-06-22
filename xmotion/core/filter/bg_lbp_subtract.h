@@ -8,6 +8,7 @@
 #include "../utils/xm_data.h"
 #include "i_filter.h"
 
+#include <map>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -70,8 +71,16 @@ namespace xm::filters {
                 spdlog::stdout_color_mt("filter_bg_lbp_subtract");
 
     private:
-        xm::ds::Color4u bgr_bg_color;
+        // ===== OCL PART =====
+        std::map<int, cl_command_queue> ocl_queue_map;
+        cl_command_queue ocl_command_queue;
+        cl_device_id device_id;
+        cl_context ocl_context;
+        // ===== OCL PART =====
 
+
+
+        xm::ds::Color4u bgr_bg_color;
 //        ocl::Image2D reference_buffer;
 
         int fine_iterations = 0;
@@ -79,17 +88,25 @@ namespace xm::filters {
         int blur_kernel = 0;
         int lbp_kernel = 0;
         float threshold = .5f;
-        long delay;
+        long delay = 0;
 
         bool initialized = false;
         bool ready = false;
 
+
     public:
+        BgLbpSubtract();
+
+        ~BgLbpSubtract() override;
+
         void init(const bgs::Conf &conf);
 
         xm::ocl::iop::ClImagePromise filter(const ocl::Image2D &in, int q_idx) override;
 
         void reset() override;
+
+    protected:
+        cl_command_queue  retrieve_queue(int index);
     };
 }
 

@@ -7,8 +7,45 @@
 
 namespace xm::filters {
 
+    BgLbpSubtract::BgLbpSubtract() {
+        device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
+        ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
+        ocl_command_queue = xm::ocl::create_queue_device(
+                ocl_context,
+                device_id,
+                true,
+                false);
+    }
+
+    BgLbpSubtract::~BgLbpSubtract() {
+        for (auto &item: ocl_queue_map) {
+            if (item.second == nullptr)
+                continue;
+            clReleaseCommandQueue(item.second);
+        }
+
+        clReleaseCommandQueue(ocl_command_queue);
+        clReleaseContext(ocl_context);
+        clReleaseDevice(device_id);
+    }
+
     void BgLbpSubtract::reset() {
         ready = false;
+    }
+
+    cl_command_queue BgLbpSubtract::retrieve_queue(int index) {
+        if (index <= 0)
+            return ocl_command_queue;
+
+        if (ocl_queue_map.contains(index))
+            return ocl_queue_map[index];
+
+        ocl_queue_map.emplace(index, xm::ocl::create_queue_device(
+                ocl_context,
+                device_id,
+                true,
+                false));
+        return ocl_queue_map[index];
     }
 
     void BgLbpSubtract::init(const bgs::Conf &conf) {

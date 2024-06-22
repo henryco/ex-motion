@@ -13,11 +13,11 @@ typedef uchar KernelType;
 #define L2_C2_NORM_DIV 360.6244584.f
 #define L2_C1_NORM_DIV 255.f
 
-inline float xor_shift_rng(int x, int y, uint seed) {
+inline float xor_shift_rng(const uint seed) {
     /* Xor-shift RNGs George Marsaglia
      *  https://www.jstatsoft.org/article/download/v008i14/916
      */
-    uint state = seed + x + y;
+    uint state = seed;
     state ^= state << 13;
     state ^= state >> 17;
     state ^= state << 5;
@@ -354,8 +354,7 @@ __kernel void kernel_subsense(
              const uchar matches_req,      // Number of required matches of It(x) with B(x)
              const uchar model_size,       // Number of frames "N" in bg_model B(x)
              const uchar channels_n,       // Number of color channels in input image [1, 2, 3]
-             const uint rng_seed_1,        // Seed for random number generator
-             const uint rng_seed_2,        // Seed for random number generator
+             const uint rng_seed,          // Seed for random number generator
              const ushort width,
              const ushort height
 
@@ -376,7 +375,7 @@ __kernel void kernel_subsense(
     }
 #endif
 
-    const float random_value = xor_shift_rng(x, y, rng_seed_1);
+    const float random_value = xor_shift_rng(idx + rng_seed);
 
     const int img_idx = idx * channels_n;
     const int ut1_idx = idx * 4;
@@ -491,8 +490,9 @@ __kernel void kernel_subsense(
     utility_2[ut2_idx] = is_foreground ? 255 : 0;
 
     // update B(x)
-    if (random_value <= 1 / new_T_x) {
-        const int random_frame_n   = (float) xor_shift_rng(x, y, rng_seed_2) * (model_size - 1);
+    if (!is_foreground && random_value <= 1 / new_T_x) {
+        // Don't ask why: xor_shift_rng(T_x + img_idx + rng_seed), just a simple heuristic
+        const int random_frame_n   = (float) xor_shift_rng(T_x + img_idx + rng_seed) * (model_size - 1);
         const int random_frame_idx = pos_3(x, y, random_frame_n, width, height, bgm_ch_size);
         for (int i = 0; i < channels_n; i++){
             bg_model[random_frame_idx + i] = image[img_idx + i]; // B, G, R

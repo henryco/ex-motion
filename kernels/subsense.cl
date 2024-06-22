@@ -32,7 +32,11 @@ inline int pos_3(int x, int y, int z, int w, int h, int c_sz) {
     return ((z * h + y) * w + x) * c_sz;
 }
 
-inline int hamming_distance(const uchar *one, const uchar *two, int n) {
+inline int hamming_distance(
+        const uchar *one,
+        const uchar *two,
+              int n
+) {
     int d = 0;
     for (int i = 0; i < n; i++) {
         const unsigned char c = one[i] ^ two[i];
@@ -42,14 +46,22 @@ inline int hamming_distance(const uchar *one, const uchar *two, int n) {
     return d;
 }
 
-inline int l1_distance(const uchar *one, const uchar *two, int n) {
+inline int l1_distance(
+        const uchar *one,
+        const uchar *two,
+              int n
+) {
     int d = 0;
     for (int i = 0; i < n; i++)
         d += abs((int) one[i] - (int) two[i]);
     return d;
 }
 
-inline float l2_distance(const uchar *one, const uchar *two, int n) {
+inline float l2_distance(
+        const uchar *one,
+        const uchar *two,
+              int n
+ ) {
     float d = 0;
     for (int i = 0; i < n; i++)
         d += pow((float) one[i] - (float) two[i], 2.f);
@@ -90,7 +102,7 @@ inline float normalize_hd(int value, LbspKernelType t) {
 
 void compute_lbsp(
         const uchar *input,
-        uchar *out,
+              uchar *out,
         const LbspKernelType kernel_type,
         const uchar threshold,
         const int channels_n,
@@ -177,6 +189,52 @@ void compute_lbsp(
                 b = 0;
             }
         }
+    }
+}
+
+void downscale(
+        const uchar *in_img_bgr,         // from
+              uchar *out_pix_bgr,        // to
+        const uint img_w,                // from
+        const uint img_h,                // from
+        const float scale_w,             // [from : to] ie: [2 : 1]
+        const float scale_h,             // [from : to] ie: [2 : 1]
+        const int pix_x,                 // to
+        const int pix_y,                 // to
+        const bool linear                // linear or nearest interpolation
+) {
+    if (!linear) {
+        const int img_x = clamp((int) (pix_x * scale_w), (int) 0, (int) (img_w - 1));
+        const int img_y = clamp((int) (pix_y * scale_h), (int) 0, (int) (img_h - 1));
+        const int pos = ((img_y * img_w) + img_x) * 3;
+        out_pix_bgr[0] = in_img_bgr[pos + 0];
+        out_pix_bgr[1] = in_img_bgr[pos + 1];
+        out_pix_bgr[2] = in_img_bgr[pos + 2];
+        return;
+    }
+
+    const float img_x = pix_x * scale_w;
+    const float img_y = pix_y * scale_h;
+    const int pos = ((img_y * img_w) + img_x) * 3;
+
+    const int x0 = (int) img_x;
+    const int y0 = (int) img_y;
+    const float dx = img_x - x0;
+    const float dy = img_y - y0;
+
+    const int x1 = min((int) (x0 + 1), (int) (img_w - 1));
+    const int y1 = min((int) (y0 + 1), (int) (img_h - 1));
+
+    for (int i = 0; i < 3; i++) {
+        float p00 = in_img_bgr[(y0 * img_w + x0) * 3 + i];
+        float p10 = in_img_bgr[(y0 * img_w + x1) * 3 + i];
+        float p01 = in_img_bgr[(y1 * img_w + x0) * 3 + i];
+        float p11 = in_img_bgr[(y1 * img_w + x1) * 3 + i];
+
+        float p0 = p00 + (p10 - p00) * dx;
+        float p1 = p01 + (p11 - p01) * dx;
+        float p = p0 + (p1 - p0) * dy;
+        out_pix_bgr[i] = (unsigned char) p;
     }
 }
 

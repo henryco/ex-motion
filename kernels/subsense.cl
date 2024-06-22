@@ -1,4 +1,8 @@
 
+typedef uchar MorphType;
+#define MORPH_TYPE_ERODE  0
+#define MORPH_TYPE_DILATE 1
+
 typedef uchar KernelType;
 #define KERNEL_TYPE_NONE       0
 #define KERNEL_TYPE_CROSS_4    1
@@ -264,6 +268,51 @@ void upscale(
             for (int i = 0; i < channels_n; i++)
                 output[o_idx + i] = input_pix[i];
         }
+    }
+}
+
+void morph_operation(
+    const uchar *input,           // Input image
+          uchar *output,          // Output image
+    const MorphType morph_type    // Erode - 0, Dilate - 1, see (MorphType)
+    const KernelType kernel_type, // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
+    const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
+    const ushort width,           // Image width
+    const ushort height,          // Image height
+    const int x,
+    const int y
+) {
+    const int img_idx = (y * width + x) * channels_n;
+    const char KER_ARR[32] = {
+        -2,-2,  -2, 2,  2,-2,  2, 2,  -2, 0,  0,-2,  2, 0,  0, 2,
+        -1,-1,  -1, 1,  1,-1,  1, 1,
+        -1, 0,   0,-1,  1, 0,  0, 1
+    };
+    const int offset = kernel_type == KERNEL_TYPE_CROSS_4
+        ? 24
+        : kernel_type == KERNEL_TYPE_SQUARE_8
+            ? 16
+            : 0;
+
+    for (int i = 0; i < channels_n; i++) {
+        uchar value = input[img_idx + i];
+
+        for (int h = offset; h < 31; h += 2) {
+            const int i_x = x + KER_ARR[h    ];
+            const int i_y = y + KER_ARR[h + 1];
+
+            if (i_x < 0 || i_x >= width || i_y < 0 || i_y >= height)
+                continue;
+
+            if (morph_type == MORPH_TYPE_DILATE) {
+                val = max(value, input[(i_y * width + i_x) * channels_n + i]);
+                continue;
+            }
+
+            // MORPH_TYPE_ERODE default
+            val = min(value, input[(i_y * width + i_x) * channels_n + i]);
+        }
+        output[img_idx + i] = value;
     }
 }
 
@@ -581,7 +630,7 @@ __kernel void kernel_erode(
 
     __global const uchar *input,           // Input image
     __global       uchar *output,          // Output image
-             const uchar kernel,           // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
+             const uchar kernel_type,      // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
              const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
              const ushort width,           // Image width
              const ushort height           // Image height
@@ -593,32 +642,24 @@ __kernel void kernel_erode(
     if (x >= width || y >= height)
         return;
 
-    const char KER_ARR[32] = {
-        -2,-2,  -2, 2,  2,-2,  2, 2,  -2, 0,  0,-2,  2, 0,  0, 2,
-        -1,-1,  -1, 1,  1,-1,  1, 1,
-        -1, 0,   0,-1,  1, 0,  0, 1
-    };
+    morph_operation(input, output, MORPH_TYPE_ERODE, kernel_type, channels_n, width, height, x, y);
+}
 
-    const int img_idx = (y * width + x) * channels_n;
+__kernel void kernel_dilate(
 
-    const int offset = kernel_type == KERNEL_TYPE_CROSS_4
-        ? 24
-        : kernel_type == KERNEL_TYPE_SQUARE_8
-            ? 16
-            : 0;
+    __global const uchar *input,           // Input image
+    __global       uchar *output,          // Output image
+             const uchar kernel_type,      // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
+             const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
+             const ushort width,           // Image width
+             const ushort height           // Image height
 
-    for (int i = 0; i < channels_n; i++) {
-        uchar min_val = input[img_idx + i];
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
 
-        for (int h = offset; h < 31; h += 2) {
-            const int i_x = x + KER_ARR[h    ];
-            const int i_y = y + KER_ARR[h + 1];
+    if (x >= width || y >= height)
+        return;
 
-            if (i_x < 0 || i_x >= width || i_y < 0 || i_y >= height)
-                continue;
-
-            min_val = min(min_val, input[(i_y * width + i_x) * channels_n + i]);
-        }
-        output[img_idx + i] = min_val;
-    }
+    morph_operation(input, output, MORPH_TYPE_DILATE, kernel_type, channels_n, width, height, x, y);
 }

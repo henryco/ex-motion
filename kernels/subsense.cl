@@ -9,8 +9,8 @@ typedef uchar KernelType;
 #define KERNEL_TYPE_SQUARE_8   2
 #define KERNEL_TYPE_DIAMOND_16 3
 
-#define L2_C3_NORM_DIV 441.6729559.f
-#define L2_C2_NORM_DIV 360.6244584.f
+#define L2_C3_NORM_DIV 441.6729559f
+#define L2_C2_NORM_DIV 360.6244584f
 #define L2_C1_NORM_DIV 255.f
 
 inline float xor_shift_rng(const uint seed) {
@@ -205,7 +205,7 @@ void downscale(
         const float scale_h,             // [from : to], ie: [2 : 1]
         const int pix_x,                 // to
         const int pix_y,                 // to
-        const uchar channels_n           // number of color channels, ie: 1/2/3/4
+        const uchar channels_n,          // number of color channels, ie: 1/2/3/4
         const bool linear                // linear or nearest interpolation
 ) {
     if (!linear) {
@@ -255,8 +255,8 @@ void upscale(
         const int pix_x,                 // From x
         const int pix_y                  // From y
 ) {
-    const float img_x = pix_x * scale_x;
-    const float img_y = pix_y * scale_y;
+    const float img_x = pix_x * scale_w;
+    const float img_y = pix_y * scale_h;
 
     for (int ky = 0; ky < ceil_scale_h; ky++) {
         for (int kx = 0; kx < ceil_scale_w; kx++) {
@@ -285,8 +285,8 @@ void upscale_apply(
         const int pix_x,                 // From x
         const int pix_y                  // From y
 ) {
-    const float img_x = pix_x * scale_x;
-    const float img_y = pix_y * scale_y;
+    const float img_x = pix_x * scale_w;
+    const float img_y = pix_y * scale_h;
 
     for (int ky = 0; ky < ceil_scale_h; ky++) {
         for (int kx = 0; kx < ceil_scale_w; kx++) {
@@ -310,7 +310,7 @@ void upscale_apply(
 void morph_operation(
     const uchar *input,           // Input image
           uchar *output,          // Output image
-    const MorphType morph_type    // Erode - 0, Dilate - 1, see (MorphType)
+    const MorphType morph_type,   // Erode - 0, Dilate - 1, see (MorphType)
     const KernelType kernel_type, // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
     const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
     const ushort width,           // Image width
@@ -341,12 +341,12 @@ void morph_operation(
                 continue;
 
             if (morph_type == MORPH_TYPE_DILATE) {
-                val = max(value, input[(i_y * width + i_x) * channels_n + i]);
+                value = max(value, input[(i_y * width + i_x) * channels_n + i]);
                 continue;
             }
 
             // MORPH_TYPE_ERODE default
-            val = min(value, input[(i_y * width + i_x) * channels_n + i]);
+            value = min(value, input[(i_y * width + i_x) * channels_n + i]);
         }
         output[img_idx + i] = value;
     }

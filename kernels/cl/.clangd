@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-x, cl, -cl-std=cl1.2]

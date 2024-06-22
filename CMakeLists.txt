@@ -195,7 +195,7 @@ set(GENERATED_CL_SOURCES)
 foreach(input_file IN LISTS KERNEL_FILES)
     get_filename_component(output_path ${input_file} DIRECTORY)
     get_filename_component(output_name ${input_file} NAME_WE)
-    set(kernel_name "${PROJECT_SOURCE_DIR}/${output_path}/${output_name}.cl")
+    set(kernel_name "${PROJECT_SOURCE_DIR}/${output_path}/cl/${output_name}.cl")
     set(output_name "${PROJECT_BINARY_DIR}/xmotion_files/generated/${output_path}/${output_name}.cpp")
     add_custom_command(
             OUTPUT ${output_name}

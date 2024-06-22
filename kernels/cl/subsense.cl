@@ -614,7 +614,7 @@ __kernel void kernel_downscale(
              const ushort out_h,           // To   height
              const float scale_w,          // [From : To], ie: [2 : 1]
              const float scale_h,          // [From : To], ie: [2 : 1]
-             const uchar channels_n        // Number of color channels, ie: 1/2/3/4
+             const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
              const uchar linear            // is linear interpolation used, [0 - false]
 
 ) {
@@ -695,7 +695,7 @@ __kernel void kernel_upscale_apply(
 
     upscale_apply(
         colors, image, output,
-        output_w, output_h,
+        out_w, out_h,
         scale_w, scale_h,
         d_x, d_y,
         channels_n,

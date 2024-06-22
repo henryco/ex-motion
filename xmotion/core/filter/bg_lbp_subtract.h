@@ -72,8 +72,7 @@ namespace xm::filters {
     private:
         xm::ds::Color4u bgr_bg_color;
 
-        std::chrono::milliseconds t0;
-        ocl::Image2D reference_buffer;
+//        ocl::Image2D reference_buffer;
 
         int fine_iterations = 0;
         int fine_kernel = 0;

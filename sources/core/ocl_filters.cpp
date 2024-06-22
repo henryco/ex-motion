@@ -168,7 +168,10 @@ namespace xm::ocl {
 
 
     xm::ocl::iop::ClImagePromise blur(const iop::ClImagePromise &in, int kernel_size, int queue_index) {
-        return blur(Kernels::instance().retrieve_queue(queue_index), in, kernel_size);
+        auto queue = queue_index < 0 && in.queue() != nullptr
+                     ? in.queue()
+                     : Kernels::instance().retrieve_queue(queue_index);
+        return blur(queue, in, kernel_size);
     }
 
     xm::ocl::iop::ClImagePromise blur(cl_command_queue queue, const iop::ClImagePromise &in_p, int kernel_size) {
@@ -634,7 +637,10 @@ namespace xm::ocl {
 
     xm::ocl::iop::ClImagePromise chroma_key(const iop::ClImagePromise &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up, const xm::ds::Color4u &color,
                     bool linear, int mask_size, int blur, int fine, int refine, int queue_index) {
-        return chroma_key(Kernels::instance().retrieve_queue(queue_index), in, hls_low, hls_up, color, linear, mask_size, blur, fine, refine);
+        auto queue = queue_index < 0 && in.queue() != nullptr
+                     ? in.queue()
+                     : Kernels::instance().retrieve_queue(queue_index);
+        return chroma_key(queue, in, hls_low, hls_up, color, linear, mask_size, blur, fine, refine);
     }
 
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(
@@ -735,12 +741,17 @@ namespace xm::ocl {
     xm::ocl::iop::ClImagePromise chroma_key_single_pass(const iop::ClImagePromise &in, const xm::ds::Color4u &hls_low, const xm::ds::Color4u &hls_up,
                                                         const xm::ds::Color4u &color, bool linear, int mask_size, int blur,
                                                         int queue_index) {
-        return chroma_key_single_pass(Kernels::instance().retrieve_queue(queue_index),
-                                      in, hls_low, hls_up, color, linear, mask_size, blur);
+        auto queue = queue_index < 0 && in.queue() != nullptr
+                     ? in.queue()
+                     : Kernels::instance().retrieve_queue(queue_index);
+        return chroma_key_single_pass(queue, in, hls_low, hls_up, color, linear, mask_size, blur);
     }
 
     xm::ocl::iop::ClImagePromise flip_rotate(const iop::ClImagePromise &in, bool flip_x, bool flip_y, bool rotate, int queue_index) {
-        return flip_rotate(Kernels::instance().retrieve_queue(queue_index), in, flip_x, flip_y, rotate);
+        auto queue = queue_index < 0 && in.queue() != nullptr
+                ? in.queue()
+                : Kernels::instance().retrieve_queue(queue_index);
+        return flip_rotate(queue, in, flip_x, flip_y, rotate);
     }
 
     xm::ocl::iop::ClImagePromise flip_rotate(cl_command_queue queue, const iop::ClImagePromise &in_p, bool flip_x, bool flip_y, bool rotate) {
@@ -791,208 +802,6 @@ namespace xm::ocl {
                                                     in.channels, in.channel_size,
                                                     buffer_out, in.context, in.device, xm::ocl::ACCESS::RW),
                                             queue, flip_rotate_event).withCleanup(in_p);
-    }
-
-    xm::ocl::iop::ClImagePromise local_binary_patterns(const iop::ClImagePromise &in, int window_size, int queue_index) {
-        return local_binary_patterns(Kernels::instance().retrieve_queue(queue_index), in, window_size);
-    }
-
-    xm::ocl::iop::ClImagePromise local_binary_patterns(cl_command_queue queue, const iop::ClImagePromise &in_p, int window_size) {
-        if (window_size > 15)
-            throw std::invalid_argument("window_size > 15");
-
-        const auto &in = in_p.getImage2D();
-
-        auto c_size = (int) std::ceil((float) (std::pow(window_size, 2) - 1) / 8.f);
-
-        if (c_size < 1)
-            throw std::invalid_argument("output channels size < 1");
-
-        const auto context = in.context;
-        const auto inter_size = in.cols * in.rows * c_size;
-        const auto pref_size = Kernels::instance().lbp_local_size;
-        size_t l_size[2] = {pref_size, pref_size};
-        size_t g_size[2] = {xm::ocl::optimal_global_size((int) in.cols, pref_size),
-                            xm::ocl::optimal_global_size((int) in.rows, pref_size)};
-
-        cl_int err;
-
-        cl_mem buffer_in = in.handle;
-        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
-
-        auto kernel_lbp = Kernels::instance().kernel_lbp_texture;
-
-        auto i_size = (int) in.channels;
-        auto k_size = (int) window_size;
-        auto width = (int) in.cols;
-        auto height = (int) in.rows;
-
-        xm::ocl::set_kernel_arg(kernel_lbp, 0, sizeof(cl_mem), &buffer_in);
-        xm::ocl::set_kernel_arg(kernel_lbp, 1, sizeof(cl_mem), &buffer_out);
-        xm::ocl::set_kernel_arg(kernel_lbp, 2, sizeof(int), &i_size);
-        xm::ocl::set_kernel_arg(kernel_lbp, 3, sizeof(int), &c_size);
-        xm::ocl::set_kernel_arg(kernel_lbp, 4, sizeof(int), &k_size);
-        xm::ocl::set_kernel_arg(kernel_lbp, 5, sizeof(int), &width);
-        xm::ocl::set_kernel_arg(kernel_lbp, 6, sizeof(int), &height);
-
-        cl_event lbp_event = xm::ocl::enqueue_kernel_fast(
-                queue,
-                kernel_lbp,
-                2,
-                g_size,
-                l_size,
-                aux::DEBUG);
-
-        xm::ocl::Image2D image(in.cols, in.rows, c_size, 1, buffer_out, in.context, in.device, xm::ocl::ACCESS::RW);
-        return xm::ocl::iop::ClImagePromise(image, queue, lbp_event).withCleanup(in_p);
-    }
-
-    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
-            const iop::ClImagePromise &lbp_texture,
-            const iop::ClImagePromise &frame,
-            const ds::Color4u &color,
-            float threshold,
-            int window_size,
-            int queue_index
-    ) {
-        return subtract_bg_lbp_single_pass(Kernels::instance().retrieve_queue(queue_index), lbp_texture, frame, color,
-                                           threshold, window_size);
-    }
-
-    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
-            cl_command_queue queue,
-            const iop::ClImagePromise &lbp_texture_p,
-            const iop::ClImagePromise &frame_p,
-            const ds::Color4u &color,
-            float threshold,
-            int window_size
-    ) {
-        if (window_size > 15)
-            throw std::invalid_argument("window_size > 15");
-
-        auto c_size = (int) std::ceil((float) (std::pow(window_size, 2) - 1) / 8.f);
-
-        if (c_size < 1)
-            throw std::invalid_argument("output channels size < 1");
-
-        const auto &frame = frame_p.getImage2D();
-        const auto &lbp_texture = lbp_texture_p.getImage2D();
-
-        const auto context = frame.context;
-        const auto inter_size = frame.size();
-        const auto pref_size = Kernels::instance().lbp_local_size;
-        size_t l_size[2] = {pref_size, pref_size};
-        size_t g_size[2] = {xm::ocl::optimal_global_size((int) frame.cols, pref_size),
-                            xm::ocl::optimal_global_size((int) frame.rows, pref_size)};
-
-        cl_int err;
-
-        cl_mem buffer_in = frame.handle;
-        cl_mem buffer_tex = lbp_texture.handle;
-        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
-
-        auto kernel_lbp_power = Kernels::instance().kernel_lbp_power;
-
-        auto i_size = (int) frame.channels;
-        auto k_size = (int) window_size;
-        auto width = (int) frame.cols;
-        auto height = (int) frame.rows;
-        auto total = (int) std::pow(window_size, 2) - 1;
-        auto color_b = (uint) color.b;
-        auto color_g = (uint) color.g;
-        auto color_r = (uint) color.r;
-
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 0, sizeof(cl_mem), &buffer_in);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 1, sizeof(cl_mem), &buffer_tex);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 2, sizeof(cl_mem), &buffer_out);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 3, sizeof(int), &i_size);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 4, sizeof(int), &c_size);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 5, sizeof(int), &k_size);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 6, sizeof(int), &total);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 7, sizeof(float), &threshold);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 8, sizeof(int), &width);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 9, sizeof(int), &height);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 10, sizeof(uchar), &color_b);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 11, sizeof(uchar), &color_g);
-        xm::ocl::set_kernel_arg(kernel_lbp_power, 12, sizeof(uchar), &color_r);
-
-        cl_event lbp_power_event = xm::ocl::enqueue_kernel_fast(
-                queue,
-                kernel_lbp_power,
-                2,
-                g_size,
-                l_size,
-                aux::DEBUG);
-
-        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(frame, buffer_out),
-                                            queue,
-                                            lbp_power_event)
-                                            .withCleanup(lbp_texture_p)
-                                            .withCleanup(frame_p);
-    }
-
-    xm::ocl::iop::ClImagePromise subtract_bg_color_diff(const iop::ClImagePromise &reference, const iop::ClImagePromise &frame,
-                                                        const ds::Color4u &color, float threshold, int queue_index) {
-        return subtract_bg_color_diff(Kernels::instance().retrieve_queue(queue_index), reference, frame, color,
-                                      threshold);
-    }
-
-    xm::ocl::iop::ClImagePromise subtract_bg_color_diff(
-            cl_command_queue queue,
-            const iop::ClImagePromise &reference_p,
-            const iop::ClImagePromise &frame_p,
-            const ds::Color4u &color,
-            float threshold
-    ) {
-        const auto &reference = reference_p.getImage2D();
-        const auto &frame = frame_p.getImage2D();
-
-        const auto context = frame.context;
-        const auto inter_size = frame.size();
-        const auto pref_size = Kernels::instance().lbp_local_size;
-        size_t l_size[2] = {pref_size, pref_size};
-        size_t g_size[2] = {xm::ocl::optimal_global_size((int) frame.cols, pref_size),
-                            xm::ocl::optimal_global_size((int) frame.rows, pref_size)};
-
-        cl_int err;
-
-        cl_mem buffer_image = frame.handle;
-        cl_mem buffer_reference = reference.handle;
-        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
-
-        auto kernel_color_diff = Kernels::instance().kernel_color_diff;
-
-        auto i_size = (int) frame.channels;
-        auto width = (int) frame.cols;
-        auto height = (int) frame.rows;
-        auto color_b = (uint) color.b;
-        auto color_g = (uint) color.g;
-        auto color_r = (uint) color.r;
-
-        xm::ocl::set_kernel_arg(kernel_color_diff, 0, sizeof(cl_mem), &buffer_image);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 1, sizeof(cl_mem), &buffer_reference);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 2, sizeof(cl_mem), &buffer_out);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 3, sizeof(int), &i_size);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 4, sizeof(float), &threshold);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 5, sizeof(int), &width);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 6, sizeof(int), &height);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 7, sizeof(uchar), &color_b);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 8, sizeof(uchar), &color_g);
-        xm::ocl::set_kernel_arg(kernel_color_diff, 9, sizeof(uchar), &color_r);
-
-        cl_event color_diff_event = xm::ocl::enqueue_kernel_fast(
-                queue,
-                kernel_color_diff,
-                2,
-                g_size,
-                l_size,
-                aux::DEBUG);
-
-        return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(frame, buffer_out),
-                                            queue,
-                                            color_diff_event)
-                .withCleanup(reference_p)
-                .withCleanup(frame_p);
     }
 
 }

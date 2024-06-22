@@ -8,8 +8,6 @@
 namespace xm::filters {
 
     void BgLbpSubtract::reset() {
-        t0 = std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::high_resolution_clock::now().time_since_epoch());
         ready = false;
     }
 
@@ -31,43 +29,11 @@ namespace xm::filters {
             throw std::logic_error("Filter is not initialized");
 
         if (!ready) {
-            const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::high_resolution_clock::now().time_since_epoch());
-            if (now - t0 >= std::chrono::milliseconds(delay)) {
-//                reference_buffer = frame_in;
-                reference_buffer = xm::ocl::blur(
-                        xm::ocl::blur(
-                                xm::ocl::blur(
-                                        frame_in,
-                                        21,
-                                        q_idx),
-                                21,
-                                q_idx),
-                        21,
-                        q_idx)
-                                .waitFor()
-                                .getImage2D();
-                ready = true;
-            }
+            // TODO
             return frame_in;
         }
 
-        // TODO mask refinement
-        return xm::ocl::subtract_bg_color_diff(
-                reference_buffer,
-                xm::ocl::blur(
-                        xm::ocl::blur(
-                                xm::ocl::blur(
-                                        frame_in,
-                                        21,
-                                        q_idx),
-                                21,
-                                q_idx),
-                        21,
-                        q_idx),
-                bgr_bg_color,
-                threshold,
-                q_idx);
+        return frame_in;
     }
 
 }

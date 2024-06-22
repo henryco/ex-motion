@@ -234,51 +234,6 @@ namespace xm::ocl {
             bool rotate
     );
 
-    xm::ocl::iop::ClImagePromise local_binary_patterns(
-            cl_command_queue queue,
-            const xm::ocl::iop::ClImagePromise &in,
-            int window_size
-    );
-
-    xm::ocl::iop::ClImagePromise local_binary_patterns(
-            const xm::ocl::iop::ClImagePromise &in,
-            int window_size,
-            int queue_index = -1
-    );
-
-    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
-            cl_command_queue queue,
-            const xm::ocl::iop::ClImagePromise &lbp_texture,
-            const xm::ocl::iop::ClImagePromise &frame,
-            const xm::ds::Color4u &color,
-            float threshold,
-            int window_size
-    );
-
-    xm::ocl::iop::ClImagePromise subtract_bg_lbp_single_pass(
-            const xm::ocl::iop::ClImagePromise &lbp_texture,
-            const xm::ocl::iop::ClImagePromise &frame,
-            const xm::ds::Color4u &color,
-            float threshold,
-            int window_size,
-            int queue_index = -1
-    );
-
-    xm::ocl::iop::ClImagePromise subtract_bg_color_diff(
-            cl_command_queue queue,
-            const xm::ocl::iop::ClImagePromise &reference,
-            const xm::ocl::iop::ClImagePromise &frame,
-            const xm::ds::Color4u &color,
-            float threshold
-    );
-
-    xm::ocl::iop::ClImagePromise subtract_bg_color_diff(
-            const xm::ocl::iop::ClImagePromise &reference,
-            const xm::ocl::iop::ClImagePromise &frame,
-            const xm::ds::Color4u &color,
-            float threshold,
-            int queue_index = -1
-    );
 }
 
 #endif //XMOTION_OCL_FILTERS_H

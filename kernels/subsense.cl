@@ -284,9 +284,9 @@ void morph_operation(
 ) {
     const int img_idx = (y * width + x) * channels_n;
     const char KER_ARR[32] = {
-        -2,-2,  -2, 2,  2,-2,  2, 2,  -2, 0,  0,-2,  2, 0,  0, 2,
-        -1,-1,  -1, 1,  1,-1,  1, 1,
-        -1, 0,   0,-1,  1, 0,  0, 1
+        -2,-2,  -2, 2,  2,-2,  2, 2,  -2, 0,  0,-2,  2, 0,  0, 2,  // offset  0
+        -1,-1,  -1, 1,  1,-1,  1, 1,                               // offset 16
+        -1, 0,   0,-1,  1, 0,  0, 1                                // offset 24
     };
     const int offset = kernel_type == KERNEL_TYPE_CROSS_4
         ? 24

@@ -1,9 +1,9 @@
 
-typedef uchar LbspKernelType;
-#define LBSP_KERNEL_NONE       0
-#define LBSP_KERNEL_CROSS_4    1
-#define LBSP_KERNEL_SQUARE_8   2
-#define LBSP_KERNEL_DIAMOND_16 3
+typedef uchar KernelType;
+#define KERNEL_TYPE_NONE       0
+#define KERNEL_TYPE_CROSS_4    1
+#define KERNEL_TYPE_SQUARE_8   2
+#define KERNEL_TYPE_DIAMOND_16 3
 
 #define L2_C3_NORM_DIV 441.6729559.f
 #define L2_C2_NORM_DIV 360.6244584.f
@@ -20,10 +20,10 @@ inline float xor_shift_rng(int x, int y, uint seed) {
     return (float) state / (float) UINT_MAX;
 }
 
-inline int lbsp_k_size_bytes(LbspKernelType t) {
-    if (t == LBSP_KERNEL_NONE)
+inline int lbsp_k_size_bytes(KernelType t) {
+    if (t == KERNEL_TYPE_NONE)
         return 0;
-    if (t == LBSP_KERNEL_DIAMOND_16)
+    if (t == KERNEL_TYPE_DIAMOND_16)
         return 2;
     return 1;
 }
@@ -92,10 +92,10 @@ inline float normalize_l2(float value, int channels_n) {
             : normalize_l2_1(value);
 }
 
-inline float normalize_hd(int value, LbspKernelType t) {
-    return t == LBSP_KERNEL_DIAMOND_16
+inline float normalize_hd(int value, KernelType t) {
+    return t == KERNEL_TYPE_DIAMOND_16
         ? (float) value / 16.f
-        : t == LBSP_KERNEL_SQUARE_8
+        : t == KERNEL_TYPE_SQUARE_8
             ? (float) value / 8.f
             : (float) value / 4.f;
 }
@@ -103,7 +103,7 @@ inline float normalize_hd(int value, LbspKernelType t) {
 void compute_lbsp(
         const uchar *input,
               uchar *out,
-        const LbspKernelType kernel_type,
+        const KernelType kernel_type,
         const uchar threshold,
         const int channels_n,
         const int width,
@@ -111,9 +111,9 @@ void compute_lbsp(
         const int x,
         const int y
 ) {
-    const int offset = kernel_type == LBSP_KERNEL_CROSS_4
+    const int offset = kernel_type == KERNEL_TYPE_CROSS_4
         ? 24
-        : kernel_type == LBSP_KERNEL_SQUARE_8
+        : kernel_type == KERNEL_TYPE_SQUARE_8
             ? 16
             : 0;
 
@@ -122,7 +122,7 @@ void compute_lbsp(
         -2,  2,
          2, -2,
          2,  2,
-        -2,  0
+        -2,  0,
          0, -2,
          2,  0,
          0,  2,
@@ -177,8 +177,8 @@ void compute_lbsp(
         const int mid = input[idx_mid + i] + threshold; // B, G or R with min threshold
 
         for (int h = offset; h < 31; h += 2) {
-            const int i_x = x + KER_ARR[i    ];
-            const int i_y = y + KER_ARR[i + 1];
+            const int i_x = x + KER_ARR[h    ];
+            const int i_y = y + KER_ARR[h + 1];
 
             if (i_x >= 0 && i_y >= 0 && i_x < width && i_y < height) {
                 if (input[((i_y * width) + i_x) * channels_n + i] > mid)
@@ -284,7 +284,7 @@ __kernel void kernel_subsense(
     __global       uchar *seg_mask,        // Output segmentation mask St(x)
 
 #ifndef DISABLED_LBSP
-             const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ]
+             const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ], see (KernelType)
              const uchar lbsp_threshold,   // Threshold value used for initial LBSP calculation
              const float n_norm_alpha,     // Normalization weight factor between color and lbsp distance [0...1]
              const ushort lbsp_0,          // Minimal LBSP distance threshold for pixels to be marked as different
@@ -466,7 +466,7 @@ __kernel void prepare_subsense_model(
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
 
 #ifndef DISABLED_LBSP
-             const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ]
+             const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ], see (KernelType)
              const uchar lbsp_threshold,   // Threshold value used for initial LBSP calculation
 #endif
              const uchar model_i,          // Current model index (z)
@@ -560,6 +560,7 @@ __kernel void kernel_upscale(
              const uchar d_x,              // ceil(scale_w)
              const uchar d_y,              // ceil(scale_h)
              const uchar channels_n        // Number of color channels, ie: 1/2/3/4
+
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);
@@ -574,4 +575,50 @@ __kernel void kernel_upscale(
         d_x, d_y,
         channels_n,
         x, y);
+}
+
+__kernel void kernel_erode(
+
+    __global const uchar *input,           // Input image
+    __global       uchar *output,          // Output image
+             const uchar kernel,           // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
+             const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
+             const ushort width,           // Image width
+             const ushort height           // Image height
+
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const char KER_ARR[32] = {
+        -2,-2,  -2, 2,  2,-2,  2, 2,  -2, 0,  0,-2,  2, 0,  0, 2,
+        -1,-1,  -1, 1,  1,-1,  1, 1,
+        -1, 0,   0,-1,  1, 0,  0, 1
+    };
+
+    const int img_idx = (y * width + x) * channels_n;
+
+    const int offset = kernel_type == KERNEL_TYPE_CROSS_4
+        ? 24
+        : kernel_type == KERNEL_TYPE_SQUARE_8
+            ? 16
+            : 0;
+
+    for (int i = 0; i < channels_n; i++) {
+        uchar min_val = input[img_idx + i];
+
+        for (int h = offset; h < 31; h += 2) {
+            const int i_x = x + KER_ARR[h    ];
+            const int i_y = y + KER_ARR[h + 1];
+
+            if (i_x < 0 || i_x >= width || i_y < 0 || i_y >= height)
+                continue;
+
+            min_val = min(min_val, input[(i_y * width + i_x) * channels_n + i]);
+        }
+        output[img_idx + i] = min_val;
+    }
 }

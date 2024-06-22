@@ -271,11 +271,11 @@ __kernel void kernel_subsense(
     int matches = 0;
 
     for (int i = bg_model_start, k = model_size; k >= 0; k--) {
-        const int bgm_idx = pos_3(x, y, i, width, height, bgm_ch_size);
+        const int bgm_idx   = pos_3(x, y, i, width, height, bgm_ch_size);
 
 #ifndef DISABLED_LBSP
-        const int d_lbsp  = hamming_distance(lbsp_img, &bg_model[bgm_idx + channels_n], kernel_size);
-        const float d_l_n = normalize_hd(d_lbsp, lbsp_kernel);
+        const int d_lbsp    = hamming_distance(lbsp_img, &bg_model[bgm_idx + channels_n], kernel_size);
+        const float d_l_n   = normalize_hd(d_lbsp, lbsp_kernel);
 #endif
 
 #ifndef COLOR_NORM_l2

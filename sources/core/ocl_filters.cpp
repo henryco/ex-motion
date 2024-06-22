@@ -46,19 +46,24 @@ namespace xm::ocl {
 
         program_filter_conv = xm::ocl::build_program(ocl_context, device_id,
                                                      ocl_kernel_filter_conv_data,
-                                                     ocl_kernel_filter_conv_data_size);
+                                                     ocl_kernel_filter_conv_data_size,
+                                                     "filter_conv.cl");
         program_color_space = xm::ocl::build_program(ocl_context, device_id,
                                                      ocl_kernel_color_space_data,
-                                                     ocl_kernel_color_space_data_size);
+                                                     ocl_kernel_color_space_data_size,
+                                                     "color_space.cl");
         program_power_chroma = xm::ocl::build_program(ocl_context, device_id,
                                                       ocl_kernel_chroma_key_data,
-                                                      ocl_kernel_chroma_key_data_size);
+                                                      ocl_kernel_chroma_key_data_size,
+                                                      "chroma_key.cl");
         program_flip_rotate = xm::ocl::build_program(ocl_context, device_id,
                                                      ocl_kernel_flip_rotate_data,
-                                                     ocl_kernel_flip_rotate_data_size);
+                                                     ocl_kernel_flip_rotate_data_size,
+                                                     "flip_rotate.cl");
         program_background = xm::ocl::build_program(ocl_context, device_id,
                                                     ocl_kernel_background_data,
-                                                    ocl_kernel_background_data_size);
+                                                    ocl_kernel_background_data_size,
+                                                    "background.cl");
 
         kernel_blur_h = xm::ocl::build_kernel(program_filter_conv, "gaussian_blur_horizontal");
         kernel_blur_v = xm::ocl::build_kernel(program_filter_conv, "gaussian_blur_vertical");

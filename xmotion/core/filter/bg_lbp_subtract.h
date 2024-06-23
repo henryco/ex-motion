@@ -97,12 +97,14 @@ namespace xm::filters {
 
         void init(const bgs::Conf &conf);
 
-        xm::ocl::iop::ClImagePromise filter(const ocl::Image2D &in, int q_idx) override;
+        xm::ocl::iop::ClImagePromise filter(const ocl::iop::ClImagePromise &in, int q_idx) override;
 
         void reset() override;
 
     protected:
         cl_command_queue retrieve_queue(int index);
+
+        void prepare_update_model(const ocl::iop::ClImagePromise &frame_in, int q_idx);
     };
 }
 

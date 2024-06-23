@@ -91,7 +91,7 @@ namespace xm::filters {
     public:
         void init(const chroma::Conf &conf);
 
-        xm::ocl::iop::ClImagePromise filter(const ocl::Image2D &in, int q_idx) override;
+        xm::ocl::iop::ClImagePromise filter(const ocl::iop::ClImagePromise &in, int q_idx) override;
 
         void reset() override;
     };

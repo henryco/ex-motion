@@ -82,18 +82,21 @@ namespace xm::filters {
         reset();
     }
 
-    xm::ocl::iop::ClImagePromise BgLbpSubtract::filter(const ocl::Image2D &frame_in, int q_idx) {
+    xm::ocl::iop::ClImagePromise BgLbpSubtract::filter(const ocl::iop::ClImagePromise &frame_in, int q_idx) {
         if (!initialized)
             throw std::logic_error("Filter is not initialized");
 
         if (model_i < model_size) {
-            // TODO
-
-
+            prepare_update_model(frame_in, q_idx);
+            model_i += 1;
             return frame_in;
         }
 
         return frame_in;
+    }
+
+    void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
+//        const auto &in = in_p.getImage2D();
     }
 
 }

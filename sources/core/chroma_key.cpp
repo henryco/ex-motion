@@ -35,7 +35,7 @@ namespace xm::filters {
         ready = true;
     }
 
-    xm::ocl::iop::ClImagePromise ChromaKey::filter(const ocl::Image2D &in, int q_idx) {
+    xm::ocl::iop::ClImagePromise ChromaKey::filter(const ocl::iop::ClImagePromise &in, int q_idx) {
         if (!ready)
             throw std::logic_error("Filter is not initialized");
         if (mask_iterations > 0 && fine_kernel >= 3)

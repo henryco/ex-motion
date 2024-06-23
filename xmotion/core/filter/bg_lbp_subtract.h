@@ -79,9 +79,9 @@ namespace xm::filters {
         int model_size = 50;
         int ghost_l = 2;
         int ghost_n = 300;
-        int color_0 = 30;
+        int color_0 = 15;
         int lbsp_0 = 3;
-        float threshold_lbsp = 0.1; // used for lbsp
+        float threshold_lbsp = 0.05; // used for lbsp
         float alpha_d_min = 0.5;
         float alpha_norm = 0.5;
         float ghost_t = 0.01;

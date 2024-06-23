@@ -482,7 +482,7 @@ __kernel void kernel_subsense(
 
         if (d_color > r_color // maybe replace with floating normalized threshold?
 #ifndef DISABLED_LBSP
-          && d_lbsp > r_lbsp  // maybe replace with floating normalized threshold?
+          || d_lbsp > r_lbsp  // maybe replace with floating normalized threshold?
 #endif
         ) {
             if (++matches >= matches_req) {

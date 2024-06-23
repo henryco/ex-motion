@@ -22,7 +22,7 @@ namespace xm::filters {
             ocl_kernel_subsense_data,
             ocl_kernel_subsense_data_size,
             "subsense.cl",
-            "-DDISABLED_EXCLUSION_MASK"
+            "-DDISABLED_EXCLUSION_MASK -DCOLOR_NORM_l2"
             );
 
         kernel_apply = xm::ocl::build_kernel(program_subsense, "kernel_upscale_apply");

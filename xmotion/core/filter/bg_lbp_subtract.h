@@ -66,8 +66,10 @@ namespace xm::filters {
         // ===== OCL PART =====
 
         // ===== KERNEL PART =====
-        const bool linear = false;
+        const int BASE_RESOLUTION = 240;
         const int color_c = 3;
+        const bool linear = false;
+
         int n_matches = 2;
         int t_upper = 256;
         int t_lower = 2;
@@ -86,6 +88,7 @@ namespace xm::filters {
         float t_scale_dec = 0.25;
         float v_flicker_inc = 1.0;
         float v_flicker_dec = 0.1;
+
         bgs::KernelType kernel_type = bgs::KERNEL_TYPE_DIAMOND_16;
         xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(0, 255, 0);
         // ===== KERNEL PART =====

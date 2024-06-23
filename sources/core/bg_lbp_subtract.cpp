@@ -104,7 +104,7 @@ namespace xm::filters {
 
         float scale;
         int n_w, n_h;
-        new_size(in.cols, in.rows, 240, n_w, n_h, scale);
+        new_size(in.cols, in.rows, BASE_RESOLUTION, n_w, n_h, scale);
 
         const int inter_size = n_w * n_h * color_c * sizeof(char);
 

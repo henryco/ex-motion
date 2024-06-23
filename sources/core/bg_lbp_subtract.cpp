@@ -97,15 +97,15 @@ namespace xm::filters {
         if (!ready)
             return frame_in;
 
-        auto p = downscale(frame_in, BASE_RESOLUTION, q_idx);
+        auto downscaled = downscale(frame_in, BASE_RESOLUTION, q_idx);
 
         if (model_i < model_size) {
-            prepare_update_model(p, q_idx);
+            prepare_update_model(downscaled, q_idx);
             model_i += 1;
-            return p;
+            return downscaled;
         }
 
-        return p;
+        return subsense(downscaled, frame_in, {/*TODO*/}, q_idx);
     }
 
     void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
@@ -229,6 +229,17 @@ namespace xm::filters {
                 n_w, n_h, color_c, sizeof(uchar),
                 buffer_io_1, ocl_context, device_id),
                 queue);
+    }
+
+    xm::ocl::iop::ClImagePromise BgLbpSubtract::subsense(const ocl::iop::ClImagePromise &downscaled_p,
+                                                         const ocl::iop::ClImagePromise &original_p,
+                                                         const ocl::iop::ClImagePromise &exclusion_p,
+                                                         int q_idx) {
+        cl_command_queue queue = q_idx < 0 && downscaled_p.queue() != nullptr
+            ? downscaled_p.queue()
+            : retrieve_queue(q_idx);
+        // TODO
+        return downscaled_p;
     }
 
     void new_size(const int w, const int h, const int base, int &new_w, int &new_h, float &scale) {

@@ -270,19 +270,19 @@ void upscale(
 }
 
 void upscale_apply(
-    const uchar *color_pix,          // Color value for background area
-    __global const uchar *input,     // Input image (larger)
-    __global       uchar *output,    // Output image [To] (larger)
-    const ushort output_w,           // To width
-    const ushort output_h,           // To height
-    const float scale_w,             // [to : from], ie: [2 : 1]
-    const float scale_h,             // [to : from], ie: [2 : 1]
-    const uchar ceil_scale_w,        // ceil(scale_w)
-    const uchar ceil_scale_h,        // ceil(scale_h)
-    const uchar channels_n,          // number of color channels, ie: 1/2/3/4
-    const uchar mask,                // Background segmentation mask
-    const int pix_x,                 // From x
-    const int pix_y                  // From y
+             const uchar *color_pix,          // Color value for background area
+    __global const uchar *input,              // Input image (larger)
+    __global       uchar *output,             // Output image [To] (larger)
+             const ushort output_w,           // To width
+             const ushort output_h,           // To height
+             const float scale_w,             // [to : from], ie: [2 : 1]
+             const float scale_h,             // [to : from], ie: [2 : 1]
+             const uchar ceil_scale_w,        // ceil(scale_w)
+             const uchar ceil_scale_h,        // ceil(scale_h)
+             const uchar channels_n,          // number of color channels, ie: 1/2/3/4
+             const uchar mask,                // Background segmentation mask
+             const int pix_x,                 // From x
+             const int pix_y                  // From y
 ) {
     const float img_x = pix_x * scale_w;
     const float img_y = pix_y * scale_h;

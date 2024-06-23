@@ -33,7 +33,7 @@ namespace xm::filters {
         kernel_dilate = xm::ocl::build_kernel(program_subsense, "kernel_dilate");
         kernel_erode = xm::ocl::build_kernel(program_subsense, "kernel_erode");
 
-        optimal_local_size = xm::ocl::optimal_local_size(device_id, kernel_subsense);
+        pref_size = xm::ocl::optimal_local_size(device_id, kernel_subsense);
     }
 
     BgLbpSubtract::~BgLbpSubtract() {
@@ -88,7 +88,7 @@ namespace xm::filters {
 
         if (model_i < model_size) {
             prepare_update_model(frame_in, q_idx);
-            model_i += 1;
+//            model_i += 1;
             return frame_in;
         }
 
@@ -96,7 +96,14 @@ namespace xm::filters {
     }
 
     void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
-//        const auto &in = in_p.getImage2D();
+        const auto &in = in_p.getImage2D();
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) in.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) in.rows, pref_size)};
+
+
+
+        cl_int err;
     }
 
 }

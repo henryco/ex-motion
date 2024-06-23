@@ -58,7 +58,7 @@ namespace xm::filters {
         cl_kernel kernel_upscale;
         cl_kernel kernel_dilate;
         cl_kernel kernel_erode;
-        size_t optimal_local_size;
+        size_t pref_size;
         // ===== OCL PART =====
 
         // ===== KERNEL PART =====
@@ -85,7 +85,14 @@ namespace xm::filters {
         // ===== KERNEL PART =====
 
 
-//        ocl::Image2D reference_buffer;
+        // uchar:  N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
+        ocl::Image2D bg_model;
+
+        // float:  4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
+        ocl::Image2D utility_1;
+
+        // short 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
+        ocl::Image2D utility_2;
 
 
         bool initialized = false;

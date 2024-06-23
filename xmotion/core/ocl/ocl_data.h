@@ -50,7 +50,7 @@ namespace xm::ocl {
                 cl_mem handle,
                 cl_context context,
                 cl_device_id device,
-                ACCESS access);
+                ACCESS access = ACCESS::RW);
 
         Image2D(const Image2D &other);
 

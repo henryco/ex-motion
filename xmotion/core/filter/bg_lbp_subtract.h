@@ -126,6 +126,8 @@ namespace xm::filters {
         cl_command_queue retrieve_queue(int index);
 
         void prepare_update_model(const ocl::iop::ClImagePromise &frame_in, int q_idx);
+
+        xm::ocl::iop::ClImagePromise downscale(const ocl::iop::ClImagePromise &in, int base, int q_idx);
     };
 }
 

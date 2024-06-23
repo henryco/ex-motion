@@ -86,6 +86,9 @@ namespace xm::filters {
         if (!initialized)
             throw std::logic_error("Filter is not initialized");
 
+        if (!ready)
+            return frame_in;
+
         if (model_i < model_size) {
             prepare_update_model(frame_in, q_idx);
             model_i += 1;
@@ -200,6 +203,14 @@ namespace xm::filters {
             false);
 
         clReleaseMemObject(buffer_io_1);
+    }
+
+    void BgLbpSubtract::start() {
+        ready = true;
+    }
+
+    void BgLbpSubtract::stop() {
+        ready = false;
     }
 
     void new_size(const int w, const int h, const int base, int &new_w, int &new_h, float &scale) {

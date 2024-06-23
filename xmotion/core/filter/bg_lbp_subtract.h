@@ -102,6 +102,7 @@ namespace xm::filters {
 
 
         bool initialized = false;
+        bool ready = false;
 
     public:
         BgLbpSubtract();
@@ -113,6 +114,10 @@ namespace xm::filters {
         xm::ocl::iop::ClImagePromise filter(const ocl::iop::ClImagePromise &in, int q_idx) override;
 
         void reset() override;
+
+        void start() override;
+
+        void stop() override;
 
     protected:
         cl_command_queue retrieve_queue(int index);

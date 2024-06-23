@@ -65,4 +65,12 @@ namespace xm::filters {
         // TODO?
     }
 
+    void ChromaKey::start() {
+
+    }
+
+    void ChromaKey::stop() {
+
+    }
+
 } // xm

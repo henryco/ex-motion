@@ -94,6 +94,10 @@ namespace xm::filters {
         xm::ocl::iop::ClImagePromise filter(const ocl::iop::ClImagePromise &in, int q_idx) override;
 
         void reset() override;
+
+        void start() override;
+
+        void stop() override;
     };
 
 } // xm

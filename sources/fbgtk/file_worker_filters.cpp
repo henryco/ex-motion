@@ -15,7 +15,10 @@ namespace xm {
         for (const auto &filter: filters) {
             if (!do_filter) {
                 filter->reset();
+                filter->stop();
                 continue;
+            } else {
+                filter->start();
             }
 
             for (auto &frame: frames) {

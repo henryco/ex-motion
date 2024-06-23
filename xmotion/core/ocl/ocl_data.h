@@ -12,13 +12,13 @@ namespace xm::ocl {
     enum class ACCESS {
 
         /** READ ONLY */
-        RO,
+        RO = 1,
 
         /** WRITE ONLY */
-        WO,
+        WO = RO << 1,
 
         /** READ WRITE */
-        RW
+        RW = RO | WO
     };
 
     class Image2D {
@@ -78,6 +78,10 @@ namespace xm::ocl {
         Image2D &retain();
 
         Image2D &decrement_ref();
+
+        cl_mem get_handle(ACCESS _access) const;
+
+        cl_mem &get_handle(ACCESS _access);
 
         void release();
 

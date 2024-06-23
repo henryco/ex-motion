@@ -27,6 +27,18 @@ namespace xm::ocl {
         return handle == nullptr || size() == 0;
     }
 
+    cl_mem Image2D::get_handle(ACCESS desired) const {
+        if ((static_cast<int>(desired) & static_cast<int>(access)) != static_cast<int>(desired))
+            throw std::invalid_argument("CL mem access denied");
+        return handle;
+    }
+
+    cl_mem &Image2D::get_handle(ACCESS desired) {
+        if ((static_cast<int>(desired) & static_cast<int>(access)) != static_cast<int>(desired))
+            throw std::invalid_argument("CL mem access denied");
+        return handle;
+    }
+
     Image2D::~Image2D() {
         release();
     }

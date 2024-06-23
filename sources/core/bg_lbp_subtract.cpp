@@ -97,24 +97,23 @@ namespace xm::filters {
         if (!ready)
             return frame_in;
 
+        auto p = downscale(frame_in, BASE_RESOLUTION, q_idx);
+
         if (model_i < model_size) {
-            prepare_update_model(frame_in, q_idx);
+            prepare_update_model(p, q_idx);
             model_i += 1;
-            return frame_in;
+            return p;
         }
 
-        return frame_in;
+        return p;
     }
 
     void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
         cl_command_queue queue = q_idx < 0 && in_p.queue() != nullptr ? in_p.queue() : retrieve_queue(q_idx);
         const auto &in = in_p.getImage2D();
 
-        float scale;
-        int n_w, n_h;
-        new_size(in.cols, in.rows, BASE_RESOLUTION, n_w, n_h, scale);
-
-        const int inter_size = n_w * n_h * color_c * sizeof(char);
+        const int n_w = in.cols;
+        const int n_h = in.rows;
 
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) n_w, pref_size),
@@ -139,34 +138,8 @@ namespace xm::filters {
                 ocl_context, device_id);
         }
 
-        cl_int err;
-
         // ======= BUFFERS ALLOCATION !
-        cl_mem buffer_in = (cl_mem) in.handle;
-        cl_mem buffer_io_1 = clCreateBuffer(ocl_context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
-
-        auto img_w = (ushort) in.cols;
-        auto img_h = (ushort) in.rows;
-        auto out_w = (ushort) n_w;
-        auto out_h = (ushort) n_h;
-        auto scale_w = (float) scale;
-        auto scale_h = (float) scale;
-        auto channels_n = (uchar) color_c;
-        auto is_linear = (uchar) linear ? 255 : 0;
-
-        int idx_0 = 0;
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(cl_mem), &buffer_in);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(cl_mem), &buffer_io_1);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(ushort), &img_w);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(ushort), &img_h);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(ushort), &out_w);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(ushort), &out_h);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(float), &scale_w);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(float), &scale_h);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(uchar), &channels_n);
-        xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(uchar), &is_linear);
-
-
+        cl_mem buffer_in = (cl_mem) in.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_bg_model = (cl_mem) bg_model.handle;
         cl_mem buffer_utility1 = (cl_mem) utility_1.handle;
         cl_mem buffer_utility2 = (cl_mem) utility_2.handle;
@@ -181,7 +154,7 @@ namespace xm::filters {
         auto _height = (ushort) n_h;
 
         int idx_1 = 0;
-        idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_io_1);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_in);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_bg_model);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility1);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility2);
@@ -196,21 +169,11 @@ namespace xm::filters {
 
         xm::ocl::enqueue_kernel_fast(
             queue,
-            kernel_downscale,
-            2,
-            g_size,
-            l_size,
-            false);
-
-        xm::ocl::enqueue_kernel_fast(
-            queue,
             kernel_prepare,
             2,
             g_size,
             l_size,
             false);
-
-        clReleaseMemObject(buffer_io_1);
     }
 
     xm::ocl::iop::ClImagePromise BgLbpSubtract::downscale(const ocl::iop::ClImagePromise &in_p, int base, int q_idx) {
@@ -229,7 +192,7 @@ namespace xm::filters {
         cl_int err;
 
         // ======= BUFFERS ALLOCATION !
-        cl_mem buffer_in = (cl_mem) in.handle;
+        cl_mem buffer_in = (cl_mem) in.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_io_1 = clCreateBuffer(ocl_context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
 
         auto img_w = (ushort) in.cols;

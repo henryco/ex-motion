@@ -8,53 +8,30 @@
 
 namespace xm::filters {
 
-    BgLbpSubtract::BgLbpSubtract() {
-        device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
-        ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
-        ocl_command_queue = xm::ocl::create_queue_device(
-                ocl_context,
-                device_id,
-                true,
-                false);
-
-        program_subsense = xm::ocl::build_program(
-            ocl_context, device_id,
-            ocl_kernel_subsense_data,
-            ocl_kernel_subsense_data_size,
-            "subsense.cl",
-            "-DDISABLED_EXCLUSION_MASK -DCOLOR_NORM_l2"
-            );
-
-        kernel_apply = xm::ocl::build_kernel(program_subsense, "kernel_upscale_apply");
-        kernel_prepare = xm::ocl::build_kernel(program_subsense, "kernel_prepare_model");
-        kernel_subsense = xm::ocl::build_kernel(program_subsense, "kernel_subsense");
-        kernel_downscale = xm::ocl::build_kernel(program_subsense, "kernel_downscale");
-        kernel_upscale = xm::ocl::build_kernel(program_subsense, "kernel_upscale");
-        kernel_dilate = xm::ocl::build_kernel(program_subsense, "kernel_dilate");
-        kernel_erode = xm::ocl::build_kernel(program_subsense, "kernel_erode");
-
-        pref_size = xm::ocl::optimal_local_size(device_id, kernel_subsense);
+    BgLbpSubtract::~BgLbpSubtract() {
+        release();
     }
 
-    BgLbpSubtract::~BgLbpSubtract() {
+    void BgLbpSubtract::release() {
         for (auto &item: ocl_queue_map) {
             if (item.second == nullptr)
                 continue;
             clReleaseCommandQueue(item.second);
         }
 
-        clReleaseKernel(kernel_apply);
-        clReleaseKernel(kernel_prepare);
-        clReleaseKernel(kernel_subsense);
-        clReleaseKernel(kernel_downscale);
-        clReleaseKernel(kernel_upscale);
-        clReleaseKernel(kernel_dilate);
-        clReleaseKernel(kernel_erode);
-        clReleaseProgram(program_subsense);
-        clReleaseCommandQueue(ocl_command_queue);
-        clReleaseContext(ocl_context);
-        clReleaseDevice(device_id);
+        if (kernel_apply != nullptr) clReleaseKernel(kernel_apply);
+        if (kernel_prepare != nullptr) clReleaseKernel(kernel_prepare);
+        if (kernel_subsense != nullptr) clReleaseKernel(kernel_subsense);
+        if (kernel_downscale != nullptr) clReleaseKernel(kernel_downscale);
+        if (kernel_upscale != nullptr) clReleaseKernel(kernel_upscale);
+        if (kernel_dilate != nullptr) clReleaseKernel(kernel_dilate);
+        if (kernel_erode != nullptr) clReleaseKernel(kernel_erode);
+        if (program_subsense != nullptr) clReleaseProgram(program_subsense);
+        if (ocl_command_queue != nullptr) clReleaseCommandQueue(ocl_command_queue);
+        if (ocl_context != nullptr) clReleaseContext(ocl_context);
+        if (device_id != nullptr) clReleaseDevice(device_id);
     }
+
 
     void BgLbpSubtract::start() {
         ready = true;
@@ -86,8 +63,43 @@ namespace xm::filters {
     void BgLbpSubtract::init(const bgs::Conf &conf) {
 //        kernel_type = conf.kernel_type;
 //        bgr_bg_color = conf.color;
-        initialized = true;
+
         reset();
+        release();
+
+        device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
+        ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
+        ocl_command_queue = xm::ocl::create_queue_device(
+            ocl_context,
+            device_id,
+            true,
+            false);
+
+        std::string options = std::string("")
+            + (mask_xc ? " -DDISABLED_EXCLUSION_MASK " : "")
+            + (norm_l2 ? " -DCOLOR_NORM_l2 " : "")
+            + (lbsp_on ? "" : " -DDISABLED_LBSP ")
+            ;
+
+        program_subsense = xm::ocl::build_program(
+            ocl_context, device_id,
+            ocl_kernel_subsense_data,
+            ocl_kernel_subsense_data_size,
+            "subsense.cl",
+            options
+        );
+
+        kernel_apply = xm::ocl::build_kernel(program_subsense, "kernel_upscale_apply");
+        kernel_prepare = xm::ocl::build_kernel(program_subsense, "kernel_prepare_model");
+        kernel_subsense = xm::ocl::build_kernel(program_subsense, "kernel_subsense");
+        kernel_downscale = xm::ocl::build_kernel(program_subsense, "kernel_downscale");
+        kernel_upscale = xm::ocl::build_kernel(program_subsense, "kernel_upscale");
+        kernel_dilate = xm::ocl::build_kernel(program_subsense, "kernel_dilate");
+        kernel_erode = xm::ocl::build_kernel(program_subsense, "kernel_erode");
+
+        pref_size = xm::ocl::optimal_local_size(device_id, kernel_subsense);
+
+        initialized = true;
     }
 
     xm::ocl::iop::ClImagePromise BgLbpSubtract::filter(const ocl::iop::ClImagePromise &frame_in, int q_idx) {
@@ -158,8 +170,12 @@ namespace xm::filters {
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_bg_model);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility1);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility2);
-        idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &lbsp_kernel);
-        idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &lbsp_threshold);
+
+        if (lbsp_on) {
+            idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &lbsp_kernel);
+            idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &lbsp_threshold);
+        }
+
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &_model_i);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &_model_size);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &_channels_n);
@@ -280,16 +296,29 @@ namespace xm::filters {
         auto _height = (ushort) image.rows;
 
         int idx_0 = 0;
+
+        if (!mask_xc) {
+            const auto ex_mask = exclusion_p.getImage2D();
+
+            cl_mem buffer_ex = (cl_mem) ex_mask.get_handle(ocl::ACCESS::RO);
+            auto _exclusion = (uchar) (ex_mask.empty() ? 0 : 255);
+
+            idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_ex);
+            idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_exclusion);
+        }
+
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_image);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_bg_model);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_utility1);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_utility2);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_seg_mask);
 
-        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_lbsp_kernel);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_lbsp_threshold);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_n_norm_alpha);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_lbsp_0);
+        if (lbsp_on) {
+            idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_lbsp_kernel);
+            idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_lbsp_threshold);
+            idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_n_norm_alpha);
+            idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_lbsp_0);
+        }
 
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_color_0);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_t_lower);

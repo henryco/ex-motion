@@ -71,6 +71,9 @@ namespace xm::filters {
         const int BASE_RESOLUTION = 240;
         const int color_c = 3;
         const bool linear = false;
+        const bool lbsp_on = false;
+        const bool norm_l2 = true;
+        const bool mask_xc = true;
 
         int n_matches = 2;
         int t_upper = 256;
@@ -79,7 +82,7 @@ namespace xm::filters {
         int model_size = 50;
         int ghost_l = 2;
         int ghost_n = 300;
-        int color_0 = 15;
+        int color_0 = 30;
         int lbsp_0 = 3;
         float threshold_lbsp = 0.05; // used for lbsp
         float alpha_d_min = 0.5;
@@ -110,7 +113,7 @@ namespace xm::filters {
         bool ready = false;
 
     public:
-        BgLbpSubtract();
+        BgLbpSubtract() = default;
 
         ~BgLbpSubtract() override;
 
@@ -135,6 +138,8 @@ namespace xm::filters {
                                               const ocl::iop::ClImagePromise &original,
                                               const ocl::iop::ClImagePromise &exclusion, // optional
                                               int q_idx);
+
+        void release();
     };
 }
 

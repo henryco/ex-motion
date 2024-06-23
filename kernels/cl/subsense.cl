@@ -560,7 +560,7 @@ __kernel void kernel_subsense(
 __kernel void kernel_prepare_model(
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
-    __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
+    __global       uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
 

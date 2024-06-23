@@ -14,6 +14,8 @@
 
 namespace xm::filters {
 
+    void new_size(int w, int h, int base, int &new_w, int &new_h, float &scale);
+
     namespace bgs {
         enum KernelType {
             KERNEL_TYPE_NONE = 0,
@@ -21,6 +23,8 @@ namespace xm::filters {
             KERNEL_TYPE_SQUARE_8 = 2,
             KERNEL_TYPE_DIAMOND_16 = 3,
         };
+
+        int lbsp_k_size_bytes(KernelType t);
 
         using Conf = struct Conf {
             /**
@@ -62,6 +66,8 @@ namespace xm::filters {
         // ===== OCL PART =====
 
         // ===== KERNEL PART =====
+        const bool linear = false;
+        const int color_c = 3;
         int n_matches = 2;
         int t_upper = 256;
         int t_lower = 2;
@@ -71,7 +77,7 @@ namespace xm::filters {
         int ghost_n = 300;
         int color_0 = 30;
         int lbsp_0 = 3;
-        float threshold_lbsp = 0.1;
+        float threshold_lbsp = 0.1; // used for lbsp
         float alpha_d_min = 0.5;
         float alpha_norm = 0.5;
         float ghost_t = 0.01;
@@ -85,7 +91,7 @@ namespace xm::filters {
         // ===== KERNEL PART =====
 
 
-        // uchar:  N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
+        // uchar:  N * w * h * [ B, G, R, LBSP_1, LBSP_2, ... ]
         ocl::Image2D bg_model;
 
         // float:  4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]

@@ -114,7 +114,7 @@ namespace xm::filters {
         if (model_i < model_size) {
             prepare_update_model(downscaled, q_idx);
             model_i += 1;
-            return downscaled;
+            return frame_in;
         }
 
         return subsense(downscaled, frame_in, {/*TODO*/}, q_idx);

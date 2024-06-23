@@ -71,7 +71,7 @@ namespace xm::filters {
         const int BASE_RESOLUTION = 240;
         const int color_c = 3;
         const bool linear = false;
-        const bool lbsp_on = false;
+        const bool lbsp_on = true;
         const bool norm_l2 = true;
         const bool mask_xc = true;
 

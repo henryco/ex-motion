@@ -10,7 +10,7 @@
 namespace xm {
 
     void FileWorker::filter_frames(std::vector<xm::ocl::Image2D> &frames) {
-//        const auto t0 = std::chrono::system_clock::now();
+        const auto t0 = std::chrono::system_clock::now();
 
         for (const auto &filter: filters) {
             if (!do_filter) {
@@ -26,9 +26,9 @@ namespace xm {
             }
         }
 
-//        const auto t1 = std::chrono::system_clock::now();
-//        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
-//        log->info("time: {}", d);
+        const auto t1 = std::chrono::system_clock::now();
+        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
+        log->info("time: {}", d);
     }
 
     void FileWorker::prepare_filters() {

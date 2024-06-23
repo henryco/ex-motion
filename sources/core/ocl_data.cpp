@@ -153,7 +153,8 @@ namespace xm::ocl {
         cl_mem_flags flags;
         if (access == ACCESS::RO) flags = CL_MEM_READ_ONLY;
         else if (access == ACCESS::WO) flags = CL_MEM_WRITE_ONLY;
-        else flags = CL_MEM_READ_WRITE;
+        else if (access == ACCESS::RW) flags = CL_MEM_READ_WRITE;
+        else throw std::invalid_argument("Invalid access modifier: " + std::to_string((int) access));
 
         cl_int err;
         cl_mem buffer = clCreateBuffer(context, flags, cols * rows * channels * channel_size, NULL, &err);
@@ -162,7 +163,7 @@ namespace xm::ocl {
         return Image2D(cols, rows, channels, channel_size, buffer, context, device, access);
     }
 
-    Image2D Image2D::allocate_from(const Image2D &t, ACCESS access) {
+    Image2D Image2D::allocate_like(const Image2D &t, ACCESS access) {
         return allocate(t.cols, t.rows, t.channels, t.channel_size, t.context, t.device, access);
     }
 }

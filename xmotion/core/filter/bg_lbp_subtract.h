@@ -16,6 +16,8 @@ namespace xm::filters {
 
     void new_size(int w, int h, int base, int &new_w, int &new_h, float &scale);
 
+    uint32_t time_seed();
+
     namespace bgs {
         enum KernelType {
             KERNEL_TYPE_NONE = 0,

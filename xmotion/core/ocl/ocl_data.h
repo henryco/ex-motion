@@ -93,7 +93,7 @@ namespace xm::ocl {
                                 cl_device_id device,
                                 ACCESS access = ACCESS::RW);
 
-        static Image2D allocate_from(const Image2D &_template,
+        static Image2D allocate_like(const Image2D &t,
                                      ACCESS access = ACCESS::RW);
     private:
         void copy_from(const Image2D &other);

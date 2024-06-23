@@ -64,13 +64,7 @@ namespace xm {
         const auto &conf = config.filters.background.delta;
         auto filter = std::make_unique<xm::filters::BgLbpSubtract>();
         filter->init({
-            .color = xm::ds::Color4u::bgr(0, 255, 0),
-            .threshold = 0.5f,
-            .delay = 2000,
-            .window = 1,
-            .refine = 0,
-            .fine = 0,
-            .blur = 0,
+            .color = xm::ds::Color4u::bgr(0, 255, 0)
         });
 
         filters.push_back(std::move(filter));

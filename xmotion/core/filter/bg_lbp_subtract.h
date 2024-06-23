@@ -15,6 +15,13 @@
 namespace xm::filters {
 
     namespace bgs {
+        enum KernelType {
+            KERNEL_TYPE_NONE = 0,
+            KERNEL_TYPE_CROSS_4 = 1,
+            KERNEL_TYPE_SQUARE_8 = 2,
+            KERNEL_TYPE_DIAMOND_16 = 3,
+        };
+
         using Conf = struct Conf {
             /**
              * New background color (BGR)
@@ -22,47 +29,14 @@ namespace xm::filters {
             xm::ds::Color4u color;
 
             /**
-             * Local Binary Patterns similarity cutoff threshold [0...1]
+             * Local Binary Patterns kernel type
              */
-            float threshold = 0;
-
-            /**
-             * Delay in starting filter (ms)
-             */
-            long delay = 0;
-
-            /**
-             * Local Binary Patterns windows size
-             *
-             * \code
-             * (CxC): C = clamp[ (window * 2) + 1,  3,  15]
-             * \endcode
-             */
-            int window = 0;
+            KernelType kernel_type = KERNEL_TYPE_DIAMOND_16;
 
             /**
              * Mask refinement iterations
              */
             int refine = 0;
-
-            /**
-             * Mask refinement kernel
-             *
-             * \code
-             * (CxC): C = max[3, (fine * 2) + 1]
-             * \endcode
-             */
-            int fine = 0;
-
-            /**
-             * Blur intensity,
-             * used to calculate gaussian blur kernel
-             *
-             * \code
-             * (CxC): C = (blur * 2) + 1
-             * \endcode
-             */
-            int blur = 0;
         };
     }
 
@@ -76,23 +50,45 @@ namespace xm::filters {
         cl_command_queue ocl_command_queue;
         cl_device_id device_id;
         cl_context ocl_context;
+        cl_program program_subsense;
+        cl_kernel kernel_apply;
+        cl_kernel kernel_prepare;
+        cl_kernel kernel_subsense;
+        cl_kernel kernel_downscale;
+        cl_kernel kernel_upscale;
+        cl_kernel kernel_dilate;
+        cl_kernel kernel_erode;
+        size_t optimal_local_size;
         // ===== OCL PART =====
 
+        // ===== KERNEL PART =====
+        int n_matches = 2;
+        int t_upper = 256;
+        int t_lower = 2;
+        int model_i = 0;
+        int model_size = 50;
+        int ghost_l = 2;
+        int ghost_n = 300;
+        int color_0 = 30;
+        int lbsp_0 = 3;
+        float threshold_lbsp = 0.1;
+        float alpha_d_min = 0.5;
+        float alpha_norm = 0.5;
+        float ghost_t = 0.01;
+        float scale_r = 0.01;
+        float t_scale_inc = 0.50;
+        float t_scale_dec = 0.25;
+        float v_flicker_inc = 1.0;
+        float v_flicker_dec = 0.1;
+        bgs::KernelType kernel_type = bgs::KERNEL_TYPE_DIAMOND_16;
+        xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(0, 255, 0);
+        // ===== KERNEL PART =====
 
 
-        xm::ds::Color4u bgr_bg_color;
 //        ocl::Image2D reference_buffer;
 
-        int fine_iterations = 0;
-        int fine_kernel = 0;
-        int blur_kernel = 0;
-        int lbp_kernel = 0;
-        float threshold = .5f;
-        long delay = 0;
 
         bool initialized = false;
-        bool ready = false;
-
 
     public:
         BgLbpSubtract();
@@ -106,7 +102,7 @@ namespace xm::filters {
         void reset() override;
 
     protected:
-        cl_command_queue  retrieve_queue(int index);
+        cl_command_queue retrieve_queue(int index);
     };
 }
 

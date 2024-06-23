@@ -393,8 +393,8 @@ __kernel void kernel_subsense(
              const ushort t_lower,         // Lower bound for T(x) value
              const ushort t_upper,         // Upper bound for T(x) value
              const ushort ghost_n,         // Number of frames after foreground marked as ghost ( see also Gt_acc(x) )
-             const ushort ghost_t,         // Ghost threshold for local variations between It and It-1
              const ushort ghost_l,         // Temporary low value of T(x) for pixel marked as a ghost
+             const float ghost_t,          // Ghost threshold for local variations between It and It-1
              const float d_min_alpha,      // Constant learning rate for D_min(x) [0...1]
              const float flicker_v_inc,    // Increment v(x) value for flickering pixels
              const float flicker_v_dec,    // Decrement v(x) value for flickering pixels
@@ -557,7 +557,7 @@ __kernel void kernel_subsense(
 
 }
 
-__kernel void prepare_subsense_model(
+__kernel void kernel_prepare_model(
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
     __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]

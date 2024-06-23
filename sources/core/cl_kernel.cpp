@@ -84,11 +84,12 @@ namespace xm::ocl {
                : preferred_workgroup_size_multiple;
     }
 
-    cl_program build_program(cl_context context, cl_device_id device, const char *source, size_t source_size, const std::string &name) {
-        return build_program(context, device, std::string(source, source_size), name);
+    cl_program build_program(cl_context context, cl_device_id device, const char *source, size_t source_size, const std::string &name, const std::string &options) {
+        return build_program(context, device, std::string(source, source_size), name, options);
     }
 
-    cl_program build_program(cl_context context, cl_device_id device, const std::string &kernel_source, const std::string &name) {
+    cl_program build_program(cl_context context, cl_device_id device, const std::string &kernel_source, const std::string &name, const std::string &options) {
+        const char *o = options.empty() ? nullptr : options.c_str();
         const char *s = kernel_source.c_str();
 
         cl_int err;
@@ -96,7 +97,7 @@ namespace xm::ocl {
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot create cl_program from source [" + name + "]: "  + std::to_string(err));
 
-        err = clBuildProgram(program, 1, &device, nullptr, nullptr, nullptr);
+        err = clBuildProgram(program, 1, &device, o, nullptr, nullptr);
         if (err != CL_SUCCESS) {
             size_t log_size;
             err = clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);

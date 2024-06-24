@@ -761,7 +761,6 @@ __kernel void kernel_dilate(
 
 __kernel void kernel_debug(
     __global const uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
-    __global const uchar *seg_mask,        // 1 * 1: [ St(x) ]  Output segmentation mask
     __global const float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
     __global const short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
     __global       uchar *output,          // 3 * 1: [ B, G, R ]
@@ -868,15 +867,8 @@ __kernel void kernel_debug(
     }
 #endif
 
-    // just segmentation mask
-    if (select_n == 6) {
-        for (int i = 0; i < 3; i++)
-            output[img_idx + i] = seg_mask[idx];
-        return;
-    }
-
     // D_min(x)
-    if (select_n == 7) {
+    if (select_n == 6) {
         const float d_x = utility_1[ut1_idx];
         int v = (int) (d_x * 255.f);
         for (int i = 0; i < 3; i++)
@@ -885,7 +877,7 @@ __kernel void kernel_debug(
     }
 
     // dt-1(x)
-    if (select_n == 8) {
+    if (select_n == 7) {
         const float d_x = utility_1[ut1_idx + 3];
         int v = (int) (d_x * 255.f);
         for (int i = 0; i < 3; i++)
@@ -894,7 +886,7 @@ __kernel void kernel_debug(
     }
 
     // R(x)
-    if (select_n == 9) {
+    if (select_n == 8) {
         const float v = utility_1[ut1_idx + 1];
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = v;
@@ -902,7 +894,7 @@ __kernel void kernel_debug(
     }
 
     // v(x)
-    if (select_n == 10) {
+    if (select_n == 9) {
         const float v = utility_1[ut1_idx + 2];
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = v;
@@ -910,7 +902,7 @@ __kernel void kernel_debug(
     }
 
     // St-1(x)
-    if (select_n == 11) {
+    if (select_n == 10) {
         const short v = utility_2[ut2_idx];
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
@@ -918,7 +910,7 @@ __kernel void kernel_debug(
     }
 
     // T(x)
-    if (select_n == 12) {
+    if (select_n == 11) {
         const int v = clamp((int) utility_2[ut2_idx + 1], 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
@@ -926,7 +918,7 @@ __kernel void kernel_debug(
     }
 
     // Gt_acc(x)
-    if (select_n == 13) {
+    if (select_n == 12) {
         const int v = clamp((int) utility_2[ut2_idx + 2], 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;

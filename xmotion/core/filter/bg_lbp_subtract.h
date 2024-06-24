@@ -141,6 +141,8 @@ namespace xm::filters {
                                               int q_idx);
 
         void release();
+
+        xm::ocl::iop::ClImagePromise debug(int n, cl_command_queue queue);
     };
 }
 

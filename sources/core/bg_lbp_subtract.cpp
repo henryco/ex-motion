@@ -403,6 +403,52 @@ namespace xm::filters {
         }));
     }
 
+    xm::ocl::iop::ClImagePromise BgLbpSubtract::debug(int n, cl_command_queue queue) {
+
+        auto out = xm::ocl::Image2D::allocate(
+                utility_1.cols, utility_1.rows, (size_t) 3, 1,
+                ocl_context, device_id);
+
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) out.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) out.rows, pref_size)};
+
+        cl_mem buffer_bg_model = (cl_mem) bg_model.get_handle(ocl::ACCESS::RO);
+        cl_mem buffer_utility1 = (cl_mem) utility_1.get_handle(ocl::ACCESS::RO);
+        cl_mem buffer_utility2 = (cl_mem) utility_2.get_handle(ocl::ACCESS::RO);
+        cl_mem buffer_out = (cl_mem) out.get_handle(ocl::ACCESS::RW);
+
+        auto _lbsp_kernel = (uchar) kernel_type;
+        auto _model_size = (uchar) model_size;
+        auto _select_n = (uchar) n;
+        auto _rng_seed = (uint) time_seed();
+        auto _width = (ushort) out.cols;
+        auto _height = (ushort) out.rows;
+
+        cl_uint idx_1 = 0;
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_bg_model);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_utility1);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_utility2);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_out);
+
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_lbsp_kernel);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_model_size);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_select_n);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uint), &_rng_seed);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(ushort), &_width);
+        xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(ushort), &_height);
+
+        xm::ocl::enqueue_kernel_fast(
+                queue,
+                kernel_debug,
+                2,
+                g_size,
+                l_size,
+                false);
+
+        return xm::ocl::iop::ClImagePromise(out, queue);
+    }
+
     void new_size(const int w, const int h, const int base, int &new_w, int &new_h, float &scale) {
         const auto ratio = (float) w / (float) h;
         if (w < h) {

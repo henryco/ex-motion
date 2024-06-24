@@ -25,11 +25,15 @@ inline float xor_shift_rng(const uint seed) {
 }
 
 inline int lbsp_k_size_bytes(KernelType t) {
+#ifndef DISABLED_LBSP
     if (t == KERNEL_TYPE_NONE)
         return 0;
     if (t == KERNEL_TYPE_DIAMOND_16)
         return 2;
     return 1;
+#else
+    return 0;
+#endif
 }
 
 inline int pos_3(int x, int y, int z, int w, int h, int c_sz) {
@@ -96,12 +100,12 @@ inline float normalize_l2(float value, int channels_n) {
             : normalize_l2_1(value);
 }
 
-inline float normalize_hd(int value, KernelType t) {
+inline float normalize_hd(int value, int channels_n, KernelType t) {
     return t == KERNEL_TYPE_DIAMOND_16
-        ? (float) value / 16.f
+        ? (float) value / (channels_n * 16.f)
         : t == KERNEL_TYPE_SQUARE_8
-            ? (float) value / 8.f
-            : (float) value / 4.f;
+            ? (float) value / (channels_n * 8.f)
+            : (float) value / (channels_n * 4.f);
 }
 
 void compute_lbsp(
@@ -461,7 +465,7 @@ __kernel void kernel_subsense(
 
 #ifndef DISABLED_LBSP
         const int d_lbsp    = hamming_distance(&bg_model[bgm_idx + channels_n], lbsp_img, kernel_size);
-        const float d_l_n   = normalize_hd(d_lbsp, lbsp_kernel);
+        const float d_l_n   = normalize_hd(d_lbsp, channels_n, lbsp_kernel);
 #endif
 
 #ifndef COLOR_NORM_l2
@@ -482,7 +486,7 @@ __kernel void kernel_subsense(
 
         if (d_color > r_color // maybe replace with floating normalized threshold?
 #ifndef DISABLED_LBSP
-          || d_lbsp > r_lbsp  // maybe replace with floating normalized threshold? // TODO FIXME
+          && d_lbsp > r_lbsp  // maybe replace with floating normalized threshold? // TODO FIXME
 #endif
         ) {
             if (++matches >= matches_req) {
@@ -753,4 +757,179 @@ __kernel void kernel_dilate(
         return;
 
     morph_operation(input, output, MORPH_TYPE_DILATE, kernel_type, channels_n, width, height, x, y);
+}
+
+__kernel void kernel_debug(
+    __global const uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
+    __global const uchar *seg_mask,        // 1 * 1: [ St(x) ]  Output segmentation mask
+    __global const float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
+    __global const short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
+    __global       uchar *output,          // 3 * 1: [ B, G, R ]
+             const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ], see (KernelType)
+             const uchar model_size,       // Number of frames "N" in bg_model B(x)
+             const uchar select_n,         // Debug type
+             const uint rng_seed,          // Seed for random number generator
+             const ushort width,
+             const ushort height
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    const int idx     = y * width + x;
+    const int ut1_idx = idx * 4;
+    const int ut2_idx = idx * 3;
+    const int img_idx = idx * 3;
+
+    const float random_value = xor_shift_rng(idx + rng_seed);
+    const int k_size_b = lbsp_k_size_bytes(lbsp_kernel);
+    const int c_size_b = 3 + (3 * k_size_b);
+
+    // Model last color
+    if (select_n == 0) {
+        const int z = model_size - 1;
+        const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = bg_model[bgm_idx + i];
+        return;
+    }
+
+    // Model random frame color
+    if (select_n == 1) {
+        const int z = clamp((int) (random_value * (model_size - 1)), 0, model_size - 1);
+        const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = bg_model[bgm_idx + i];
+        return;
+    }
+
+    // Model average colors
+    if (select_n == 2) {
+        int color_avg[3] = {0, 0, 0};
+        for (int z = 0; z < model_size - 1; z++) {
+            const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
+            for (int i = 0; i < 3; i++)
+                color_avg[i] += bg_model[bgm_idx + i];
+        }
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = (int) ((float) color_avg[i] / (float) model_size);
+        return;
+    }
+
+#ifndef DISABLED_LBSP
+    // Model last LBSP
+    if (select_n == 3) {
+        const int z = model_size - 1;
+        const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
+        const int offset_idx = bgm_idx + 3;
+        const uchar ref[6] = {0, 0};
+        const int d = hamming_distance(&bg_model[offset_idx], ref, k_size_b);
+        const float nd = normalize_hd(d, 3, lbsp_kernel);
+        const int nc = (int) (nd * 255.f);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = nc;
+        return;
+    }
+
+    // Model random LBSP
+    if (select_n == 4) {
+        const int z = clamp((int) (random_value * (model_size - 1)), 0, model_size - 1);
+        const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
+        const int offset_idx = bgm_idx + 3;
+        const uchar ref[6] = {0, 0};
+        const int d = hamming_distance(&bg_model[offset_idx], ref, k_size_b);
+        const float nd = normalize_hd(d, 3, lbsp_kernel);
+        const int nc = (int) (nd * 255.f);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = nc;
+        return;
+    }
+
+    // Model average LBSP
+    if (select_n == 5) {
+        int avg = 0;
+
+        for (int z = 0; z < model_size - 1; z++) {
+            const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
+            const int offset_idx = bgm_idx + 3;
+            const uchar ref[6] = {0, 0};
+            const int d = hamming_distance(&bg_model[offset_idx], ref, k_size_b);
+            const float nd = normalize_hd(d, 3, lbsp_kernel);
+            avg += (int) (nd * 255.f);
+        }
+
+        avg = (int) ((float) avg / (float) model_size);
+
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = avg;
+        return;
+    }
+#endif
+
+    // just segmentation mask
+    if (select_n == 6) {
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = seg_mask[idx];
+        return;
+    }
+
+    // D_min(x)
+    if (select_n == 7) {
+        const float d_x = utility_1[ut1_idx];
+        int v = (int) (d_x * 255.f);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = v;
+        return;
+    }
+
+    // dt-1(x)
+    if (select_n == 8) {
+        const float d_x = utility_1[ut1_idx + 3];
+        int v = (int) (d_x * 255.f);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = v;
+        return;
+    }
+
+    // R(x)
+    if (select_n == 9) {
+        const float v = utility_1[ut1_idx + 1];
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = v;
+        return;
+    }
+
+    // v(x)
+    if (select_n == 10) {
+        const float v = utility_1[ut1_idx + 2];
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = v;
+        return;
+    }
+
+    // St-1(x)
+    if (select_n == 11) {
+        const short v = utility_2[ut2_idx];
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = (uchar) v;
+        return;
+    }
+
+    // T(x)
+    if (select_n == 12) {
+        const int v = clamp((int) utility_2[ut2_idx + 1], 0, 255);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = (uchar) v;
+        return;
+    }
+
+    // Gt_acc(x)
+    if (select_n == 13) {
+        const int v = clamp((int) utility_2[ut2_idx + 2], 0, 255);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = (uchar) v;
+        return;
+    }
 }

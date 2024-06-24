@@ -64,6 +64,7 @@ namespace xm::filters {
         cl_kernel kernel_upscale;
         cl_kernel kernel_dilate;
         cl_kernel kernel_erode;
+        cl_kernel kernel_debug;
         size_t pref_size;
         // ===== OCL PART =====
 

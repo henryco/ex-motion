@@ -6,6 +6,9 @@
 #include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../kernels/subsense.h"
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "UnreachableCode"
+#pragma ide diagnostic ignored "ConstantConditionsOC"
 namespace xm::filters {
 
     BgLbpSubtract::~BgLbpSubtract() {
@@ -26,6 +29,7 @@ namespace xm::filters {
         if (kernel_upscale != nullptr) clReleaseKernel(kernel_upscale);
         if (kernel_dilate != nullptr) clReleaseKernel(kernel_dilate);
         if (kernel_erode != nullptr) clReleaseKernel(kernel_erode);
+        if (kernel_debug != nullptr) clReleaseKernel(kernel_debug);
         if (program_subsense != nullptr) clReleaseProgram(program_subsense);
         if (ocl_command_queue != nullptr) clReleaseCommandQueue(ocl_command_queue);
         if (ocl_context != nullptr) clReleaseContext(ocl_context);
@@ -96,6 +100,7 @@ namespace xm::filters {
         kernel_upscale = xm::ocl::build_kernel(program_subsense, "kernel_upscale");
         kernel_dilate = xm::ocl::build_kernel(program_subsense, "kernel_dilate");
         kernel_erode = xm::ocl::build_kernel(program_subsense, "kernel_erode");
+        kernel_debug = xm::ocl::build_kernel(program_subsense, "kernel_debug");
 
         pref_size = xm::ocl::optimal_local_size(device_id, kernel_subsense);
 
@@ -426,3 +431,4 @@ namespace xm::filters {
         return 1;
     }
 }
+#pragma clang diagnostic pop

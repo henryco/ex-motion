@@ -124,8 +124,8 @@ namespace xm::filters {
         cl_command_queue queue = q_idx < 0 && in_p.queue() != nullptr ? in_p.queue() : retrieve_queue(q_idx);
         const auto &in = in_p.getImage2D();
 
-        const int n_w = in.cols;
-        const int n_h = in.rows;
+        const int n_w = (int) in.cols;
+        const int n_h = (int) in.rows;
 
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) n_w, pref_size),
@@ -134,7 +134,7 @@ namespace xm::filters {
         const int lbsp_c_size = bgs::lbsp_k_size_bytes(kernel_type);
         if (bg_model.empty()) {
             bg_model = xm::ocl::Image2D::allocate(
-                n_w, n_h, model_size * (color_c + color_c * lbsp_c_size), 1,
+                n_w, n_h, (size_t) model_size * (color_c + color_c * lbsp_c_size), 1,
                 ocl_context, device_id);
         }
 
@@ -165,7 +165,7 @@ namespace xm::filters {
         auto _width = (ushort) n_w;
         auto _height = (ushort) n_h;
 
-        int idx_1 = 0;
+        cl_uint idx_1 = 0;
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_in);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_bg_model);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility1);
@@ -199,8 +199,8 @@ namespace xm::filters {
         float scale;
         int n_w, n_h;
 
-        new_size(in.cols, in.rows, base, n_w, n_h, scale);
-        const int inter_size = n_w * n_h * color_c * sizeof(char);
+        new_size((int) in.cols, (int) in.rows, base, n_w, n_h, scale);
+        const int inter_size = n_w * n_h * color_c * (int) sizeof(char);
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) n_w, pref_size),
                             xm::ocl::optimal_global_size((int) n_h, pref_size)};
@@ -220,7 +220,7 @@ namespace xm::filters {
         auto channels_n = (uchar) color_c;
         auto is_linear = (uchar) linear ? 255 : 0;
 
-        int idx_0 = 0;
+        cl_uint idx_0 = 0;
         idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(cl_mem), &buffer_in);
         idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(cl_mem), &buffer_io_1);
         idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(ushort), &img_w);
@@ -258,7 +258,7 @@ namespace xm::filters {
         const auto image = downscaled_p.getImage2D();
         const auto original = original_p.getImage2D();
 
-        const int inter_size = image.cols * image.rows * 1 * sizeof(char);
+        const int inter_size = (int) image.cols * (int) image.rows * 1 * (int) sizeof(char);
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) image.cols, pref_size),
                             xm::ocl::optimal_global_size((int) image.rows, pref_size)};
@@ -295,7 +295,7 @@ namespace xm::filters {
         auto _width = (ushort) image.cols;
         auto _height = (ushort) image.rows;
 
-        int idx_0 = 0;
+        cl_uint idx_0 = 0;
 
         if (!mask_xc) {
             const auto ex_mask = exclusion_p.getImage2D();
@@ -366,7 +366,7 @@ namespace xm::filters {
         auto _color_g = (uchar) bgr_bg_color.g;
         auto _color_r = (uchar) bgr_bg_color.r;
 
-        int idx_1 = 0;
+        cl_uint idx_1 = 0;
         idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_seg_mask);
         idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_original);
         idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_out);

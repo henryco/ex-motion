@@ -101,7 +101,9 @@ namespace xm::filters {
         kernel_upscale = xm::ocl::build_kernel(program_subsense, "kernel_upscale");
         kernel_dilate = xm::ocl::build_kernel(program_subsense, "kernel_dilate");
         kernel_erode = xm::ocl::build_kernel(program_subsense, "kernel_erode");
-        kernel_debug = xm::ocl::build_kernel(program_subsense, "kernel_debug");
+
+        if (debug_on) kernel_debug = xm::ocl::build_kernel(program_subsense, "kernel_debug");
+        else kernel_debug = nullptr;
 
         pref_size = xm::ocl::optimal_local_size(device_id, kernel_subsense);
 
@@ -373,8 +375,75 @@ namespace xm::filters {
             l_size,
             false);
 
-        // TODO MASK REFINEMENT
+        // =============================================== EROSION ===============================================
 
+        cl_mem buffer_morph = clCreateBuffer(ocl_context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
+        auto erode_kernel_type = (uchar) erode_type;
+        auto erode_c_size = (uchar) 1;
+
+
+        cl_mem b_arr[2] = {buffer_seg_mask, buffer_morph};
+
+        int i_in = 0;
+        int i_ot = 1;
+
+        for (int i = 0; i < refine_erode; i++) {
+
+            cl_uint idx_2 = 0;
+
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &b_arr[i_in]);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &b_arr[i_ot]);
+
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(uchar), &erode_kernel_type);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(uchar), &erode_c_size);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(ushort), &_width);
+            xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(ushort), &_height);
+
+            xm::ocl::enqueue_kernel_fast(
+                    queue,
+                    kernel_erode,
+                    2,
+                    g_size,
+                    l_size,
+                    false);
+
+            int tmp = i_in;
+            i_in = i_ot;
+            i_ot = tmp;
+        }
+
+
+
+        // =============================================== DILATION ===============================================
+
+        auto dilate_kernel_type = (uchar) dilate_type;
+        auto dilate_c_size = (uchar) 1;
+
+        for (int i = 0; i < refine_dilate; i++) {
+            cl_uint idx_3 = 0;
+
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &b_arr[i_in]);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &b_arr[i_ot]);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(uchar), &dilate_kernel_type);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(uchar), &dilate_c_size);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(ushort), &_width);
+            xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(ushort), &_height);
+
+            xm::ocl::enqueue_kernel_fast(
+                    queue,
+                    kernel_dilate,
+                    2,
+                    g_size,
+                    l_size,
+                    false);
+
+            int tmp = i_in;
+            i_in = i_ot;
+            i_ot = tmp;
+        }
+
+
+        // ============================================= MASK APPLY ==============================================
         const auto img_out = xm::ocl::Image2D::allocate_like(original);
 
         cl_mem buffer_out = (cl_mem) img_out.get_handle(ocl::ACCESS::WO);
@@ -393,7 +462,7 @@ namespace xm::filters {
         auto _color_r = (uchar) bgr_bg_color.r;
 
         cl_uint idx_1 = 0;
-        idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_seg_mask);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &b_arr[i_ot]);
         idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_original);
         idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_out);
 
@@ -419,8 +488,9 @@ namespace xm::filters {
             false);
 
         return xm::ocl::iop::ClImagePromise(img_out,queue)
-        .withCleanup(new std::function<void()>([buffer_seg_mask]() {
+        .withCleanup(new std::function<void()>([buffer_seg_mask, buffer_morph]() {
             clReleaseMemObject(buffer_seg_mask);
+            clReleaseMemObject(buffer_morph);
         }));
     }
 

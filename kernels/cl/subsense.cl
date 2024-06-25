@@ -443,7 +443,12 @@ __kernel void kernel_subsense(
     const float random_value = xor_shift_rng(pre_seed);
 
     const int img_idx = idx * channels_n;
+
+#ifndef DEBUG_OFF
     const int ut1_idx = idx * 5;
+#else
+    const int ut1_idx = idx * 4;
+#endif
     const int ut2_idx = idx * 3;
 
     const float D_m = utility_1[ut1_idx    ];
@@ -628,7 +633,10 @@ __kernel void kernel_prepare_model(
     utility_1[ut1_idx + 1] = 1.f;       // R(x)
     utility_1[ut1_idx + 2] = 1.f;       // v(x)
     utility_1[ut1_idx + 3] = .5f;       // dt-1(x)
+
+#ifndef DEBUG_OFF
     utility_1[ut1_idx + 4] = 0.f;       // Diff(D_min, dt)
+#endif
 
     utility_2[ut2_idx    ] = 0;         // St-1(x)
     utility_2[ut2_idx + 1] = t_lower;   // T(x)

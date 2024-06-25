@@ -68,6 +68,7 @@ namespace xm::filters {
         size_t pref_size;
         // ===== OCL PART =====
 
+
         // ===== KERNEL PART =====
         const int BASE_RESOLUTION = 240;
         const int color_c = 3;
@@ -104,10 +105,13 @@ namespace xm::filters {
         xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(255, 255, 255);
         // ===== KERNEL PART =====
 
+
+        // ===== REFINE PART =====
         int refine_erode = 1;
         int refine_dilate = 1;
         bgs::KernelType erode_type = bgs::KERNEL_TYPE_SQUARE_8;
         bgs::KernelType dilate_type = bgs::KERNEL_TYPE_SQUARE_8;
+        // ===== REFINE PART =====
 
 
         // uchar:  N * w * h * [ B, G, R, LBSP_1, LBSP_2, ... ]

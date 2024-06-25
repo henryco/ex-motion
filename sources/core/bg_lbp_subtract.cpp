@@ -375,17 +375,19 @@ namespace xm::filters {
             l_size,
             false);
 
-        // =============================================== EROSION ===============================================
+
+        // ============================================= MORPHOLOGY =============================================
 
         cl_mem buffer_morph = clCreateBuffer(ocl_context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
         auto erode_kernel_type = (uchar) erode_type;
         auto erode_c_size = (uchar) 1;
 
-
         cl_mem b_arr[2] = {buffer_seg_mask, buffer_morph};
-
         int i_in = 0;
         int i_ot = 1;
+
+
+        // =============================================== EROSION ===============================================
 
         for (int i = 0; i < refine_erode; i++) {
 

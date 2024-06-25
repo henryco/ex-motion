@@ -408,6 +408,7 @@ __kernel void kernel_subsense(
              const float d_min_alpha,      // Constant learning rate for D_min(x) [0...1]
              const float flicker_v_inc,    // Increment v(x) value for flickering pixels
              const float flicker_v_dec,    // Decrement v(x) value for flickering pixels
+             const float flicker_v_cap,    // Maximum   v(x) value for flickering pixels
              const float t_scale_inc,      // Scale for T(x) feedback increment
              const float t_scale_dec,      // Scale for T(x) feedback decrement
              const float r_scale,          // Scale for R(x) feedback change (both directions)
@@ -524,7 +525,7 @@ __kernel void kernel_subsense(
 
     // update v(x)
     const float new_V_x = is_foreground != St_1
-        ? (V_x + flicker_v_inc)
+        ? min(flicker_v_cap, V_x + flicker_v_inc)
         : max(flicker_v_dec, V_x - flicker_v_dec);
     utility_1[ut1_idx + 2] = new_V_x;
 
@@ -777,6 +778,7 @@ __kernel void kernel_debug(
              const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ], see (KernelType)
              const uchar model_size,       // Number of frames "N" in bg_model B(x)
              const uchar select_n,         // Debug type
+             const float flicker_v_cap,    // Max value of v(x) for blinking pixels
              const uint rng_seed,          // Seed for random number generator
              const ushort width,
              const ushort height
@@ -906,7 +908,7 @@ __kernel void kernel_debug(
 
     // v(x)
     if (select_n == 9) {
-        const int v = clamp((int) utility_1[ut1_idx + 2], 0, 255);
+        const int v = clamp((int) (utility_1[ut1_idx + 2] / flicker_v_cap * 255.f), 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = v;
         return;

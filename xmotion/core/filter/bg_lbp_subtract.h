@@ -94,6 +94,7 @@ namespace xm::filters {
         float t_scale_dec = 0.25;
         float v_flicker_inc = 1.0;
         float v_flicker_dec = 0.1;
+        float v_flicker_cap = 10.;
 
         bgs::KernelType kernel_type = bgs::KERNEL_TYPE_DIAMOND_16;
         xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(255, 255, 255);

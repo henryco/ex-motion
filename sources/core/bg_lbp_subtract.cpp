@@ -301,6 +301,7 @@ namespace xm::filters {
         auto _d_min_alpha = (float) alpha_d_min;
         auto _flicker_v_inc = (float) v_flicker_inc;
         auto _flicker_v_dec = (float) v_flicker_dec;
+        auto _flicker_v_cap = (float) v_flicker_cap;
         auto _t_scale_inc = (float) t_scale_inc;
         auto _t_scale_dec = (float) t_scale_dec;
         auto _r_scale = (float) scale_r;
@@ -346,6 +347,7 @@ namespace xm::filters {
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_d_min_alpha);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_flicker_v_inc);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_flicker_v_dec);
+        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_flicker_v_cap);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_t_scale_inc);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_t_scale_dec);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_r_scale);
@@ -438,6 +440,7 @@ namespace xm::filters {
         auto _lbsp_kernel = (uchar) kernel_type;
         auto _model_size = (uchar) model_size;
         auto _select_n = (uchar) n;
+        auto _flicker_v_cap = (float) v_flicker_cap;
         auto _rng_seed = (uint) time_seed();
         auto _width = (ushort) out.cols;
         auto _height = (ushort) out.rows;
@@ -452,6 +455,7 @@ namespace xm::filters {
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_lbsp_kernel);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_model_size);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_select_n);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(float), &_flicker_v_cap);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uint), &_rng_seed);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(ushort), &_width);
         xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(ushort), &_height);

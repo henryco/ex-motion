@@ -124,7 +124,7 @@ namespace xm::filters {
 
         auto out1 = subsense(downscaled, frame_in, {/*TODO*/}, q_idx);
 
-        return debug(13, out1.queue());
+        return debug(0, out1.queue());
     }
 
     void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
@@ -157,8 +157,15 @@ namespace xm::filters {
                 ocl_context, device_id);
         }
 
+        if (noise_map.empty()) {
+            noise_map = xm::ocl::Image2D::allocate(
+                    n_w, n_h, 1, sizeof(float),
+                    ocl_context, device_id);
+        }
+
         // ======= BUFFERS ALLOCATION !
         cl_mem buffer_in = (cl_mem) in.get_handle(ocl::ACCESS::RO);
+        cl_mem buffer_noise = (cl_mem) noise_map.get_handle(ocl::ACCESS::WO);
         cl_mem buffer_bg_model = (cl_mem) bg_model.handle;
         cl_mem buffer_utility1 = (cl_mem) utility_1.handle;
         cl_mem buffer_utility2 = (cl_mem) utility_2.handle;
@@ -174,6 +181,7 @@ namespace xm::filters {
 
         cl_uint idx_1 = 0;
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_in);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_noise);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_bg_model);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility1);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility2);
@@ -273,6 +281,7 @@ namespace xm::filters {
         cl_int err;
 
         cl_mem buffer_image = (cl_mem) image.get_handle(ocl::ACCESS::RO);
+        cl_mem buffer_noise = (cl_mem) noise_map.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_bg_model = (cl_mem) bg_model.get_handle(ocl::ACCESS::RW);
         cl_mem buffer_utility1 = (cl_mem) utility_1.get_handle(ocl::ACCESS::RW);
         cl_mem buffer_utility2 = (cl_mem) utility_2.get_handle(ocl::ACCESS::RW);
@@ -315,6 +324,7 @@ namespace xm::filters {
         }
 
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_image);
+        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_noise);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_bg_model);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_utility1);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_utility2);
@@ -418,6 +428,7 @@ namespace xm::filters {
         cl_mem buffer_bg_model = (cl_mem) bg_model.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_utility1 = (cl_mem) utility_1.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_utility2 = (cl_mem) utility_2.get_handle(ocl::ACCESS::RO);
+        cl_mem buffer_noise = (cl_mem) noise_map.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_out = (cl_mem) out.get_handle(ocl::ACCESS::RW);
 
         auto _lbsp_kernel = (uchar) kernel_type;
@@ -431,6 +442,7 @@ namespace xm::filters {
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_bg_model);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_utility1);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_utility2);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_noise);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_out);
 
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_lbsp_kernel);

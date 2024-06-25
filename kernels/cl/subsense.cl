@@ -40,6 +40,11 @@ inline int pos_3(int x, int y, int z, int w, int h, int c_sz) {
     return ((z * h + y) * w + x) * c_sz;
 }
 
+static float noise_3(float x, float y, float z) {
+    float ptr = 0.0f;
+    return fract(sin(x * 112.9898f + y * 179.233f + z * 237.212f) * 43758.5453f, &ptr);
+}
+
 inline int hamming_distance(
     __global const uchar *one,
              const uchar *two,
@@ -381,6 +386,7 @@ __kernel void kernel_subsense(
 #endif
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
+    __global const float *noise_map,       // Input noise map, single channel
     __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
@@ -429,7 +435,8 @@ __kernel void kernel_subsense(
     }
 #endif
 
-    const float random_value = xor_shift_rng(idx + rng_seed);
+    const int pre_seed = (int) (noise_map[idx] * rng_seed);
+    const float random_value = xor_shift_rng(pre_seed);
 
     const int img_idx = idx * channels_n;
     const int ut1_idx = idx * 4;
@@ -546,7 +553,7 @@ __kernel void kernel_subsense(
     // update B(x)
     if (!is_foreground && random_value <= 1 / new_T_x) {
         // Don't ask why: xor_shift_rng(T_x + img_idx + rng_seed), just a simple heuristic
-        const int random_frame_n   = (float) xor_shift_rng(T_x + img_idx + rng_seed) * (model_size - 1);
+        const int random_frame_n   = (float) xor_shift_rng(42 + pre_seed) * (model_size - 1);
         const int random_frame_idx = pos_3(x, y, random_frame_n, width, height, bgm_ch_size);
         for (int i = 0; i < channels_n; i++){
             bg_model[random_frame_idx + i] = image[img_idx + i]; // B, G, R
@@ -564,6 +571,7 @@ __kernel void kernel_subsense(
 __kernel void kernel_prepare_model(
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
+    __global       float *noise_map,       // Output noise map, single channel
     __global       uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
@@ -600,6 +608,8 @@ __kernel void kernel_prepare_model(
     const int ut2_idx = idx * 3;
     const int img_idx = idx * channels_n;
     const int bgm_idx = pos_3(x, y, clamp((int) model_i, 0, model_size - 1), width, height, bgm_ch_size);
+
+    noise_map[idx] = noise_3(x, y, model_i);
 
     utility_1[ut1_idx    ] = .5f;       // D_min(x)
     utility_1[ut1_idx + 1] = 1;         // R(x)
@@ -763,6 +773,7 @@ __kernel void kernel_debug(
     __global const uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global const float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
     __global const short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
+    __global const float *noise_map,       // Input noise map, single channel
     __global       uchar *output,          // 3 * 1: [ B, G, R ]
              const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ], see (KernelType)
              const uchar model_size,       // Number of frames "N" in bg_model B(x)
@@ -782,7 +793,7 @@ __kernel void kernel_debug(
     const int ut2_idx = idx * 3;
     const int img_idx = idx * 3;
 
-    const float random_value = xor_shift_rng(idx + rng_seed);
+    const float random_value = xor_shift_rng((int) (noise_map[idx] * rng_seed));
     const int k_size_b = lbsp_k_size_bytes(lbsp_kernel);
     const int c_size_b = 3 + (3 * k_size_b);
 

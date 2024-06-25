@@ -109,6 +109,8 @@ namespace xm::filters {
         // short 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
         ocl::Image2D utility_2;
 
+        // float: w * h
+        ocl::Image2D noise_map;
 
         bool initialized = false;
         bool ready = false;

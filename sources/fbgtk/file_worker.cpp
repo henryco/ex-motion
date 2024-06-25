@@ -36,7 +36,8 @@ namespace xm {
         logic->proceed(dt, frames);
         process_results();
 
-        update_gui(fps);
+        if (!bypass)
+            update_gui(fps);
 
 
 //        const auto t1 = std::chrono::system_clock::now();

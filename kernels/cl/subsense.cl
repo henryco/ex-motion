@@ -483,8 +483,9 @@ __kernel void kernel_subsense(
         const float d_c_n   = normalize_l2(d_color, channels_n);
 #endif
 
-#ifndef DISABLED_LBSP
-        const float dtx = n_norm_alpha * d_c_n + n_norm_alpha_inv * d_l_n;
+#ifndef DISABLED_LBSP // TODO FIXME
+//        const float dtx = n_norm_alpha * d_c_n + n_norm_alpha_inv * d_l_n;
+        const float dtx = d_l_n;
 #else
         const float dtx = d_c_n;
 #endif
@@ -941,5 +942,6 @@ __kernel void kernel_debug(
         const int v = (int) (random_value * 255.f);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = v;
+        return;
     }
 }

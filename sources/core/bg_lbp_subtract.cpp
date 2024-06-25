@@ -124,7 +124,7 @@ namespace xm::filters {
 
         auto out1 = subsense(downscaled, frame_in, {/*TODO*/}, q_idx);
 
-        return debug(0, out1.queue());
+        return debug(6, out1);
     }
 
     void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
@@ -415,7 +415,11 @@ namespace xm::filters {
         }));
     }
 
-    xm::ocl::iop::ClImagePromise BgLbpSubtract::debug(int n, cl_command_queue queue) {
+    xm::ocl::iop::ClImagePromise BgLbpSubtract::debug(int n, const xm::ocl::iop::ClImagePromise &ref) {
+        if (n < 0)
+            return ref;
+
+        auto queue = ref.queue() == nullptr ? retrieve_queue(-1) : ref.queue();
 
         auto out = xm::ocl::Image2D::allocate(
                 utility_1.cols, utility_1.rows, (size_t) 3, 1,

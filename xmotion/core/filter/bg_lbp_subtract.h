@@ -85,7 +85,7 @@ namespace xm::filters {
         int ghost_n = 300;
         int color_0 = 30;
         int lbsp_0 = 3;
-        float threshold_lbsp = 0.05; // used for lbsp
+        float threshold_lbsp = 0.001; // used for lbsp
         float alpha_d_min = 0.5;
         float alpha_norm = 0.5;
         float ghost_t = 0.01;
@@ -144,7 +144,7 @@ namespace xm::filters {
 
         void release();
 
-        xm::ocl::iop::ClImagePromise debug(int n, cl_command_queue queue);
+        xm::ocl::iop::ClImagePromise debug(int n, const xm::ocl::iop::ClImagePromise &ref);
     };
 }
 

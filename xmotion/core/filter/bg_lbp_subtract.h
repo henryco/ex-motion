@@ -76,6 +76,8 @@ namespace xm::filters {
         const bool norm_l2 = true;
         const bool mask_xc = true;
 
+        int color_0 = 20;
+        int lbsp_0 = 2;
         int n_matches = 2;
         int t_upper = 256;
         int t_lower = 2;
@@ -83,8 +85,6 @@ namespace xm::filters {
         int model_size = 50;
         int ghost_l = 2;
         int ghost_n = 300;
-        int color_0 = 30;
-        int lbsp_0 = 3;
         float threshold_lbsp = 0.001; // used for lbsp
         float alpha_d_min = 0.5;
         float alpha_norm = 0.5;

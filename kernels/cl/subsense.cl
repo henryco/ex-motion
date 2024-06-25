@@ -453,6 +453,7 @@ __kernel void kernel_subsense(
     const float n_norm_alpha_inv = 1.f - n_norm_alpha;
     const int kernel_size = lbsp_k_size_bytes(lbsp_kernel);
     const int bgm_ch_size = channels_n * (1 + kernel_size);
+    const int lbsp_size_b = channels_n * kernel_size;
     const int r_lbsp  = (int) (pow(2.f, R_x) + lbsp_0);
     uchar lbsp_img[6]; // (2 bytes = 16 bits) x (B+G+R = 3)
     compute_lbsp(image, lbsp_img, lbsp_kernel, lbsp_threshold, channels_n, width, height, x, y);
@@ -471,7 +472,7 @@ __kernel void kernel_subsense(
         const int bgm_idx   = pos_3(x, y, i, width, height, bgm_ch_size);
 
 #ifndef DISABLED_LBSP
-        const int d_lbsp    = hamming_distance(&bg_model[bgm_idx + channels_n], lbsp_img, kernel_size);
+        const int d_lbsp    = hamming_distance(&bg_model[bgm_idx + channels_n], lbsp_img, lbsp_size_b);
         const float d_l_n   = normalize_hd(d_lbsp, channels_n, lbsp_kernel);
 #endif
 
@@ -483,9 +484,8 @@ __kernel void kernel_subsense(
         const float d_c_n   = normalize_l2(d_color, channels_n);
 #endif
 
-#ifndef DISABLED_LBSP // TODO FIXME
-//        const float dtx = n_norm_alpha * d_c_n + n_norm_alpha_inv * d_l_n;
-        const float dtx = d_l_n;
+#ifndef DISABLED_LBSP
+        const float dtx = n_norm_alpha * d_c_n + n_norm_alpha_inv * d_l_n;
 #else
         const float dtx = d_c_n;
 #endif
@@ -552,18 +552,16 @@ __kernel void kernel_subsense(
     utility_2[ut2_idx] = is_foreground ? 255 : 0;
 
     // update B(x)
-    if (!is_foreground && random_value <= 1 / new_T_x) {
-        // Don't ask why: xor_shift_rng(T_x + img_idx + rng_seed), just a simple heuristic
+    if (!is_foreground && random_value <= (1.f / (float) new_T_x)) {
         const int random_frame_n   = (float) xor_shift_rng(42 + pre_seed) * (model_size - 1);
         const int random_frame_idx = pos_3(x, y, random_frame_n, width, height, bgm_ch_size);
-        for (int i = 0; i < channels_n; i++){
+        for (int i = 0; i < channels_n; i++)
             bg_model[random_frame_idx + i] = image[img_idx + i]; // B, G, R
-        }
+
 #ifndef DISABLED_LBSP
         const int random_frame_idx_offset = random_frame_idx + channels_n;
-        for (int i = 0; i < kernel_size; i++) {
-            bg_model[random_frame_idx_offset + i] = lbsp_img[i]; // LBSP bit strings
-        }
+        for (int i = 0; i < lbsp_size_b; i++)
+            bg_model[random_frame_idx_offset + i] = (uchar) lbsp_img[i]; // LBSP bit strings
 #endif
     }
 
@@ -598,6 +596,7 @@ __kernel void kernel_prepare_model(
 #ifndef DISABLED_LBSP
     const int kernel_size = lbsp_k_size_bytes(lbsp_kernel);
     const int bgm_ch_size = channels_n * (1 + kernel_size);
+    const int lbsp_size_b = channels_n * kernel_size;
     uchar lbsp_img[6]; // (2 bytes = 16 bits) x (B+G+R = 3)
     compute_lbsp(image, lbsp_img, lbsp_kernel, lbsp_threshold, channels_n, width, height, x, y);
 #else
@@ -627,9 +626,8 @@ __kernel void kernel_prepare_model(
 
 #ifndef DISABLED_LBSP
     const int bgm_idx_offset = bgm_idx + channels_n;
-    for (int i = 0; i < kernel_size; i++) {
+    for (int i = 0; i < lbsp_size_b; i++)
         bg_model[bgm_idx_offset + i] = lbsp_img[i]; // LBSP bit strings
-    }
 #endif
 }
 
@@ -797,6 +795,7 @@ __kernel void kernel_debug(
     const float random_value = xor_shift_rng((int) (noise_map[idx] * rng_seed));
     const int k_size_b = lbsp_k_size_bytes(lbsp_kernel);
     const int c_size_b = 3 + (3 * k_size_b);
+    const int l_size_b = 3 * k_size_b;
 
     // Model last color
     if (select_n == 0) {
@@ -836,7 +835,7 @@ __kernel void kernel_debug(
         const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
         const int offset_idx = bgm_idx + 3;
         const uchar ref[6] = {0, 0};
-        const int d = hamming_distance(&bg_model[offset_idx], ref, k_size_b);
+        const int d = hamming_distance(&bg_model[offset_idx], ref, l_size_b);
         const float nd = normalize_hd(d, 3, lbsp_kernel);
         const int nc = (int) (nd * 255.f);
         for (int i = 0; i < 3; i++)
@@ -850,7 +849,7 @@ __kernel void kernel_debug(
         const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
         const int offset_idx = bgm_idx + 3;
         const uchar ref[6] = {0, 0};
-        const int d = hamming_distance(&bg_model[offset_idx], ref, k_size_b);
+        const int d = hamming_distance(&bg_model[offset_idx], ref, l_size_b);
         const float nd = normalize_hd(d, 3, lbsp_kernel);
         const int nc = (int) (nd * 255.f);
         for (int i = 0; i < 3; i++)
@@ -866,7 +865,7 @@ __kernel void kernel_debug(
             const int bgm_idx = pos_3(x, y, z, width, height, c_size_b);
             const int offset_idx = bgm_idx + 3;
             const uchar ref[6] = {0, 0};
-            const int d = hamming_distance(&bg_model[offset_idx], ref, k_size_b);
+            const int d = hamming_distance(&bg_model[offset_idx], ref, l_size_b);
             const float nd = normalize_hd(d, 3, lbsp_kernel);
             avg += (int) (nd * 255.f);
         }

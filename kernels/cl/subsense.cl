@@ -388,7 +388,7 @@ __kernel void kernel_subsense(
     __global const uchar *image,           // Input image (current)  ch_n * 1
     __global const float *noise_map,       // Input noise map, single channel
     __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
-    __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
+    __global       float *utility_1,       // 5 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
     __global       uchar *seg_mask,        // Output segmentation mask St(x)
 
@@ -404,6 +404,8 @@ __kernel void kernel_subsense(
              const ushort t_upper,         // Upper bound for T(x) value
              const ushort ghost_n,         // Number of frames after foreground marked as ghost ( see also Gt_acc(x) )
              const ushort ghost_l,         // Temporary low value of T(x) for pixel marked as a ghost
+             const ushort ghost_n_inc,     // Increment Gt_acc(x) value for ghost qualifiers
+             const ushort ghost_n_dec,     // Decrement Gt_acc(x) value for ghost qualifiers
              const float ghost_t,          // Ghost threshold for local variations between It and It-1
              const float d_min_alpha,      // Constant learning rate for D_min(x) [0...1]
              const float flicker_v_inc,    // Increment v(x) value for flickering pixels
@@ -412,6 +414,7 @@ __kernel void kernel_subsense(
              const float t_scale_inc,      // Scale for T(x) feedback increment
              const float t_scale_dec,      // Scale for T(x) feedback decrement
              const float r_scale,          // Scale for R(x) feedback change (both directions)
+             const float r_cap,            // Max value for R(x)
              const uchar matches_req,      // Number of required matches of It(x) with B(x)
              const uchar model_size,       // Number of frames "N" in bg_model B(x)
              const uchar channels_n,       // Number of color channels in input image [1, 2, 3]
@@ -440,7 +443,7 @@ __kernel void kernel_subsense(
     const float random_value = xor_shift_rng(pre_seed);
 
     const int img_idx = idx * channels_n;
-    const int ut1_idx = idx * 4;
+    const int ut1_idx = idx * 5;
     const int ut2_idx = idx * 3;
 
     const float D_m = utility_1[ut1_idx    ];
@@ -512,10 +515,17 @@ __kernel void kernel_subsense(
     // update out segmentation mask St(x)
     seg_mask[idx] = is_foreground ? 255 : 0;
 
+    const float d_diff = fabs(utility_1[ut1_idx + 3] - D_MIN_X);
+
+#ifndef DEBUG_OFF
+    // update diff(D_min, dt)
+    utility_1[ut1_idx + 4] = d_diff;
+#endif
+
     // update G_c(x)
-    const float new_G_c = is_foreground && (fabs(utility_1[ut1_idx + 3] - D_MIN_X) < ghost_t)
-        ? utility_2[ut2_idx + 2] + 1
-        : 0;
+    const int new_G_c = is_foreground && (d_diff < ghost_t)
+        ? utility_2[ut2_idx + 2] + ghost_n_inc
+        : max(0, utility_2[ut2_idx + 2] - ghost_n_dec);
     utility_2[ut2_idx + 2] = new_G_c;
 
     // update moving average D_min(x) and dt-1(x)
@@ -531,7 +541,7 @@ __kernel void kernel_subsense(
 
     // update R(x)
     utility_1[ut1_idx + 1] = R_x < pow(1.f + new_D_m * 2.f, 2.f)
-        ? R_x + r_scale * (new_V_x - flicker_v_dec) // that " -flicker_v_dec " is heuristic, whatever
+        ? min(r_cap, R_x + r_scale * (new_V_x - flicker_v_dec)) // that " -flicker_v_dec " is heuristic, whatever
         : max(1.f, R_x - (r_scale / new_V_x));
 
     // update T(x)
@@ -544,16 +554,18 @@ __kernel void kernel_subsense(
         t_upper);
     utility_2[ut2_idx + 1] = new_T_x;
 
-    // Ghost detected
+    // Ghost detection
+    bool is_ghost = false;
     if (new_G_c > ghost_n) {
         new_T_x = ghost_l;
+        is_ghost = true;
     }
 
     // update St-1(x)
     utility_2[ut2_idx] = is_foreground ? 255 : 0;
 
     // update B(x)
-    if (!is_foreground && random_value <= (1.f / (float) new_T_x)) {
+    if ((!is_foreground || is_ghost) && random_value <= (1.f / (float) new_T_x)) {
         const int random_frame_n   = (float) xor_shift_rng(42 + pre_seed) * (model_size - 1);
         const int random_frame_idx = pos_3(x, y, random_frame_n, width, height, bgm_ch_size);
         for (int i = 0; i < channels_n; i++)
@@ -573,7 +585,7 @@ __kernel void kernel_prepare_model(
     __global const uchar *image,           // Input image (current)  ch_n * 1
     __global       float *noise_map,       // Output noise map, single channel
     __global       uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
-    __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
+    __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
 
 #ifndef DISABLED_LBSP
@@ -605,7 +617,7 @@ __kernel void kernel_prepare_model(
 #endif
 
     const int idx     = y * width + x;
-    const int ut1_idx = idx * 4;
+    const int ut1_idx = idx * 5;
     const int ut2_idx = idx * 3;
     const int img_idx = idx * channels_n;
     const int bgm_idx = pos_3(x, y, clamp((int) model_i, 0, model_size - 1), width, height, bgm_ch_size);
@@ -613,9 +625,10 @@ __kernel void kernel_prepare_model(
     noise_map[idx] = noise_3(x, y, model_i);
 
     utility_1[ut1_idx    ] = .5f;       // D_min(x)
-    utility_1[ut1_idx + 1] = 1;         // R(x)
-    utility_1[ut1_idx + 2] = 1;         // v(x)
+    utility_1[ut1_idx + 1] = 1.f;       // R(x)
+    utility_1[ut1_idx + 2] = 1.f;       // v(x)
     utility_1[ut1_idx + 3] = .5f;       // dt-1(x)
+    utility_1[ut1_idx + 4] = 0.f;       // Diff(D_min, dt)
 
     utility_2[ut2_idx    ] = 0;         // St-1(x)
     utility_2[ut2_idx + 1] = t_lower;   // T(x)
@@ -769,9 +782,10 @@ __kernel void kernel_dilate(
     morph_operation(input, output, MORPH_TYPE_DILATE, kernel_type, channels_n, width, height, x, y);
 }
 
+#ifndef DEBUG_OFF
 __kernel void kernel_debug(
     __global const uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
-    __global const float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
+    __global const float *utility_1,       // 5 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]
     __global const short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
     __global const float *noise_map,       // Input noise map, single channel
     __global       uchar *output,          // 3 * 1: [ B, G, R ]
@@ -779,7 +793,9 @@ __kernel void kernel_debug(
              const uchar model_size,       // Number of frames "N" in bg_model B(x)
              const uchar select_n,         // Debug type
              const float flicker_v_cap,    // Max value of v(x) for blinking pixels
+             const float r_cap,            // Max value of R(x)
              const uint rng_seed,          // Seed for random number generator
+             const ushort ghost_n,         // Number of frames after foreground marked as ghost ( see also Gt_acc(x) )
              const ushort width,
              const ushort height
 ) {
@@ -790,7 +806,7 @@ __kernel void kernel_debug(
         return;
 
     const int idx     = y * width + x;
-    const int ut1_idx = idx * 4;
+    const int ut1_idx = idx * 5;
     const int ut2_idx = idx * 3;
     const int img_idx = idx * 3;
 
@@ -898,16 +914,24 @@ __kernel void kernel_debug(
         return;
     }
 
-    // R(x)
+    // Diff(D_min, dt)
     if (select_n == 8) {
-        const float v = utility_1[ut1_idx + 1];
+        const int v = (int) (255.f * utility_1[ut1_idx + 4]);
         for (int i = 0; i < 3; i++)
-            output[img_idx + i] = v * 10.f;
+            output[img_idx + i] = v;
+        return;
+    }
+
+    // R(x)
+    if (select_n == 9) {
+        const float v = clamp((int) (utility_1[ut1_idx + 1] / r_cap * 255.f), 0, 255);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = v;
         return;
     }
 
     // v(x)
-    if (select_n == 9) {
+    if (select_n == 10) {
         const int v = clamp((int) (utility_1[ut1_idx + 2] / flicker_v_cap * 255.f), 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = v;
@@ -915,7 +939,7 @@ __kernel void kernel_debug(
     }
 
     // St-1(x)
-    if (select_n == 10) {
+    if (select_n == 11) {
         const short v = utility_2[ut2_idx];
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
@@ -923,7 +947,7 @@ __kernel void kernel_debug(
     }
 
     // T(x)
-    if (select_n == 11) {
+    if (select_n == 12) {
         const int v = clamp((int) utility_2[ut2_idx + 1], 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
@@ -931,18 +955,32 @@ __kernel void kernel_debug(
     }
 
     // Gt_acc(x)
-    if (select_n == 12) {
+    if (select_n == 13) {
         const int v = clamp((int) utility_2[ut2_idx + 2], 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
         return;
     }
 
+    // Ghosts
+    if (select_n == 14) {
+        const int v = utility_2[ut2_idx + 2];
+        if (v > ghost_n) {
+            output[img_idx + 2] = 255;
+            return;
+        }
+
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = clamp((int) utility_2[ut2_idx + 2], 0, 255);
+        return;
+    }
+
     // random value
-    if (select_n == 13) {
+    if (select_n == 15) {
         const int v = (int) (random_value * 255.f);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = v;
         return;
     }
 }
+#endif

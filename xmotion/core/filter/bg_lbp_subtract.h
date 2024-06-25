@@ -71,10 +71,11 @@ namespace xm::filters {
         // ===== KERNEL PART =====
         const int BASE_RESOLUTION = 240;
         const int color_c = 3;
-        const bool linear = false;
+        const bool debug_on = true;
         const bool lbsp_on = true;
         const bool norm_l2 = true;
-        const bool mask_xc = true;
+        const bool mask_xc = false;
+        const bool linear = false;
 
         int color_0 = 25;
         int lbsp_0 = 2;
@@ -85,11 +86,14 @@ namespace xm::filters {
         int model_size = 50;
         int ghost_l = 2;
         int ghost_n = 300;
+        int ghost_n_inc = 1;
+        int ghost_n_dec = 15;
         float threshold_lbsp = 0.0025; // used for lbsp
-        float alpha_d_min = 0.5;
+        float alpha_d_min = 0.75;
         float alpha_norm = 0.5;
-        float ghost_t = 0.01;
-        float scale_r = 0.01;
+        float ghost_t = 0.1;
+        float r_scale = 0.01;
+        float r_cap = 10;
         float t_scale_inc = 0.50;
         float t_scale_dec = 0.25;
         float v_flicker_inc = 1.0;

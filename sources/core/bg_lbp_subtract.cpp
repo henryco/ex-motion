@@ -54,7 +54,7 @@ namespace xm::filters {
             return ocl_command_queue;
 
         if (ocl_queue_map.contains(index))
-            return ocl_queue_map[index];
+            return ocl_queue_map.at(debug_on);
 
         ocl_queue_map.emplace(index, xm::ocl::create_queue_device(
                 ocl_context,
@@ -80,9 +80,10 @@ namespace xm::filters {
             false);
 
         std::string options = std::string("")
-            + (mask_xc ? " -DDISABLED_EXCLUSION_MASK " : "")
+            + (mask_xc ? "" : " -DDISABLED_EXCLUSION_MASK ")
             + (norm_l2 ? " -DCOLOR_NORM_l2 " : "")
             + (lbsp_on ? "" : " -DDISABLED_LBSP ")
+            + (debug_on ? "" : " -DDEBUG_OFF ")
             ;
 
         program_subsense = xm::ocl::build_program(
@@ -138,7 +139,7 @@ namespace xm::filters {
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) n_w, pref_size),
                             xm::ocl::optimal_global_size((int) n_h, pref_size)};
 
-        const int lbsp_c_size = bgs::lbsp_k_size_bytes(kernel_type);
+        const int lbsp_c_size = lbsp_on ? bgs::lbsp_k_size_bytes(kernel_type) : 0;
         if (bg_model.empty()) {
             bg_model = xm::ocl::Image2D::allocate(
                 n_w, n_h, (size_t) model_size * (color_c + color_c * lbsp_c_size), 1,
@@ -147,7 +148,7 @@ namespace xm::filters {
 
         if (utility_1.empty()) {
             utility_1 = xm::ocl::Image2D::allocate(
-                n_w, n_h, 4, sizeof(float),
+                n_w, n_h, debug_on ? 5 : 4, sizeof(float),
                 ocl_context, device_id);
         }
 
@@ -297,6 +298,8 @@ namespace xm::filters {
         auto _t_upper = (ushort) t_upper;
         auto _ghost_n = (ushort) ghost_n;
         auto _ghost_l = (ushort) ghost_l;
+        auto _ghost_n_inc = (ushort) ghost_n_inc;
+        auto _ghost_n_dec = (ushort) ghost_n_dec;
         auto _ghost_t = (float) ghost_t;
         auto _d_min_alpha = (float) alpha_d_min;
         auto _flicker_v_inc = (float) v_flicker_inc;
@@ -304,7 +307,8 @@ namespace xm::filters {
         auto _flicker_v_cap = (float) v_flicker_cap;
         auto _t_scale_inc = (float) t_scale_inc;
         auto _t_scale_dec = (float) t_scale_dec;
-        auto _r_scale = (float) scale_r;
+        auto _r_scale = (float) r_scale;
+        auto _r_cap = (float) r_cap;
         auto _matches_req = (uchar) n_matches;
         auto _model_size = (uchar) model_size;
         auto _channels_n = (uchar) color_c;
@@ -314,7 +318,7 @@ namespace xm::filters {
 
         cl_uint idx_0 = 0;
 
-        if (!mask_xc) {
+        if (mask_xc) {
             const auto ex_mask = exclusion_p.getImage2D();
 
             cl_mem buffer_ex = (cl_mem) ex_mask.get_handle(ocl::ACCESS::RO);
@@ -343,6 +347,8 @@ namespace xm::filters {
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_t_upper);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_ghost_n);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_ghost_l);
+        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_ghost_n_inc);
+        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(ushort), &_ghost_n_dec);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_ghost_t);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_d_min_alpha);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_flicker_v_inc);
@@ -351,6 +357,7 @@ namespace xm::filters {
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_t_scale_inc);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_t_scale_dec);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_r_scale);
+        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_r_cap);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_matches_req);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_model_size);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_channels_n);
@@ -441,7 +448,9 @@ namespace xm::filters {
         auto _model_size = (uchar) model_size;
         auto _select_n = (uchar) n;
         auto _flicker_v_cap = (float) v_flicker_cap;
+        auto _r_cap = (float) r_cap;
         auto _rng_seed = (uint) time_seed();
+        auto _ghost_n = (ushort) ghost_n;
         auto _width = (ushort) out.cols;
         auto _height = (ushort) out.rows;
 
@@ -456,7 +465,9 @@ namespace xm::filters {
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_model_size);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uchar), &_select_n);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(float), &_flicker_v_cap);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(float), &_r_cap);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(uint), &_rng_seed);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(ushort), &_ghost_n);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(ushort), &_width);
         xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(ushort), &_height);
 

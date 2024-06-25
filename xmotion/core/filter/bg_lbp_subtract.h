@@ -76,7 +76,7 @@ namespace xm::filters {
         const bool norm_l2 = true;
         const bool mask_xc = true;
 
-        int color_0 = 20;
+        int color_0 = 25;
         int lbsp_0 = 2;
         int n_matches = 2;
         int t_upper = 256;
@@ -85,7 +85,7 @@ namespace xm::filters {
         int model_size = 50;
         int ghost_l = 2;
         int ghost_n = 300;
-        float threshold_lbsp = 0.001; // used for lbsp
+        float threshold_lbsp = 0.0025; // used for lbsp
         float alpha_d_min = 0.5;
         float alpha_norm = 0.5;
         float ghost_t = 0.01;
@@ -96,7 +96,7 @@ namespace xm::filters {
         float v_flicker_dec = 0.1;
 
         bgs::KernelType kernel_type = bgs::KERNEL_TYPE_DIAMOND_16;
-        xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(0, 255, 0);
+        xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(255, 255, 255);
         // ===== KERNEL PART =====
 
 

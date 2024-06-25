@@ -122,7 +122,9 @@ namespace xm::filters {
             return frame_in;
         }
 
-        return subsense(downscaled, frame_in, {/*TODO*/}, q_idx);
+        auto out1 = subsense(downscaled, frame_in, {/*TODO*/}, q_idx);
+
+        return debug(13, out1.queue());
     }
 
     void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {

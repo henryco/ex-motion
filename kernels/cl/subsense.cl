@@ -889,13 +889,13 @@ __kernel void kernel_debug(
     if (select_n == 8) {
         const float v = utility_1[ut1_idx + 1];
         for (int i = 0; i < 3; i++)
-            output[img_idx + i] = v;
+            output[img_idx + i] = v * 10.f;
         return;
     }
 
     // v(x)
     if (select_n == 9) {
-        const float v = utility_1[ut1_idx + 2];
+        const int v = clamp((int) utility_1[ut1_idx + 2], 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = v;
         return;
@@ -923,5 +923,12 @@ __kernel void kernel_debug(
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
         return;
+    }
+
+    // random value
+    if (select_n == 13) {
+        const int v = (int) (random_value * 255.f);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = v;
     }
 }

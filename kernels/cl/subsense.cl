@@ -622,7 +622,13 @@ __kernel void kernel_prepare_model(
 #endif
 
     const int idx     = y * width + x;
+
+#ifndef DEBUG_OFF
     const int ut1_idx = idx * 5;
+#else
+    const int ut1_idx = idx * 4;
+#endif
+
     const int ut2_idx = idx * 3;
     const int img_idx = idx * channels_n;
     const int bgm_idx = pos_3(x, y, clamp((int) model_i, 0, model_size - 1), width, height, bgm_ch_size);

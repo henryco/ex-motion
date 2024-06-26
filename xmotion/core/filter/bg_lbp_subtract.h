@@ -109,7 +109,7 @@ namespace xm::filters {
         // ===== REFINE PART =====
         int refine_erode = 0;
         int refine_dilate = 0;
-        bgs::KernelType erode_type = bgs::KERNEL_TYPE_CROSS_4;
+        bgs::KernelType erode_type = bgs::KERNEL_TYPE_DIAMOND_16;
         bgs::KernelType dilate_type = bgs::KERNEL_TYPE_DIAMOND_16;
         // ===== REFINE PART =====
 

@@ -72,34 +72,34 @@ namespace xm::filters {
         // ===== KERNEL PART =====
         const int BASE_RESOLUTION = 240;
         const int color_c = 3;
-        const bool debug_on = false;
+        const bool debug_on = true;
         const bool lbsp_on = true;
         const bool norm_l2 = true;
         const bool mask_xc = false;
         const bool linear = false;
 
-        int color_0 = 25;
-        int lbsp_0 = 2;
+        int color_0 = 30;
+        int lbsp_0 = 3;
         int n_matches = 2;
         int t_upper = 256;
         int t_lower = 2;
         int model_i = 0;
         int model_size = 50;
-        int ghost_l = 2;
+        int ghost_l = 1;
         int ghost_n = 300;
         int ghost_n_inc = 1;
         int ghost_n_dec = 15;
         float threshold_lbsp = 0.0025; // used for lbsp
-        float alpha_d_min = 0.75;
+        float alpha_d_min = 0.5;
         float alpha_norm = 0.5;
-        float ghost_t = 0.1;
+        float ghost_t = 0.25;
         float r_scale = 0.01;
-        float r_cap = 10;
+        float r_cap = 255;
         float t_scale_inc = 0.50;
         float t_scale_dec = 0.25;
         float v_flicker_inc = 1.0;
         float v_flicker_dec = 0.1;
-        float v_flicker_cap = 10.;
+        float v_flicker_cap = 100;
 
         bgs::KernelType kernel_type = bgs::KERNEL_TYPE_DIAMOND_16;
         xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(255, 255, 255);
@@ -109,8 +109,8 @@ namespace xm::filters {
         // ===== REFINE PART =====
         int refine_erode = 0;
         int refine_dilate = 0;
-        bgs::KernelType erode_type = bgs::KERNEL_TYPE_DIAMOND_16;
-        bgs::KernelType dilate_type = bgs::KERNEL_TYPE_DIAMOND_16;
+        bgs::KernelType erode_type = bgs::KERNEL_TYPE_SQUARE_8;
+        bgs::KernelType dilate_type = bgs::KERNEL_TYPE_SQUARE_8;
         // ===== REFINE PART =====
 
 

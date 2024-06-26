@@ -178,7 +178,8 @@ namespace xm::filters {
         auto _model_i = (uchar) model_i;
         auto _model_size = (uchar) model_size;
         auto _channels_n = (uchar) color_c;
-        auto _t_lower = (ushort) t_lower;
+        auto _t_higher = (ushort) t_upper;
+        auto _flicker_v_dec = (float) v_flicker_dec;
         auto _width = (ushort) n_w;
         auto _height = (ushort) n_h;
 
@@ -197,7 +198,8 @@ namespace xm::filters {
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &_model_i);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &_model_size);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &_channels_n);
-        idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(ushort), &_t_lower);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(ushort), &_t_higher);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(float), &_flicker_v_dec);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(ushort), &_width);
         xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(ushort), &_height);
 
@@ -495,6 +497,9 @@ namespace xm::filters {
     xm::ocl::iop::ClImagePromise BgLbpSubtract::debug(int n, const xm::ocl::iop::ClImagePromise &ref) {
         if (n < 0)
             return ref;
+
+        if (!debug_on)
+            throw std::invalid_argument("Debug is disabled");
 
         auto queue = ref.queue() == nullptr ? retrieve_queue(-1) : ref.queue();
 

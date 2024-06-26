@@ -473,7 +473,7 @@ __kernel void kernel_subsense(
     const int bg_model_start = (int) (random_value * (model_size - 1));
     const int r_color = (int) (R_x * color_0);
 
-    bool is_foreground = false;
+    bool is_foreground = true;
     float D_MIN_X = 1.f;
     int matches = 0;
 
@@ -501,14 +501,14 @@ __kernel void kernel_subsense(
 
         D_MIN_X = min(D_MIN_X, dtx);
 
-        if (d_color > r_color // maybe replace with floating normalized threshold?
+        if (d_color <= r_color // maybe replace with floating normalized threshold?
 #ifndef DISABLED_LBSP
-          && d_lbsp > r_lbsp  // maybe replace with floating normalized threshold? // TODO FIXME
+          && d_lbsp <= r_lbsp  // maybe replace with floating normalized threshold? // TODO FIXME
 #endif
         ) {
             if (++matches >= matches_req) {
-                // Foreground detected
-                is_foreground = true;
+                // Background detected
+                is_foreground = false;
                 break;
             }
         }
@@ -600,7 +600,8 @@ __kernel void kernel_prepare_model(
              const uchar model_i,          // Current model index (z)
              const uchar model_size,       // Number of frames "N" in bg_model B(x)
              const uchar channels_n,       // Number of color channels in input image [1, 2, 3]
-             const ushort t_lower,         // Lower bound for T(x) value
+             const ushort t_higher,        // Higher bound for T(x) value
+             const float v_x,              // Minimal v(x) value
              const ushort width,
              const ushort height
 
@@ -635,17 +636,17 @@ __kernel void kernel_prepare_model(
 
     noise_map[idx] = noise_3(x, y, model_i);
 
-    utility_1[ut1_idx    ] = .5f;       // D_min(x)
+    utility_1[ut1_idx    ] = .0f;       // D_min(x)
     utility_1[ut1_idx + 1] = 1.f;       // R(x)
-    utility_1[ut1_idx + 2] = 1.f;       // v(x)
-    utility_1[ut1_idx + 3] = .5f;       // dt-1(x)
+    utility_1[ut1_idx + 2] = v_x;       // v(x)
+    utility_1[ut1_idx + 3] = .0f;       // dt-1(x)
 
 #ifndef DEBUG_OFF
     utility_1[ut1_idx + 4] = 0.f;       // Diff(D_min, dt)
 #endif
 
     utility_2[ut2_idx    ] = 0;         // St-1(x)
-    utility_2[ut2_idx + 1] = t_lower;   // T(x)
+    utility_2[ut2_idx + 1] = t_higher;  // T(x)
     utility_2[ut2_idx + 2] = 0;         // Gt_acc(x)
 
     for (int i = 0; i < channels_n; i++) {
@@ -994,6 +995,16 @@ __kernel void kernel_debug(
         const int v = (int) (random_value * 255.f);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = v;
+        return;
+    }
+
+    // R(x) < pow(1.f + D_min(x) * 2.f, 2.f)
+    if (select_n == 16) {
+        const float d_m = utility_1[ut1_idx    ];
+        const float r_x = utility_1[ut1_idx + 1];
+        const bool is_l = r_x < pow(1.f + d_m * 2.f, 2.f);
+        for (int i = 0; i < 3; i++)
+            output[img_idx + i] = is_l ? 0 : 255;
         return;
     }
 }

@@ -1,3 +1,19 @@
+//
+// Created by henryco on 06/2024.
+//
+
+/*
+ * List of preprocessor flags:
+ *
+   - COLOR_NORM_l2            - whether to use L2 or L1 distance for color comparison
+   - DISABLED_EXCLUSION_MASK  - whether to use early exclusion mask
+   - DISABLED_LBSP            - Disable or enable Local Binary Similarity patterns for spacial comparison
+   - DISABLED_DEBUG           - Disable or enable debugging kernel (see 'kernel_debug')
+   - DISABLED_GHOST           - Disable or enable "ghosts" detection and removal
+   - DISABLED_ADAPT           - Disable or enable updating background model B(x)
+   - DISABLED_MORPH           - Disable or enable morphological operations (erode/dilate/etc.)
+ *
+ */
 
 typedef uchar MorphType;
 #define MORPH_TYPE_ERODE  0
@@ -101,31 +117,8 @@ inline float noise_3(float x, float y, float z) {
     return fract(sin(x * 112.9898f + y * 179.233f + z * 237.212f) * 43758.5453f, &ptr);
 }
 
-inline int hamming_distance(
-    __global const uchar *one,
-             const uchar *two,
-                   int n
-) {
-    int d = 0;
-    for (int i = 0; i < n; i++) {
-        const unsigned char c = one[i] ^ two[i];
-        for (int j = 0; j < 8; j++)
-            d += ((c >> j) & 1);
-    }
-    return d;
-}
 
-inline int l1_distance(
-    __global const uchar *one,
-    __global const uchar *two,
-                   int n
-) {
-    int d = 0;
-    for (int i = 0; i < n; i++)
-        d += abs((int) one[i] - (int) two[i]);
-    return d;
-}
-
+#ifdef COLOR_NORM_l2
 inline float l2_distance(
     __global const uchar *one,
     __global const uchar *two,
@@ -135,10 +128,6 @@ inline float l2_distance(
     for (int i = 0; i < n; i++)
         d += pow((float) one[i] - (float) two[i], 2.f);
     return sqrt(d);
-}
-
-inline float normalize_l1(int value, int channels_n) {
-    return (float) value / (255.f * (float) channels_n);
 }
 
 inline float normalize_l2_3(float value) {
@@ -159,6 +148,38 @@ inline float normalize_l2(float value, int channels_n) {
         : channels_n == 2
             ? normalize_l2_2(value)
             : normalize_l2_1(value);
+}
+#else
+inline int l1_distance(
+        __global const uchar *one,
+        __global const uchar *two,
+        int n
+) {
+    int d = 0;
+    for (int i = 0; i < n; i++)
+        d += abs((int) one[i] - (int) two[i]);
+    return d;
+}
+
+inline float normalize_l1(int value, int channels_n) {
+    return (float) value / (255.f * (float) channels_n);
+}
+#endif
+
+
+#ifndef DISABLED_LBSP
+inline int hamming_distance(
+        __global const uchar *one,
+        const uchar *two,
+        int n
+) {
+    int d = 0;
+    for (int i = 0; i < n; i++) {
+        const unsigned char c = one[i] ^ two[i];
+        for (int j = 0; j < 8; j++)
+            d += ((c >> j) & 1);
+    }
+    return d;
 }
 
 inline float normalize_hd(int value, int channels_n, KernelType t) {
@@ -205,18 +226,19 @@ void compute_lbsp(
         }
     }
 }
+#endif
 
 void downscale(
-    __global const uchar *in_img,    // from
-    uchar *out_pix,                  // to
-    const ushort img_w,              // from
-    const ushort img_h,              // from
-    const float scale_w,             // [from : to], ie: [2 : 1]
-    const float scale_h,             // [from : to], ie: [2 : 1]
-    const int pix_x,                 // to
-    const int pix_y,                 // to
-    const uchar channels_n,          // number of color channels, ie: 1/2/3/4
-    const bool linear                // linear or nearest interpolation
+    __global const uchar *in_img,          // from
+    uchar *out_pix,                        // to
+    const ushort img_w,                    // from
+    const ushort img_h,                    // from
+    const float scale_w,                   // [from : to], ie: [2 : 1]
+    const float scale_h,                   // [from : to], ie: [2 : 1]
+    const int pix_x,                       // to
+    const int pix_y,                       // to
+    const uchar channels_n,                // number of color channels, ie: 1/2/3/4
+    const bool linear                      // linear or nearest interpolation
 ) {
     if (!linear) {
         const int img_x = clamp((int) (pix_x * scale_w), (int) 0, (int) (img_w - 1));
@@ -252,17 +274,17 @@ void downscale(
 }
 
 void upscale(
-    __global const uchar *input_pix,          // Input color pixel [From]
-    __global uchar *output,             // Output image [To]
-    const ushort output_w,           // To width
-    const ushort output_h,           // To height
-    const float scale_w,             // [to : from], ie: [2 : 1]
-    const float scale_h,             // [to : from], ie: [2 : 1]
-    const uchar ceil_scale_w,        // ceil(scale_w)
-    const uchar ceil_scale_h,        // ceil(scale_h)
-    const uchar channels_n,          // number of color channels, ie: 1/2/3/4
-    const int pix_x,                 // From x
-    const int pix_y                  // From y
+    __global const uchar *input_pix,       // Input color pixel [From]
+    __global uchar *output,                // Output image [To]
+    const ushort output_w,                 // To width
+    const ushort output_h,                 // To height
+    const float scale_w,                   // [to : from], ie: [2 : 1]
+    const float scale_h,                   // [to : from], ie: [2 : 1]
+    const uchar ceil_scale_w,              // ceil(scale_w)
+    const uchar ceil_scale_h,              // ceil(scale_h)
+    const uchar channels_n,                // number of color channels, ie: 1/2/3/4
+    const int pix_x,                       // From x
+    const int pix_y                        // From y
 ) {
     const float img_x = pix_x * scale_w;
     const float img_y = pix_y * scale_h;
@@ -280,19 +302,19 @@ void upscale(
 }
 
 void upscale_apply(
-             const uchar *color_pix,          // Color value for background area
-    __global const uchar *input,              // Input image (larger)
-    __global       uchar *output,             // Output image [To] (larger)
-             const ushort output_w,           // To width
-             const ushort output_h,           // To height
-             const float scale_w,             // [to : from], ie: [2 : 1]
-             const float scale_h,             // [to : from], ie: [2 : 1]
-             const uchar ceil_scale_w,        // ceil(scale_w)
-             const uchar ceil_scale_h,        // ceil(scale_h)
-             const uchar channels_n,          // number of color channels, ie: 1/2/3/4
-             const uchar mask,                // Background segmentation mask
-             const int pix_x,                 // From x
-             const int pix_y                  // From y
+             const uchar *color_pix,       // Color value for background area
+    __global const uchar *input,           // Input image (larger)
+    __global       uchar *output,          // Output image [To] (larger)
+             const ushort output_w,        // To width
+             const ushort output_h,        // To height
+             const float scale_w,          // [to : from], ie: [2 : 1]
+             const float scale_h,          // [to : from], ie: [2 : 1]
+             const uchar ceil_scale_w,     // ceil(scale_w)
+             const uchar ceil_scale_h,     // ceil(scale_h)
+             const uchar channels_n,       // number of color channels, ie: 1/2/3/4
+             const uchar mask,             // Background segmentation mask
+             const int pix_x,              // From x
+             const int pix_y               // From y
 ) {
     const float img_x = pix_x * scale_w;
     const float img_y = pix_y * scale_h;
@@ -316,14 +338,15 @@ void upscale_apply(
     }
 }
 
+#ifndef DISABLED_MORPH
 void morph_operation(
-    __global const uchar *input,  // Input image
-    __global       uchar *output, // Output image
-    const MorphType morph_type,   // Erode - 0, Dilate - 1, see (MorphType)
-    const KernelType kernel_type, // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
-    const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
-    const ushort width,           // Image width
-    const ushort height,          // Image height
+    __global const uchar *input,           // Input image
+    __global       uchar *output,          // Output image
+    const MorphType morph_type,            // Erode - 0, Dilate - 1, see (MorphType)
+    const KernelType kernel_type,          // Kernel type: [ 0, 1, 2, 3 ], see (KernelType)
+    const uchar channels_n,                // Number of color channels, ie: 1/2/3/4
+    const ushort width,                    // Image width
+    const ushort height,                   // Image height
     const int x,
     const int y
 ) {
@@ -351,6 +374,7 @@ void morph_operation(
         output[img_idx + i] = value;
     }
 }
+#endif
 
 __kernel void kernel_subsense(
     /* Flexible Background Subtraction With Self-Balanced Local Sensitivity
@@ -737,6 +761,7 @@ __kernel void kernel_upscale_apply(
         x, y);
 }
 
+#ifndef DISABLED_MORPH
 __kernel void kernel_erode(
 
     __global const uchar *input,           // Input image
@@ -774,9 +799,11 @@ __kernel void kernel_dilate(
 
     morph_operation(input, output, MORPH_TYPE_DILATE, kernel_type, channels_n, width, height, x, y);
 }
+#endif
 
 #ifndef DISABLED_DEBUG
 __kernel void kernel_debug(
+
     __global const uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global const float *utility_1,       // 5 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]
     __global const short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
@@ -791,6 +818,7 @@ __kernel void kernel_debug(
              const ushort ghost_n,         // Number of frames after foreground marked as ghost ( see also Gt_acc(x) )
              const ushort width,
              const ushort height
+
 ) {
     const int x = get_global_id(0);
     const int y = get_global_id(1);

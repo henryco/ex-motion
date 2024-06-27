@@ -53,19 +53,19 @@ namespace xm::filters {
     private:
         // ===== OCL PART =====
         std::map<int, cl_command_queue> ocl_queue_map;
-        cl_command_queue ocl_command_queue;
-        cl_device_id device_id;
-        cl_context ocl_context;
-        cl_program program_subsense;
-        cl_kernel kernel_apply;
-        cl_kernel kernel_prepare;
-        cl_kernel kernel_subsense;
-        cl_kernel kernel_downscale;
-        cl_kernel kernel_upscale;
-        cl_kernel kernel_dilate;
-        cl_kernel kernel_erode;
-        cl_kernel kernel_debug;
-        size_t pref_size;
+        cl_command_queue ocl_command_queue = nullptr;
+        cl_device_id device_id = nullptr;
+        cl_context ocl_context = nullptr;
+        cl_program program_subsense = nullptr;
+        cl_kernel kernel_apply = nullptr;
+        cl_kernel kernel_prepare = nullptr;
+        cl_kernel kernel_subsense = nullptr;
+        cl_kernel kernel_downscale = nullptr;
+        cl_kernel kernel_upscale = nullptr;
+        cl_kernel kernel_dilate = nullptr;
+        cl_kernel kernel_erode = nullptr;
+        cl_kernel kernel_debug = nullptr;
+        size_t pref_size = 0;
         // ===== OCL PART =====
 
 
@@ -125,11 +125,14 @@ namespace xm::filters {
         // float:  4 * 4: [ D_min(x), R(x), v(x), dt1-(x) ]
         ocl::Image2D utility_1;
 
-        // short 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
+        // short 2 * 2: [ T(x), Gt_acc(x) ]
         ocl::Image2D utility_2;
 
         // float: w * h
         ocl::Image2D noise_map;
+
+        // uchar: w * h
+        ocl::Image2D seg_mask;
 
         bool initialized = false;
         bool ready = false;

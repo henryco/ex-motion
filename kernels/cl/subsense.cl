@@ -388,6 +388,7 @@ __kernel void kernel_subsense(
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
     __global const float *noise_map,       // Input noise map, single channel
+    __global const uchar *seg_mask_1,      // Input previous segmentation mask St-1(x), single channel
     __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global       float *utility_1,       // 5 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
@@ -450,14 +451,14 @@ __kernel void kernel_subsense(
 #else
     const int ut1_idx = idx * 4;
 #endif
-    const int ut2_idx = idx * 3;
+    const int ut2_idx = idx * 2;
 
     const float D_m = utility_1[ut1_idx    ];
     const float R_x = utility_1[ut1_idx + 1];
     const float V_x = utility_1[ut1_idx + 2];
 
-    const bool St_1 = utility_2[ut2_idx] > 0;
-    const short T_x = utility_2[ut2_idx + 1];
+    const bool St_1 = seg_mask_1[idx] > 0;
+    const short T_x = utility_2[ut2_idx ];
 
 #ifndef DISABLED_LBSP
     const float n_norm_alpha_inv = 1.f - n_norm_alpha;
@@ -521,9 +522,6 @@ __kernel void kernel_subsense(
     // update out segmentation mask St(x)
     seg_mask[idx] = is_foreground ? 255 : 0;
 
-    // update St-1(x)
-    utility_2[ut2_idx] = is_foreground ? 255 : 0;
-
     // update moving average D_min(x) and dt-1(x)
     const float new_D_m = D_m * (1.f - d_min_alpha) + D_MIN_X * d_min_alpha;
     utility_1[ut1_idx    ] = new_D_m;
@@ -549,15 +547,15 @@ __kernel void kernel_subsense(
         ),
         t_lower,
         t_upper);
-    utility_2[ut2_idx + 1] = new_T_x;
+    utility_2[ut2_idx] = new_T_x;
 
     #ifndef DISABLED_GHOST
         // update G_c(x)
         const float d_diff = fabs(utility_1[ut1_idx + 3] - D_MIN_X);
         const int new_G_c = is_foreground && (d_diff < ghost_t)
-                ? utility_2[ut2_idx + 2] + ghost_n_inc
-                : max(0, utility_2[ut2_idx + 2] - ghost_n_dec);
-        utility_2[ut2_idx + 2] = new_G_c;
+                ? utility_2[ut2_idx + 1] + ghost_n_inc
+                : max(0, utility_2[ut2_idx + 1] - ghost_n_dec);
+        utility_2[ut2_idx + 1] = new_G_c;
 
         // Ghost detection
         if (new_G_c > ghost_n) {
@@ -591,9 +589,10 @@ __kernel void kernel_prepare_model(
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
     __global       float *noise_map,       // Output noise map, single channel
+    __global       uchar *seg_mask,        // Output segmentation mask St(x), single channel
     __global       uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global       float *utility_1,       // 4 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]
-    __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
+    __global       short *utility_2,       // 2 * 2: [ T(x), Gt_acc(x) ]
 
 #ifndef DISABLED_LBSP
              const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ], see (KernelType)
@@ -632,11 +631,12 @@ __kernel void kernel_prepare_model(
     const int ut1_idx = idx * 4;
 #endif
 
-    const int ut2_idx = idx * 3;
+    const int ut2_idx = idx * 2;
     const int img_idx = idx * channels_n;
     const int bgm_idx = pos_3(x, y, clamp((int) model_i, 0, model_size - 1), width, height, bgm_ch_size);
 
     noise_map[idx] = noise_3(x, y, model_i);
+    seg_mask[idx] = .0f;
 
     utility_1[ut1_idx    ] = .0f;       // D_min(x)
     utility_1[ut1_idx + 1] = 1.f;       // R(x)
@@ -647,9 +647,8 @@ __kernel void kernel_prepare_model(
     utility_1[ut1_idx + 4] = 0.f;       // Diff(D_min, dt)
 #endif
 
-    utility_2[ut2_idx    ] = 0;         // St-1(x)
-    utility_2[ut2_idx + 1] = t_upper;   // T(x)
-    utility_2[ut2_idx + 2] = 0;         // Gt_acc(x)
+    utility_2[ut2_idx    ] = t_upper;   // T(x)
+    utility_2[ut2_idx + 1] = 0;         // Gt_acc(x)
 
     for (int i = 0; i < channels_n; i++) {
         bg_model[bgm_idx + i] = image[img_idx + i]; // B, G, R
@@ -805,8 +804,9 @@ __kernel void kernel_dilate(
 __kernel void kernel_debug(
 
     __global const uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
+    __global const uchar *seg_mask,        // Input segmentation mask St(x), single channel
     __global const float *utility_1,       // 5 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]
-    __global const short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
+    __global const short *utility_2,       // 2 * 2: [ T(x), Gt_acc(x) ]
     __global const float *noise_map,       // Input noise map, single channel
     __global       uchar *output,          // 3 * 1: [ B, G, R ]
              const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ], see (KernelType)
@@ -828,7 +828,7 @@ __kernel void kernel_debug(
 
     const int idx     = y * width + x;
     const int ut1_idx = idx * 5;
-    const int ut2_idx = idx * 3;
+    const int ut2_idx = idx * 2;
     const int img_idx = idx * 3;
 
     const float random_value = xor_shift_rng((int) (noise_map[idx] * rng_seed));
@@ -961,7 +961,7 @@ __kernel void kernel_debug(
 
     // St-1(x)
     if (select_n == 11) {
-        const short v = utility_2[ut2_idx];
+        const short v = seg_mask[idx];
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
         return;
@@ -969,7 +969,7 @@ __kernel void kernel_debug(
 
     // T(x)
     if (select_n == 12) {
-        const int v = clamp((int) utility_2[ut2_idx + 1], 0, 255);
+        const int v = clamp((int) utility_2[ut2_idx    ], 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
         return;
@@ -977,7 +977,7 @@ __kernel void kernel_debug(
 
     // Gt_acc(x)
     if (select_n == 13) {
-        const int v = clamp((int) utility_2[ut2_idx + 2], 0, 255);
+        const int v = clamp((int) utility_2[ut2_idx + 1], 0, 255);
         for (int i = 0; i < 3; i++)
             output[img_idx + i] = (uchar) v;
         return;
@@ -985,14 +985,14 @@ __kernel void kernel_debug(
 
     // Ghosts
     if (select_n == 14) {
-        const int v = utility_2[ut2_idx + 2];
+        const int v = utility_2[ut2_idx + 1];
         if (v > ghost_n) {
             output[img_idx + 2] = 255;
             return;
         }
 
         for (int i = 0; i < 3; i++)
-            output[img_idx + i] = clamp((int) utility_2[ut2_idx + 2], 0, 255);
+            output[img_idx + i] = clamp((int) utility_2[ut2_idx + 1], 0, 255);
         return;
     }
 

@@ -497,6 +497,9 @@ __kernel void kernel_subsense(
     // update out segmentation mask St(x)
     seg_mask[idx] = is_foreground ? 255 : 0;
 
+    // update St-1(x)
+    utility_2[ut2_idx] = is_foreground ? 255 : 0;
+
     // update moving average D_min(x) and dt-1(x)
     const float new_D_m = D_m * (1.f - d_min_alpha) + D_MIN_X * d_min_alpha;
     utility_1[ut1_idx    ] = new_D_m;
@@ -522,9 +525,6 @@ __kernel void kernel_subsense(
         t_lower,
         t_upper);
     utility_2[ut2_idx + 1] = new_T_x;
-
-    // update St-1(x)
-    utility_2[ut2_idx] = is_foreground ? 255 : 0;
 
 
 #ifndef DISABLED_GHOST

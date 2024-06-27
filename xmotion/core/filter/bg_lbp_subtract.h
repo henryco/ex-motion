@@ -72,6 +72,7 @@ namespace xm::filters {
         // ===== KERNEL PART =====
         const int BASE_RESOLUTION = 240;
         const int color_c = 3;
+        const bool adapt_on = true;
         const bool debug_on = true;
         const bool ghost_on = true;
         const bool lbsp_on = true;

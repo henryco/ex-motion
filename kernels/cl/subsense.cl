@@ -636,7 +636,7 @@ __kernel void kernel_prepare_model(
     const int bgm_idx = pos_3(x, y, clamp((int) model_i, 0, model_size - 1), width, height, bgm_ch_size);
 
     noise_map[idx] = noise_3(x, y, model_i);
-    seg_mask[idx] = .0f;
+    seg_mask[idx] = 0;
 
     utility_1[ut1_idx    ] = .0f;       // D_min(x)
     utility_1[ut1_idx + 1] = 1.f;       // R(x)

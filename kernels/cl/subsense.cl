@@ -13,6 +13,62 @@ typedef uchar KernelType;
 #define L2_C2_NORM_DIV 360.6244584f
 #define L2_C1_NORM_DIV 255.f
 
+__constant const char KER_ARR[32] = {
+        -2, -2,
+        -2,  2,
+        2, -2,
+        2,  2,
+        -2,  0,
+        0, -2,
+        2,  0,
+        0,  2,
+
+        -1, -1,
+        -1,  1,
+        1, -1,
+        1,  1,
+
+        -1,  0,
+        0, -1,
+        1,  0,
+        0,  1
+};
+
+inline int kernel_offset(const KernelType kernel_type) {
+    /*
+        O   O   O
+          O O O
+        O O X O O
+          O O O
+        O   O   O
+
+    ------- = ------- offset  0
+
+        O   O   O
+          . . .
+        O . X . O
+          . . .
+        O   O   O
+
+    ------- + ------- offset 16
+
+          O . O
+          . X .
+          O . O
+
+    ------- + ------- offset 24
+
+            O
+          O X O
+            O
+    */
+    return kernel_type == KERNEL_TYPE_CROSS_4
+            ? 24
+            : kernel_type == KERNEL_TYPE_SQUARE_8
+              ? 16
+              : 0;
+}
+
 inline float xor_shift_rng(const uint seed) {
     /* Xor-shift RNGs George Marsaglia
      *  https://www.jstatsoft.org/article/download/v008i14/916
@@ -124,62 +180,7 @@ void compute_lbsp(
     const int x,
     const int y
 ) {
-    const int offset = kernel_type == KERNEL_TYPE_CROSS_4
-        ? 24
-        : kernel_type == KERNEL_TYPE_SQUARE_8
-            ? 16
-            : 0;
-
-    const char KER_ARR[32] = {
-        -2, -2,
-        -2,  2,
-         2, -2,
-         2,  2,
-        -2,  0,
-         0, -2,
-         2,  0,
-         0,  2,
-
-        -1, -1,
-        -1,  1,
-         1, -1,
-         1,  1,
-
-        -1,  0,
-         0, -1,
-         1,  0,
-         0,  1
-    };
-
-    /*
-
-        O   O   O
-          O O O
-        O O X O O
-          O O O
-        O   O   O
-
-    ------- = ------- offset  0
-
-        O   O   O
-          . . .
-        O . X . O
-          . . .
-        O   O   O
-
-    ------- + ------- offset 16
-
-          O . O
-          . X .
-          O . O
-
-    ------- + ------- offset 24
-
-            O
-          O X O
-            O
-
-    */
+    const int offset = kernel_offset(kernel_type);
 
     out[0] = 0;
     int c = 0, b = 0;
@@ -327,31 +328,7 @@ void morph_operation(
     const int y
 ) {
     const int img_idx = (y * width + x) * channels_n;
-    const char KER_ARR[32] = {
-        -2, -2,
-        -2,  2,
-        2, -2,
-        2,  2,
-        -2,  0,
-        0, -2,
-        2,  0,
-        0,  2,
-
-        -1, -1,
-        -1,  1,
-        1, -1,
-        1,  1,
-
-        -1,  0,
-        0, -1,
-        1,  0,
-        0,  1
-    };
-    const int offset = kernel_type == KERNEL_TYPE_CROSS_4
-        ? 24
-        : kernel_type == KERNEL_TYPE_SQUARE_8
-            ? 16
-            : 0;
+    const int offset = kernel_offset(kernel_type);
 
     for (int i = 0; i < channels_n; i++) {
         uchar value = input[img_idx + i];

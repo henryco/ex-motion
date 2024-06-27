@@ -79,7 +79,7 @@ namespace xm::filters {
         const bool linear = false;
 
         float color_0 = 0.069;
-        float lbsp_0 = 0.33;
+        float lbsp_0 = 0.31;
 
         int n_matches = 2;
         int t_upper = 256;

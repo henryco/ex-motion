@@ -175,6 +175,13 @@ namespace xm::filters {
                     ocl_context, device_id);
         }
 
+        if (tmp_mask.empty()) {
+            tmp_mask = xm::ocl::Image2D::allocate(
+                    n_w, n_h, 1, 1,
+                    ocl_context, device_id);
+        }
+
+
         // ======= BUFFERS ALLOCATION !
         cl_mem buffer_in = (cl_mem) in.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_noise = (cl_mem) noise_map.handle;
@@ -289,20 +296,16 @@ namespace xm::filters {
         const auto image = downscaled_p.getImage2D();
         const auto original = original_p.getImage2D();
 
-        const int inter_size = (int) image.cols * (int) image.rows * 1 * (int) sizeof(char);
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) image.cols, pref_size),
                             xm::ocl::optimal_global_size((int) image.rows, pref_size)};
 
-        cl_int err;
-
         cl_mem buffer_image = (cl_mem) image.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_noise = (cl_mem) noise_map.handle;
-        cl_mem buffer_seg_prev = (cl_mem) seg_mask.handle;
+        cl_mem buffer_seg_mask = (cl_mem) seg_mask.handle;
         cl_mem buffer_bg_model = (cl_mem) bg_model.handle;
         cl_mem buffer_utility1 = (cl_mem) utility_1.handle;
         cl_mem buffer_utility2 = (cl_mem) utility_2.handle;
-        cl_mem buffer_seg_mask = clCreateBuffer(ocl_context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
 
         auto _lbsp_kernel = (uchar) kernel_type;
         auto _lbsp_threshold = (uchar) std::min(255.f, lbsp_d * 255.f);
@@ -346,7 +349,6 @@ namespace xm::filters {
 
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_image);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_noise);
-        idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_seg_prev);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_bg_model);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_utility1);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_utility2);
@@ -393,73 +395,14 @@ namespace xm::filters {
 
         // ============================================= MORPHOLOGY =============================================
 
-        cl_mem buffer_morph = clCreateBuffer(ocl_context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
-
-        cl_mem b_arr[2] = {buffer_seg_mask, buffer_morph};
-        int i_in = 0;
-        int i_ot = 1;
-
-        // =============================================== DILATION ===============================================
-        auto dilate_kernel_type = (uchar) dilate_type;
-        auto dilate_c_size = (uchar) 1;
-
-        for (int i = 0; i < refine_dilate; i++) {
-            cl_uint idx_3 = 0;
-
-            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &b_arr[i_in]);
-            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &b_arr[i_ot]);
-            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(uchar), &dilate_kernel_type);
-            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(uchar), &dilate_c_size);
-            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(ushort), &_width);
-            xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(ushort), &_height);
-
-            xm::ocl::enqueue_kernel_fast(
-                    queue,
-                    kernel_dilate,
-                    2,
-                    g_size,
-                    l_size,
-                    false);
-
-            int tmp = i_in;
-            i_in = i_ot;
-            i_ot = tmp;
-        }
-
-
-        // =============================================== EROSION ===============================================
-        auto erode_kernel_type = (uchar) erode_type;
-        auto erode_c_size = (uchar) 1;
-
-        for (int i = 0; i < refine_erode; i++) {
-
-            cl_uint idx_2 = 0;
-
-            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &b_arr[i_in]);
-            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &b_arr[i_ot]);
-
-            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(uchar), &erode_kernel_type);
-            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(uchar), &erode_c_size);
-            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(ushort), &_width);
-            xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(ushort), &_height);
-
-            xm::ocl::enqueue_kernel_fast(
-                    queue,
-                    kernel_erode,
-                    2,
-                    g_size,
-                    l_size,
-                    false);
-
-            int tmp = i_in;
-            i_in = i_ot;
-            i_ot = tmp;
-        }
+        dilate(queue);
+        erode(queue);
 
         // ============================================= MASK APPLY ==============================================
         const auto img_out = xm::ocl::Image2D::allocate_like(original);
 
-        cl_mem buffer_out = (cl_mem) img_out.get_handle(ocl::ACCESS::WO);
+        cl_mem buffer_in = (cl_mem) seg_mask.handle;
+        cl_mem buffer_out = (cl_mem) img_out.handle;
         cl_mem buffer_original = (cl_mem) original.get_handle(ocl::ACCESS::RO);
 
         auto _mask_w = (ushort) image.cols;
@@ -475,7 +418,7 @@ namespace xm::filters {
         auto _color_r = (uchar) bgr_bg_color.r;
 
         cl_uint idx_1 = 0;
-        idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &b_arr[i_in]);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_in);
         idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_original);
         idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_out);
 
@@ -500,11 +443,93 @@ namespace xm::filters {
             l_size,
             false);
 
-        return xm::ocl::iop::ClImagePromise(img_out,queue)
-        .withCleanup(new std::function<void()>([buffer_seg_mask, buffer_morph]() {
-            clReleaseMemObject(buffer_seg_mask);
-            clReleaseMemObject(buffer_morph);
-        }));
+        return xm::ocl::iop::ClImagePromise(img_out,queue);
+    }
+
+    void BgLbpSubtract::erode(cl_command_queue queue) {
+        if (refine_erode <= 0)
+            return;
+
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) seg_mask.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) seg_mask.rows, pref_size)};
+
+        auto erode_kernel_type = (uchar) erode_type;
+        auto erode_c_size = (uchar) 1;
+        auto _width = (ushort) seg_mask.rows;
+        auto _height = (ushort) seg_mask.cols;
+
+        xm::ocl::Image2D im_1 = seg_mask;
+        xm::ocl::Image2D im_2 = tmp_mask;
+
+        for (int i = 0; i < refine_erode; i++) {
+
+            cl_uint idx_2 = 0;
+
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &im_1.handle);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &im_2.handle);
+
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(uchar), &erode_kernel_type);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(uchar), &erode_c_size);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(ushort), &_width);
+            xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(ushort), &_height);
+
+            xm::ocl::enqueue_kernel_fast(
+                    queue,
+                    kernel_erode,
+                    2,
+                    g_size,
+                    l_size,
+                    false);
+
+            auto tmp = im_1;
+            im_1 = std::move(im_2);
+            im_2 = std::move(tmp);
+        }
+
+        seg_mask = std::move(im_1);
+    }
+
+    void BgLbpSubtract::dilate(cl_command_queue queue) {
+        if (refine_dilate <= 0)
+            return;
+
+        size_t l_size[2] = {pref_size, pref_size};
+        size_t g_size[2] = {xm::ocl::optimal_global_size((int) seg_mask.cols, pref_size),
+                            xm::ocl::optimal_global_size((int) seg_mask.rows, pref_size)};
+
+        auto dilate_kernel_type = (uchar) dilate_type;
+        auto dilate_c_size = (uchar) 1;
+        auto _width = (ushort) seg_mask.rows;
+        auto _height = (ushort) seg_mask.cols;
+
+        xm::ocl::Image2D im_1 = seg_mask;
+        xm::ocl::Image2D im_2 = tmp_mask;
+
+        for (int i = 0; i < refine_dilate; i++) {
+            cl_uint idx_3 = 0;
+
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &im_1.handle);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &im_2.handle);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(uchar), &dilate_kernel_type);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(uchar), &dilate_c_size);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(ushort), &_width);
+            xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(ushort), &_height);
+
+            xm::ocl::enqueue_kernel_fast(
+                    queue,
+                    kernel_dilate,
+                    2,
+                    g_size,
+                    l_size,
+                    false);
+
+            auto tmp = im_1;
+            im_1 = std::move(im_2);
+            im_2 = std::move(tmp);
+        }
+
+        seg_mask = std::move(im_1);
     }
 
     xm::ocl::iop::ClImagePromise BgLbpSubtract::debug(int n, const xm::ocl::iop::ClImagePromise &ref) {
@@ -524,11 +549,12 @@ namespace xm::filters {
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) out.cols, pref_size),
                             xm::ocl::optimal_global_size((int) out.rows, pref_size)};
 
-        cl_mem buffer_bg_model = (cl_mem) bg_model.get_handle(ocl::ACCESS::RO);
-        cl_mem buffer_utility1 = (cl_mem) utility_1.get_handle(ocl::ACCESS::RO);
-        cl_mem buffer_utility2 = (cl_mem) utility_2.get_handle(ocl::ACCESS::RO);
-        cl_mem buffer_noise = (cl_mem) noise_map.get_handle(ocl::ACCESS::RO);
-        cl_mem buffer_out = (cl_mem) out.get_handle(ocl::ACCESS::RW);
+        cl_mem buffer_bg_model = (cl_mem) bg_model.handle;
+        cl_mem buffer_seg_mask = (cl_mem) seg_mask.handle;
+        cl_mem buffer_utility1 = (cl_mem) utility_1.handle;
+        cl_mem buffer_utility2 = (cl_mem) utility_2.handle;
+        cl_mem buffer_noise = (cl_mem) noise_map.handle;
+        cl_mem buffer_out = (cl_mem) out.handle;
 
         auto _lbsp_kernel = (uchar) kernel_type;
         auto _model_size = (uchar) model_size;
@@ -542,6 +568,7 @@ namespace xm::filters {
 
         cl_uint idx_1 = 0;
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_bg_model);
+        idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_seg_mask);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_utility1);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_utility2);
         idx_1 = xm::ocl::set_kernel_arg(kernel_debug, idx_1, sizeof(cl_mem), &buffer_noise);

@@ -388,11 +388,10 @@ __kernel void kernel_subsense(
 
     __global const uchar *image,           // Input image (current)  ch_n * 1
     __global const float *noise_map,       // Input noise map, single channel
-    __global const uchar *seg_mask_1,      // Input previous segmentation mask St-1(x), single channel
     __global       uchar *bg_model,        // N * ch_n * [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global       float *utility_1,       // 5 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]
     __global       short *utility_2,       // 3 * 2: [ St-1(x), T(x), Gt_acc(x) ]
-    __global       uchar *seg_mask,        // Output segmentation mask St(x)
+    __global       uchar *seg_mask,        // Input/Output segmentation mask St(x)
 
 #ifndef DISABLED_LBSP
              const uchar lbsp_kernel,      // LBSP kernel type: [ 0, 1, 2, 3 ], see (KernelType)
@@ -457,8 +456,8 @@ __kernel void kernel_subsense(
     const float R_x = utility_1[ut1_idx + 1];
     const float V_x = utility_1[ut1_idx + 2];
 
-    const bool St_1 = seg_mask_1[idx] > 0;
-    const short T_x = utility_2[ut2_idx ];
+    const bool St_1 = seg_mask[idx ] > 0;
+    const short T_x = utility_2[ut2_idx];
 
 #ifndef DISABLED_LBSP
     const float n_norm_alpha_inv = 1.f - n_norm_alpha;

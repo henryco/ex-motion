@@ -134,6 +134,9 @@ namespace xm::filters {
         // uchar: w * h
         ocl::Image2D seg_mask;
 
+        // uchar: w * h
+        ocl::Image2D tmp_mask;
+
         bool initialized = false;
         bool ready = false;
 
@@ -171,6 +174,10 @@ namespace xm::filters {
         int denorm_color_threshold(float v) const;
 
         int denorm_lbsp_threshold(float v) const;
+
+        void erode(cl_command_queue queue);
+
+        void dilate(cl_command_queue queue);
     };
 }
 

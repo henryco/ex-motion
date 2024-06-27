@@ -85,6 +85,7 @@ namespace xm::filters {
             + (lbsp_on ? "" : " -DDISABLED_LBSP ")
             + (debug_on ? "" : " -DDISABLED_DEBUG ")
             + (ghost_on ? "" : " -DISABLED_GHOST ")
+            + (adapt_on ? "" : " -DISABLED_ADAPT ")
             ;
 
         program_subsense = xm::ocl::build_program(

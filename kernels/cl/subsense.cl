@@ -516,6 +516,7 @@ __kernel void kernel_subsense(
         ? min(r_cap, R_x + r_scale * (new_V_x - flicker_v_dec)) // that " -flicker_v_dec " is heuristic, whatever
         : max(1.f, R_x - (r_scale / new_V_x));
 
+#ifndef DISABLED_ADAPT
     // update T(x)
     short new_T_x = clamp(
         (ushort) (is_foreground
@@ -526,28 +527,25 @@ __kernel void kernel_subsense(
         t_upper);
     utility_2[ut2_idx + 1] = new_T_x;
 
+    #ifndef DISABLED_GHOST
+        // update G_c(x)
+        const float d_diff = fabs(utility_1[ut1_idx + 3] - D_MIN_X);
+        const int new_G_c = is_foreground && (d_diff < ghost_t)
+                ? utility_2[ut2_idx + 2] + ghost_n_inc
+                : max(0, utility_2[ut2_idx + 2] - ghost_n_dec);
+        utility_2[ut2_idx + 2] = new_G_c;
 
-#ifndef DISABLED_GHOST
+        // Ghost detection
+        if (new_G_c > ghost_n) {
+            is_foreground = false;
+            new_T_x = ghost_l;
+        }
 
-    // update G_c(x)
-    const float d_diff = fabs(utility_1[ut1_idx + 3] - D_MIN_X);
-    const int new_G_c = is_foreground && (d_diff < ghost_t)
-            ? utility_2[ut2_idx + 2] + ghost_n_inc
-            : max(0, utility_2[ut2_idx + 2] - ghost_n_dec);
-    utility_2[ut2_idx + 2] = new_G_c;
-
-    // Ghost detection
-    if (new_G_c > ghost_n) {
-        is_foreground = false;
-        new_T_x = ghost_l;
-    }
-
-#ifndef DISABLED_DEBUG
-    // update diff(D_min, dt)
-    utility_1[ut1_idx + 4] = d_diff;
-#endif
-
-#endif
+        #ifndef DISABLED_DEBUG
+            // update diff(D_min, dt)
+            utility_1[ut1_idx + 4] = d_diff;
+        #endif
+    #endif
 
     // update B(x)
     if (!is_foreground && random_value <= (1.f / (float) new_T_x)) {
@@ -556,13 +554,13 @@ __kernel void kernel_subsense(
         for (int i = 0; i < channels_n; i++)
             bg_model[random_frame_idx + i] = image[img_idx + i]; // B, G, R
 
-#ifndef DISABLED_LBSP
-        const int random_frame_idx_offset = random_frame_idx + channels_n;
-        for (int i = 0; i < lbsp_size_b; i++)
-            bg_model[random_frame_idx_offset + i] = (uchar) lbsp_img[i]; // LBSP bit strings
-#endif
+    #ifndef DISABLED_LBSP
+            const int random_frame_idx_offset = random_frame_idx + channels_n;
+            for (int i = 0; i < lbsp_size_b; i++)
+                bg_model[random_frame_idx_offset + i] = (uchar) lbsp_img[i]; // LBSP bit strings
+    #endif
     }
-
+#endif
 }
 
 __kernel void kernel_prepare_model(

@@ -23,7 +23,8 @@ namespace xm::filters {
             KERNEL_TYPE_NONE = 0,
             KERNEL_TYPE_CROSS_4 = 1,
             KERNEL_TYPE_SQUARE_8 = 2,
-            KERNEL_TYPE_DIAMOND_16 = 3,
+            KERNEL_TYPE_RUBY_12 = 3,
+            KERNEL_TYPE_DIAMOND_16 = 4,
         };
 
         int lbsp_k_size_bytes(KernelType t);

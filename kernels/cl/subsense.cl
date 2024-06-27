@@ -23,7 +23,8 @@ typedef uchar KernelType;
 #define KERNEL_TYPE_NONE       0
 #define KERNEL_TYPE_CROSS_4    1
 #define KERNEL_TYPE_SQUARE_8   2
-#define KERNEL_TYPE_DIAMOND_16 3
+#define KERNEL_TYPE_RUBY_12    3
+#define KERNEL_TYPE_DIAMOND_16 4
 
 #define L2_C3_NORM_DIV 441.6729559f
 #define L2_C2_NORM_DIV 360.6244584f
@@ -34,6 +35,7 @@ __constant const char KER_ARR[32] = {
         -2,  2,
         2, -2,
         2,  2,
+
         -2,  0,
         0, -2,
         2,  0,
@@ -51,6 +53,7 @@ __constant const char KER_ARR[32] = {
 };
 
 inline int kernel_offset(const KernelType kernel_type) {
+
     /*
         O   O   O
           O O O
@@ -60,11 +63,19 @@ inline int kernel_offset(const KernelType kernel_type) {
 
     ------- = ------- offset  0
 
-        O   O   O
+        O   .   O
+          . . .
+        . . X . .
+          . . .
+        O   .   O
+
+    ------- + ------- offset  8
+
+            O
           . . .
         O . X . O
           . . .
-        O   O   O
+            O
 
     ------- + ------- offset 16
 
@@ -78,11 +89,8 @@ inline int kernel_offset(const KernelType kernel_type) {
           O X O
             O
     */
-    return kernel_type == KERNEL_TYPE_CROSS_4
-            ? 24
-            : kernel_type == KERNEL_TYPE_SQUARE_8
-              ? 16
-              : 0;
+
+    return 32 - (kernel_type * 8);
 }
 
 inline float xor_shift_rng(const uint seed) {
@@ -96,13 +104,18 @@ inline float xor_shift_rng(const uint seed) {
     return (float) state / (float) UINT_MAX;
 }
 
+inline float noise_3(float x, float y, float z) {
+    /* Popular in shaders scene sine-noise,
+     * phase wages are arbitrary, but I left original one
+     *  https://thebookofshaders.com/11/
+     */
+    float ptr = 0.0f;
+    return fract(sin(x * 112.9898f + y * 179.233f + z * 237.212f) * 43758.5453f, &ptr);
+}
+
 inline int lbsp_k_size_bytes(KernelType t) {
 #ifndef DISABLED_LBSP
-    if (t == KERNEL_TYPE_NONE)
-        return 0;
-    if (t == KERNEL_TYPE_DIAMOND_16)
-        return 2;
-    return 1;
+    return t < KERNEL_TYPE_RUBY_12 ? 1 : 2;
 #else
     return 0;
 #endif
@@ -111,12 +124,6 @@ inline int lbsp_k_size_bytes(KernelType t) {
 inline int pos_3(int x, int y, int z, int w, int h, int c_sz) {
     return ((z * h + y) * w + x) * c_sz;
 }
-
-inline float noise_3(float x, float y, float z) {
-    float ptr = 0.0f;
-    return fract(sin(x * 112.9898f + y * 179.233f + z * 237.212f) * 43758.5453f, &ptr);
-}
-
 
 #ifdef COLOR_NORM_l2
 inline float l2_distance(
@@ -139,7 +146,7 @@ inline float normalize_l2_2(float value) {
 }
 
 inline float normalize_l2_1(float value) {
-    return value /L2_C1_NORM_DIV;
+    return value / L2_C1_NORM_DIV;
 }
 
 inline float normalize_l2(float value, int channels_n) {
@@ -183,11 +190,7 @@ inline int hamming_distance(
 }
 
 inline float normalize_hd(int value, int channels_n, KernelType t) {
-    return t == KERNEL_TYPE_DIAMOND_16
-        ? (float) value / (channels_n * 16.f)
-        : t == KERNEL_TYPE_SQUARE_8
-            ? (float) value / (channels_n * 8.f)
-            : (float) value / (channels_n * 4.f);
+    return (float) value / (float) (channels_n * 4 * t);
 }
 
 void compute_lbsp(

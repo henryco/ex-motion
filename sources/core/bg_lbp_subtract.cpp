@@ -181,7 +181,6 @@ namespace xm::filters {
                     ocl_context, device_id);
         }
 
-
         // ======= BUFFERS ALLOCATION !
         cl_mem buffer_in = (cl_mem) in.get_handle(ocl::ACCESS::RO);
         cl_mem buffer_noise = (cl_mem) noise_map.handle;
@@ -603,11 +602,7 @@ namespace xm::filters {
     }
 
     int BgLbpSubtract::denorm_lbsp_threshold(float v) const {
-        return kernel_type == bgs::KERNEL_TYPE_DIAMOND_16
-               ? (int) std::ceil((float) color_c * 16.f * v)
-               : kernel_type == bgs::KERNEL_TYPE_SQUARE_8
-                 ? (int) std::ceil((float) color_c * 8.f * v)
-                 : (int) std::ceil((float) color_c * 4.f * v);
+        return (int) std::ceil((float) color_c * v * 4.f * (float) ((int) kernel_type));
     }
 
     void new_size(const int w, const int h, const int base, int &new_w, int &new_h, float &scale) {
@@ -631,11 +626,8 @@ namespace xm::filters {
     }
 
     int bgs::lbsp_k_size_bytes(bgs::KernelType t) {
-        if (t == KernelType::KERNEL_TYPE_NONE)
-            return 0;
-        if (t == KernelType::KERNEL_TYPE_DIAMOND_16)
-            return 2;
-        return 1;
+        if (t == bgs::KERNEL_TYPE_NONE) return 0;
+        return ((int) t) < ((int) bgs::KERNEL_TYPE_RUBY_12) ? 1 : 2;
     }
 }
 #pragma clang diagnostic pop

@@ -65,6 +65,7 @@ namespace xm::filters {
         cl_kernel kernel_upscale = nullptr;
         cl_kernel kernel_dilate = nullptr;
         cl_kernel kernel_erode = nullptr;
+        cl_kernel kernel_gate = nullptr;
         cl_kernel kernel_debug = nullptr;
         size_t pref_size = 0;
         // ===== OCL PART =====
@@ -113,10 +114,13 @@ namespace xm::filters {
 
 
         // ===== REFINE PART =====
+        int refine_gate = 0;
         int refine_erode = 0;
         int refine_dilate = 0;
-        bgs::KernelType erode_type = bgs::KERNEL_TYPE_SQUARE_8;
-        bgs::KernelType dilate_type = bgs::KERNEL_TYPE_SQUARE_8;
+        float refine_gate_threshold = 0.5;
+        bgs::KernelType gate_type = bgs::KERNEL_TYPE_RUBY_12;
+        bgs::KernelType erode_type = bgs::KERNEL_TYPE_RUBY_12;
+        bgs::KernelType dilate_type = bgs::KERNEL_TYPE_RUBY_12;
         // ===== REFINE PART =====
 
 
@@ -179,6 +183,8 @@ namespace xm::filters {
         void erode(cl_command_queue queue, size_t *l_size, size_t *g_size);
 
         void dilate(cl_command_queue queue, size_t *l_size, size_t *g_size);
+
+        void gate(cl_command_queue queue, size_t *l_size, size_t *g_size);
     };
 }
 

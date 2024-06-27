@@ -342,7 +342,42 @@ void upscale_apply(
 }
 
 #ifndef DISABLED_MORPH
-void morph_operation(
+inline void gate_mask_operation(
+        __global const uchar *input,           // Input image
+        __global       uchar *output,          // Output image
+        const KernelType kernel_type,          // Kernel type: [ 0, 1, 2, 3, 4 ], see (KernelType)
+        const uchar channels_n,                // Number of color channels, ie: 1/2/3/4
+        const uchar threshold,                 // Frequency threshold
+        const ushort width,                    // Image width
+        const ushort height,                   // Image height
+        const int x,
+        const int y
+) {
+    const int img_idx = (y * width + x) * channels_n;
+    const int offset = kernel_offset(kernel_type);
+
+    for (int i = 0; i < channels_n; i++) {
+        uchar value = input[img_idx + i];
+        int counter = value > 0 ? 0 : 1; // Foreground -> 0, Background -> 1
+
+        for (int h = offset; h < 31; h += 2) {
+            const int i_x = x + KER_ARR[h    ];
+            const int i_y = y + KER_ARR[h + 1];
+
+            if (i_x < 0 || i_x >= width || i_y < 0 || i_y >= height)
+                continue;
+
+            counter += input[(i_y * width + i_x) * channels_n + i] > 0 ? 0 : 1;
+
+            if (counter > threshold)
+                break;
+        }
+
+        output[img_idx + i] = counter > threshold ? 0 : 255;
+    }
+}
+
+inline void morph_operation(
     __global const uchar *input,           // Input image
     __global       uchar *output,          // Output image
     const MorphType morph_type,            // Erode - 0, Dilate - 1, see (MorphType)
@@ -763,6 +798,26 @@ __kernel void kernel_upscale_apply(
 }
 
 #ifndef DISABLED_MORPH
+__kernel void kernel_gate_mask(
+
+    __global const uchar *input,           // Input image
+    __global       uchar *output,          // Output image
+             const uchar kernel_type,      // Kernel type: [ 0, 1, 2, 3, 4 ], see (KernelType)
+             const uchar channels_n,       // Number of color channels, ie: 1/2/3/4
+             const uchar threshold,        // Frequency threshold
+             const ushort width,           // Image width
+             const ushort height           // Image height
+
+) {
+    const int x = get_global_id(0);
+    const int y = get_global_id(1);
+
+    if (x >= width || y >= height)
+        return;
+
+    gate_mask_operation(input, output, kernel_type, channels_n, threshold, width, height, x, y);
+}
+
 __kernel void kernel_erode(
 
     __global const uchar *input,           // Input image

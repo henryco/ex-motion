@@ -29,6 +29,7 @@ namespace xm::filters {
         if (kernel_upscale != nullptr) clReleaseKernel(kernel_upscale);
         if (kernel_dilate != nullptr) clReleaseKernel(kernel_dilate);
         if (kernel_erode != nullptr) clReleaseKernel(kernel_erode);
+        if (kernel_gate != nullptr) clReleaseKernel(kernel_gate);
         if (kernel_debug != nullptr) clReleaseKernel(kernel_debug);
         if (program_subsense != nullptr) clReleaseProgram(program_subsense);
         if (ocl_command_queue != nullptr) clReleaseCommandQueue(ocl_command_queue);
@@ -102,11 +103,15 @@ namespace xm::filters {
         kernel_subsense = xm::ocl::build_kernel(program_subsense, "kernel_subsense");
         kernel_downscale = xm::ocl::build_kernel(program_subsense, "kernel_downscale");
         kernel_upscale = xm::ocl::build_kernel(program_subsense, "kernel_upscale");
-        kernel_dilate = xm::ocl::build_kernel(program_subsense, "kernel_dilate");
-        kernel_erode = xm::ocl::build_kernel(program_subsense, "kernel_erode");
 
-        if (debug_on) kernel_debug = xm::ocl::build_kernel(program_subsense, "kernel_debug");
-        else kernel_debug = nullptr;
+        if (morph_on) {
+            kernel_dilate = xm::ocl::build_kernel(program_subsense, "kernel_dilate");
+            kernel_erode = xm::ocl::build_kernel(program_subsense, "kernel_erode");
+            kernel_gate = xm::ocl::build_kernel(program_subsense, "kernel_gate_mask");
+        }
+
+        if (debug_on)
+            kernel_debug = xm::ocl::build_kernel(program_subsense, "kernel_debug");
 
         pref_size = xm::ocl::optimal_local_size(device_id, kernel_subsense);
 
@@ -395,6 +400,7 @@ namespace xm::filters {
         // ============================================= MORPHOLOGY =============================================
 
         if (morph_on) {
+            gate(queue, l_size, g_size);
             dilate(queue, l_size, g_size);
             erode(queue, l_size, g_size);
         }
@@ -445,6 +451,52 @@ namespace xm::filters {
             false);
 
         return xm::ocl::iop::ClImagePromise(img_out,queue);
+    }
+
+
+    void BgLbpSubtract::gate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
+        if (refine_gate <= 0 || !morph_on)
+            return;
+
+        auto gate_kernel_type = (uchar) gate_type;
+        auto gate_threshold = (uchar) ((float) gate_kernel_type * 4.f * refine_gate_threshold);
+        auto gate_c_size = (uchar) 1;
+        auto _width = (ushort) seg_mask.cols;
+        auto _height = (ushort) seg_mask.rows;
+
+        xm::ocl::Image2D im_1 = seg_mask;
+        xm::ocl::Image2D im_2 = tmp_mask;
+
+        for (int i = 0; i < refine_gate; i++) {
+
+            cl_uint idx_2 = 0;
+
+            cl_mem b1 = im_1.handle;
+            cl_mem b2 = im_2.handle;
+
+            idx_2 = xm::ocl::set_kernel_arg(kernel_gate, idx_2, sizeof(cl_mem), &b1);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_gate, idx_2, sizeof(cl_mem), &b2);
+
+            idx_2 = xm::ocl::set_kernel_arg(kernel_gate, idx_2, sizeof(uchar), &gate_kernel_type);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_gate, idx_2, sizeof(uchar), &gate_c_size);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_gate, idx_2, sizeof(uchar), &gate_threshold);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_gate, idx_2, sizeof(ushort), &_width);
+            xm::ocl::set_kernel_arg(kernel_gate, idx_2, sizeof(ushort), &_height);
+
+            xm::ocl::enqueue_kernel_fast(
+                    queue,
+                    kernel_gate,
+                    2,
+                    g_size,
+                    l_size,
+                    false);
+
+            auto tmp = im_1;
+            im_1 = std::move(im_2);
+            im_2 = std::move(tmp);
+        }
+
+        seg_mask = std::move(im_1);
     }
 
     void BgLbpSubtract::erode(cl_command_queue queue, size_t *l_size, size_t *g_size) {

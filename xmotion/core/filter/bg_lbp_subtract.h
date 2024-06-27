@@ -86,13 +86,13 @@ namespace xm::filters {
         int t_lower = 2;
         int model_i = 0;
         int model_size = 50;
-        int ghost_l = 1;
+        int ghost_l = 2;
         int ghost_n = 300;
         int ghost_n_inc = 1;
         int ghost_n_dec = 15;
         float threshold_lbsp = 0.0025; // used for lbsp
-        float alpha_d_min = 0.5;
-        float alpha_norm = 0.5;
+        float alpha_d_min = 0.75;
+        float alpha_norm = 0.75;
         float ghost_t = 0.25;
         float r_scale = 0.01;
         float r_cap = 255;

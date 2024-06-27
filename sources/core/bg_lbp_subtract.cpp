@@ -395,8 +395,8 @@ namespace xm::filters {
 
         // ============================================= MORPHOLOGY =============================================
 
-        dilate(queue);
-        erode(queue);
+        dilate(queue, l_size, g_size);
+        erode(queue, l_size, g_size);
 
         // ============================================= MASK APPLY ==============================================
         const auto img_out = xm::ocl::Image2D::allocate_like(original);
@@ -446,13 +446,9 @@ namespace xm::filters {
         return xm::ocl::iop::ClImagePromise(img_out,queue);
     }
 
-    void BgLbpSubtract::erode(cl_command_queue queue) {
+    void BgLbpSubtract::erode(cl_command_queue queue, size_t *l_size, size_t *g_size) {
         if (refine_erode <= 0)
             return;
-
-        size_t l_size[2] = {pref_size, pref_size};
-        size_t g_size[2] = {xm::ocl::optimal_global_size((int) seg_mask.cols, pref_size),
-                            xm::ocl::optimal_global_size((int) seg_mask.rows, pref_size)};
 
         auto erode_kernel_type = (uchar) erode_type;
         auto erode_c_size = (uchar) 1;
@@ -490,13 +486,9 @@ namespace xm::filters {
         seg_mask = std::move(im_1);
     }
 
-    void BgLbpSubtract::dilate(cl_command_queue queue) {
+    void BgLbpSubtract::dilate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
         if (refine_dilate <= 0)
             return;
-
-        size_t l_size[2] = {pref_size, pref_size};
-        size_t g_size[2] = {xm::ocl::optimal_global_size((int) seg_mask.cols, pref_size),
-                            xm::ocl::optimal_global_size((int) seg_mask.rows, pref_size)};
 
         auto dilate_kernel_type = (uchar) dilate_type;
         auto dilate_c_size = (uchar) 1;

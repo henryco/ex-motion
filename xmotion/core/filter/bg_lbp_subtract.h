@@ -82,8 +82,8 @@ namespace xm::filters {
         const bool mask_xc = false; // Should use early exclusion mask
         const bool linear = false;  // Should use linear interpolation for image downscaling
 
-        float color_0 = 0.069;      // threshold used in color comparison
-        float lbsp_0 = 0.31;        // threshold used in lbsp comparison
+        float color_0 = 0.062;      // threshold used in color comparison above which pixel is classified as different
+        float lbsp_0 = 0.31;        // threshold used in lbsp  comparison above which pixel is classified as different
         float lbsp_d = 0.0025;      // threshold used in lbsp calculation
 
         int n_matches = 2;          // number of intersections of I(x) with B(x) to detect background
@@ -175,9 +175,9 @@ namespace xm::filters {
 
         int denorm_lbsp_threshold(float v) const;
 
-        void erode(cl_command_queue queue);
+        void erode(cl_command_queue queue, size_t *l_size, size_t *g_size);
 
-        void dilate(cl_command_queue queue);
+        void dilate(cl_command_queue queue, size_t *l_size, size_t *g_size);
     };
 }
 

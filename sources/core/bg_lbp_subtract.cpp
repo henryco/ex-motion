@@ -80,12 +80,13 @@ namespace xm::filters {
             false);
 
         std::string options = std::string("")
-            + (mask_xc ? "" : " -DDISABLED_EXCLUSION_MASK ")
             + (norm_l2 ? " -DCOLOR_NORM_l2 " : "")
+            + (mask_xc ? "" : " -DDISABLED_EXCLUSION_MASK ")
             + (lbsp_on ? "" : " -DDISABLED_LBSP ")
             + (debug_on ? "" : " -DDISABLED_DEBUG ")
             + (ghost_on ? "" : " -DDISABLED_GHOST ")
             + (adapt_on ? "" : " -DDISABLED_ADAPT ")
+            + (morph_on ? "" : " -DDiSABLED_MORPH ")
             ;
 
         program_subsense = xm::ocl::build_program(
@@ -176,7 +177,7 @@ namespace xm::filters {
         cl_mem buffer_utility2 = (cl_mem) utility_2.handle;
 
         auto lbsp_kernel = (uchar) kernel_type;
-        auto lbsp_threshold = (uchar) std::min(255.f, threshold_lbsp * 255.f);
+        auto lbsp_threshold = (uchar) std::min(255.f, lbsp_d * 255.f);
         auto _model_i = (uchar) model_i;
         auto _model_size = (uchar) model_size;
         auto _channels_n = (uchar) color_c;
@@ -295,7 +296,7 @@ namespace xm::filters {
         cl_mem buffer_seg_mask = clCreateBuffer(ocl_context, CL_MEM_READ_WRITE, inter_size, NULL, &err);
 
         auto _lbsp_kernel = (uchar) kernel_type;
-        auto _lbsp_threshold = (uchar) std::min(255.f, threshold_lbsp * 255.f);
+        auto _lbsp_threshold = (uchar) std::min(255.f, lbsp_d * 255.f);
         auto _n_norm_alpha = (float) alpha_norm;
         auto _lbsp_0 = (ushort) denorm_lbsp_threshold(lbsp_0);
 

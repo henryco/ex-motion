@@ -10,7 +10,7 @@
    - DISABLED_LBSP            - Disable or enable Local Binary Similarity patterns for spacial comparison
    - DISABLED_DEBUG           - Disable or enable debugging kernel (see 'kernel_debug')
    - DISABLED_GHOST           - Disable or enable "ghosts" detection and removal
-   - DISABLED_ADAPT           - Disable or enable updating background model B(x)
+   - DISABLED_ADAPT           - Disable or enable updates of background model B(x)
    - DISABLED_MORPH           - Disable or enable morphological operations (erode/dilate/etc.)
  *
  */

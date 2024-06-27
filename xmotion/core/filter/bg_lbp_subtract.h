@@ -71,38 +71,40 @@ namespace xm::filters {
 
         // ===== KERNEL PART =====
         const int BASE_RESOLUTION = 240;
-        const int color_c = 3;
-        const bool adapt_on = true;
-        const bool debug_on = true;
-        const bool ghost_on = true;
-        const bool lbsp_on = true;
-        const bool norm_l2 = true;
-        const bool mask_xc = false;
-        const bool linear = false;
+        const int color_c = 3;      // Number of color channels in image
 
-        float color_0 = 0.069;
-        float lbsp_0 = 0.31;
+        const bool adapt_on = true; // Should enable updates of background model B(x)
+        const bool debug_on = true; // Should enable debug functions
+        const bool morph_on = true; // Should enable morphological operations (erode/dilate/etc.)
+        const bool ghost_on = true; // Should enable "ghost" detection
+        const bool lbsp_on = true;  // Should use Local Binary Similarity Patterns for spatial comparison
+        const bool norm_l2 = true;  // Should use L2 distance (and norm) for color comparison
+        const bool mask_xc = false; // Should use early exclusion mask
+        const bool linear = false;  // Should use linear interpolation for image downscaling
 
-        int n_matches = 2;
-        int t_upper = 256;
-        int t_lower = 2;
-        int model_i = 0;
-        int model_size = 50;
-        int ghost_l = 2;
-        int ghost_n = 300;
-        int ghost_n_inc = 1;
-        int ghost_n_dec = 15;
-        float threshold_lbsp = 0.0025; // used for lbsp
-        float alpha_d_min = 0.75;
-        float alpha_norm = 0.75;
-        float ghost_t = 0.25;
-        float r_scale = 0.01;
-        float r_cap = 255;
-        float t_scale_inc = 0.50;
-        float t_scale_dec = 0.25;
-        float v_flicker_inc = 1.0;
-        float v_flicker_dec = 0.1;
-        float v_flicker_cap = 100;
+        float color_0 = 0.069;      // threshold used in color comparison
+        float lbsp_0 = 0.31;        // threshold used in lbsp comparison
+        float lbsp_d = 0.0025;      // threshold used in lbsp calculation
+
+        int n_matches = 2;          // number of intersections of I(x) with B(x) to detect background
+        int t_upper = 256;          // Maximal value of T(x), higher T(x) -> lower p
+        int t_lower = 2;            // Minimal value of T(x), lower T(x) -> higher p
+        int model_i = 0;            // Current initialization frame number, non tweak-able
+        int model_size = 50;        // Number of frames in B(x), frame consist of N color pixels (BGR) with LBSP string for each of them
+        int ghost_l = 2;            // Temporary new T(x) value for pixel classified as a "ghost"
+        int ghost_n = 300;          // Number of frames for which pixel is unchanged to be classified as a ghost
+        int ghost_n_inc = 1;        // Increment value for ghost_n accumulator (see "ghost_n")
+        int ghost_n_dec = 15;       // Decrement value for ghost_n accumulator (see "ghost_n")
+        float alpha_d_min = 0.75;   // Constant learning rate for D_min(x): [ D_min(x) =   dt(x) * a + D_min(x) * (1-a) ]
+        float alpha_norm = 0.75;    // Mixing alpha for dt(x) calculation:  [ dt(x)    = d_color * a + d_lbsp   * (1-a) ]
+        float ghost_t = 0.25;       // Ghost threshold for local variations (dt(x)) between It and It-1
+        float r_scale = 0.01;       // Scale for R(x) feedback change (both directions)
+        float r_cap = 255;          // Max value for R(x)
+        float t_scale_inc = 0.50;   // Scale for T(x) feedback increment
+        float t_scale_dec = 0.25;   // Scale for T(x) feedback decrement
+        float v_flicker_inc = 1.0;  // Increment v(x) value for flickering pixels
+        float v_flicker_dec = 0.1;  // Decrement v(x) value for flickering pixels
+        float v_flicker_cap = 100;  // Maximum   v(x) value for flickering pixels
 
         bgs::KernelType kernel_type = bgs::KERNEL_TYPE_DIAMOND_16;
         xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(255, 255, 255);

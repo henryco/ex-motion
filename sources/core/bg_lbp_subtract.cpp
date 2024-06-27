@@ -395,8 +395,10 @@ namespace xm::filters {
 
         // ============================================= MORPHOLOGY =============================================
 
-        dilate(queue, l_size, g_size);
-        erode(queue, l_size, g_size);
+        if (morph_on) {
+            dilate(queue, l_size, g_size);
+            erode(queue, l_size, g_size);
+        }
 
         // ============================================= MASK APPLY ==============================================
         const auto img_out = xm::ocl::Image2D::allocate_like(original);
@@ -447,13 +449,13 @@ namespace xm::filters {
     }
 
     void BgLbpSubtract::erode(cl_command_queue queue, size_t *l_size, size_t *g_size) {
-        if (refine_erode <= 0)
+        if (refine_erode <= 0 || !morph_on)
             return;
 
         auto erode_kernel_type = (uchar) erode_type;
         auto erode_c_size = (uchar) 1;
-        auto _width = (ushort) seg_mask.rows;
-        auto _height = (ushort) seg_mask.cols;
+        auto _width = (ushort) seg_mask.cols;
+        auto _height = (ushort) seg_mask.rows;
 
         xm::ocl::Image2D im_1 = seg_mask;
         xm::ocl::Image2D im_2 = tmp_mask;
@@ -462,8 +464,11 @@ namespace xm::filters {
 
             cl_uint idx_2 = 0;
 
-            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &im_1.handle);
-            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &im_2.handle);
+            cl_mem b1 = im_1.handle;
+            cl_mem b2 = im_2.handle;
+
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &b1);
+            idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(cl_mem), &b2);
 
             idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(uchar), &erode_kernel_type);
             idx_2 = xm::ocl::set_kernel_arg(kernel_erode, idx_2, sizeof(uchar), &erode_c_size);
@@ -487,13 +492,13 @@ namespace xm::filters {
     }
 
     void BgLbpSubtract::dilate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
-        if (refine_dilate <= 0)
+        if (refine_dilate <= 0 || !morph_on)
             return;
 
         auto dilate_kernel_type = (uchar) dilate_type;
         auto dilate_c_size = (uchar) 1;
-        auto _width = (ushort) seg_mask.rows;
-        auto _height = (ushort) seg_mask.cols;
+        auto _width = (ushort) seg_mask.cols;
+        auto _height = (ushort) seg_mask.rows;
 
         xm::ocl::Image2D im_1 = seg_mask;
         xm::ocl::Image2D im_2 = tmp_mask;
@@ -501,8 +506,11 @@ namespace xm::filters {
         for (int i = 0; i < refine_dilate; i++) {
             cl_uint idx_3 = 0;
 
-            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &im_1.handle);
-            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &im_2.handle);
+            cl_mem b1 = im_1.handle;
+            cl_mem b2 = im_2.handle;
+
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &b1);
+            idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(cl_mem), &b2);
             idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(uchar), &dilate_kernel_type);
             idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(uchar), &dilate_c_size);
             idx_3 = xm::ocl::set_kernel_arg(kernel_dilate, idx_3, sizeof(ushort), &_width);

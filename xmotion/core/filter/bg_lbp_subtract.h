@@ -98,13 +98,13 @@ namespace xm::filters {
         float alpha_d_min = 0.75;   // Constant learning rate for D_min(x): [ D_min(x) =   dt(x) * a + D_min(x) * (1-a) ]
         float alpha_norm = 0.75;    // Mixing alpha for dt(x) calculation:  [ dt(x)    = d_color * a + d_lbsp   * (1-a) ]
         float ghost_t = 0.25;       // Ghost threshold for local variations (dt(x)) between It and It-1
-        float r_scale = 0.01;       // Scale for R(x) feedback change (both directions)
+        float r_scale = 0.1;       // Scale for R(x) feedback change (both directions)
         float r_cap = 255;          // Max value for R(x)
         float t_scale_inc = 0.50;   // Scale for T(x) feedback increment
         float t_scale_dec = 0.25;   // Scale for T(x) feedback decrement
         float v_flicker_inc = 1.0;  // Increment v(x) value for flickering pixels
         float v_flicker_dec = 0.1;  // Decrement v(x) value for flickering pixels
-        float v_flicker_cap = 100;  // Maximum   v(x) value for flickering pixels
+        float v_flicker_cap = 255;  // Maximum   v(x) value for flickering pixels
 
         bgs::KernelType kernel_type = bgs::KERNEL_TYPE_DIAMOND_16;
         xm::ds::Color4u bgr_bg_color = xm::ds::Color4u::bgr(255, 255, 255);

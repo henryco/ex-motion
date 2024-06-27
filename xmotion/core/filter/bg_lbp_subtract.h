@@ -78,8 +78,9 @@ namespace xm::filters {
         const bool mask_xc = false;
         const bool linear = false;
 
-        int color_0 = 30;
-        int lbsp_0 = 3;
+        float color_0 = 0.069;
+        float lbsp_0 = 0.33;
+
         int n_matches = 2;
         int t_upper = 256;
         int t_lower = 2;
@@ -159,6 +160,10 @@ namespace xm::filters {
         void release();
 
         xm::ocl::iop::ClImagePromise debug(int n, const xm::ocl::iop::ClImagePromise &ref);
+
+        int denorm_color_threshold(float v) const;
+
+        int denorm_lbsp_threshold(float v) const;
     };
 }
 

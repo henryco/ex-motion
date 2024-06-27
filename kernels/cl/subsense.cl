@@ -40,7 +40,7 @@ inline int pos_3(int x, int y, int z, int w, int h, int c_sz) {
     return ((z * h + y) * w + x) * c_sz;
 }
 
-static float noise_3(float x, float y, float z) {
+inline float noise_3(float x, float y, float z) {
     float ptr = 0.0f;
     return fract(sin(x * 112.9898f + y * 179.233f + z * 237.212f) * 43758.5453f, &ptr);
 }
@@ -501,9 +501,9 @@ __kernel void kernel_subsense(
 
         D_MIN_X = min(D_MIN_X, dtx);
 
-        if (d_color <= r_color // maybe replace with floating normalized threshold?
+        if (d_color <= r_color
 #ifndef DISABLED_LBSP
-          && d_lbsp <= r_lbsp  // maybe replace with floating normalized threshold? // TODO FIXME
+          && d_lbsp <= r_lbsp
 #endif
         ) {
             if (++matches >= matches_req) {
@@ -600,7 +600,7 @@ __kernel void kernel_prepare_model(
              const uchar model_i,          // Current model index (z)
              const uchar model_size,       // Number of frames "N" in bg_model B(x)
              const uchar channels_n,       // Number of color channels in input image [1, 2, 3]
-             const ushort t_higher,        // Higher bound for T(x) value
+             const ushort t_upper,         // Upper bound for T(x) value
              const float v_x,              // Minimal v(x) value
              const ushort width,
              const ushort height
@@ -646,7 +646,7 @@ __kernel void kernel_prepare_model(
 #endif
 
     utility_2[ut2_idx    ] = 0;         // St-1(x)
-    utility_2[ut2_idx + 1] = t_higher;  // T(x)
+    utility_2[ut2_idx + 1] = t_upper;   // T(x)
     utility_2[ut2_idx + 2] = 0;         // Gt_acc(x)
 
     for (int i = 0; i < channels_n; i++) {

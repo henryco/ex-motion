@@ -295,9 +295,9 @@ namespace xm::filters {
         auto _lbsp_kernel = (uchar) kernel_type;
         auto _lbsp_threshold = (uchar) std::min(255.f, threshold_lbsp * 255.f);
         auto _n_norm_alpha = (float) alpha_norm;
-        auto _lbsp_0 = (ushort) lbsp_0;
+        auto _lbsp_0 = (ushort) denorm_lbsp_threshold(lbsp_0);
 
-        auto _color_0 = (ushort) color_0;
+        auto _color_0 = (ushort) denorm_color_threshold(color_0);
         auto _t_lower = (ushort) t_lower;
         auto _t_upper = (ushort) t_upper;
         auto _ghost_n = (ushort) ghost_n;
@@ -553,6 +553,21 @@ namespace xm::filters {
                 false);
 
         return xm::ocl::iop::ClImagePromise(out, queue);
+    }
+
+    int BgLbpSubtract::denorm_color_threshold(float v) const {
+        return (int) std::ceil(v * (norm_l2
+            ? std::sqrt((float) color_c * std::pow(255.f, 2.f))
+            : (float) color_c * 255
+        ));
+    }
+
+    int BgLbpSubtract::denorm_lbsp_threshold(float v) const {
+        return kernel_type == bgs::KERNEL_TYPE_DIAMOND_16
+               ? (int) std::ceil((float) color_c * 16.f * v)
+               : kernel_type == bgs::KERNEL_TYPE_SQUARE_8
+                 ? (int) std::ceil((float) color_c * 8.f * v)
+                 : (int) std::ceil((float) color_c * 4.f * v);
     }
 
     void new_size(const int w, const int h, const int base, int &new_w, int &new_h, float &scale) {

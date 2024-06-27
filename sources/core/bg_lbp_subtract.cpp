@@ -83,7 +83,8 @@ namespace xm::filters {
             + (mask_xc ? "" : " -DDISABLED_EXCLUSION_MASK ")
             + (norm_l2 ? " -DCOLOR_NORM_l2 " : "")
             + (lbsp_on ? "" : " -DDISABLED_LBSP ")
-            + (debug_on ? "" : " -DDEBUG_OFF ")
+            + (debug_on ? "" : " -DDISABLED_DEBUG ")
+            + (ghost_on ? "" : " -DISABLED_GHOST ")
             ;
 
         program_subsense = xm::ocl::build_program(

@@ -421,7 +421,7 @@ __kernel void kernel_subsense(
 
     const int img_idx = idx * channels_n;
 
-#ifndef DEBUG_OFF
+#ifndef DISABLED_DEBUG
     const int ut1_idx = idx * 5;
 #else
     const int ut1_idx = idx * 4;
@@ -497,19 +497,6 @@ __kernel void kernel_subsense(
     // update out segmentation mask St(x)
     seg_mask[idx] = is_foreground ? 255 : 0;
 
-    const float d_diff = fabs(utility_1[ut1_idx + 3] - D_MIN_X);
-
-#ifndef DEBUG_OFF
-    // update diff(D_min, dt)
-    utility_1[ut1_idx + 4] = d_diff;
-#endif
-
-    // update G_c(x)
-    const int new_G_c = is_foreground && (d_diff < ghost_t)
-        ? utility_2[ut2_idx + 2] + ghost_n_inc
-        : max(0, utility_2[ut2_idx + 2] - ghost_n_dec);
-    utility_2[ut2_idx + 2] = new_G_c;
-
     // update moving average D_min(x) and dt-1(x)
     const float new_D_m = D_m * (1.f - d_min_alpha) + D_MIN_X * d_min_alpha;
     utility_1[ut1_idx    ] = new_D_m;
@@ -536,18 +523,34 @@ __kernel void kernel_subsense(
         t_upper);
     utility_2[ut2_idx + 1] = new_T_x;
 
-    // Ghost detection
-    bool is_ghost = false;
-    if (new_G_c > ghost_n) {
-        new_T_x = ghost_l;
-        is_ghost = true;
-    }
-
     // update St-1(x)
     utility_2[ut2_idx] = is_foreground ? 255 : 0;
 
+
+#ifndef DISABLED_GHOST
+
+    // update G_c(x)
+    const float d_diff = fabs(utility_1[ut1_idx + 3] - D_MIN_X);
+    const int new_G_c = is_foreground && (d_diff < ghost_t)
+            ? utility_2[ut2_idx + 2] + ghost_n_inc
+            : max(0, utility_2[ut2_idx + 2] - ghost_n_dec);
+    utility_2[ut2_idx + 2] = new_G_c;
+
+    // Ghost detection
+    if (new_G_c > ghost_n) {
+        is_foreground = false;
+        new_T_x = ghost_l;
+    }
+
+#ifndef DISABLED_DEBUG
+    // update diff(D_min, dt)
+    utility_1[ut1_idx + 4] = d_diff;
+#endif
+
+#endif
+
     // update B(x)
-    if ((!is_foreground || is_ghost) && random_value <= (1.f / (float) new_T_x)) {
+    if (!is_foreground && random_value <= (1.f / (float) new_T_x)) {
         const int random_frame_n   = (float) xor_shift_rng(42 + pre_seed) * (model_size - 1);
         const int random_frame_idx = pos_3(x, y, random_frame_n, width, height, bgm_ch_size);
         for (int i = 0; i < channels_n; i++)
@@ -601,7 +604,7 @@ __kernel void kernel_prepare_model(
 
     const int idx     = y * width + x;
 
-#ifndef DEBUG_OFF
+#ifndef DISABLED_DEBUG
     const int ut1_idx = idx * 5;
 #else
     const int ut1_idx = idx * 4;
@@ -618,7 +621,7 @@ __kernel void kernel_prepare_model(
     utility_1[ut1_idx + 2] = v_x;       // v(x)
     utility_1[ut1_idx + 3] = .0f;       // dt-1(x)
 
-#ifndef DEBUG_OFF
+#ifndef DISABLED_DEBUG
     utility_1[ut1_idx + 4] = 0.f;       // Diff(D_min, dt)
 #endif
 
@@ -774,7 +777,7 @@ __kernel void kernel_dilate(
     morph_operation(input, output, MORPH_TYPE_DILATE, kernel_type, channels_n, width, height, x, y);
 }
 
-#ifndef DEBUG_OFF
+#ifndef DISABLED_DEBUG
 __kernel void kernel_debug(
     __global const uchar *bg_model,        // N:     [ B, G, R, LBSP_1, LBSP_2, ... ]
     __global const float *utility_1,       // 5 * 4: [ D_min(x), R(x), v(x), dt1-(x), diff(D_min, dt) ]

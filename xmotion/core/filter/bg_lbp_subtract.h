@@ -84,9 +84,9 @@ namespace xm::filters {
         const bool mask_xc = false; // Should use early exclusion mask
         const bool linear = false;  // Should use linear interpolation for image downscaling
 
-        float color_0 = 0.062;      // threshold used in color comparison above which pixel is classified as different
-        float lbsp_0 = 0.31;        // threshold used in lbsp  comparison above which pixel is classified as different
-        float lbsp_d = 0.0025;      // threshold used in lbsp calculation
+        float color_0 = 0.032;      // threshold used in color comparison above which pixel is classified as different
+        float lbsp_0 = 0.06;        // threshold used in lbsp  comparison above which pixel is classified as different
+        float lbsp_d = 0.025;       // threshold used in lbsp calculation
 
         int n_matches = 2;          // number of intersections of I(x) with B(x) to detect background
         int t_upper = 256;          // Maximal value of T(x), higher T(x) -> lower p
@@ -117,8 +117,8 @@ namespace xm::filters {
         int refine_gate = 0;
         int refine_erode = 0;
         int refine_dilate = 0;
-        float refine_gate_threshold = 0.5;
-        bgs::KernelType gate_type = bgs::KERNEL_TYPE_RUBY_12;
+        float refine_gate_threshold = 0.85;
+        bgs::KernelType gate_type = bgs::KERNEL_TYPE_DIAMOND_16;
         bgs::KernelType erode_type = bgs::KERNEL_TYPE_RUBY_12;
         bgs::KernelType dilate_type = bgs::KERNEL_TYPE_RUBY_12;
         // ===== REFINE PART =====

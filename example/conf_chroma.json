@@ -1,33 +1,15 @@
 {
   "type": "calibration",
 
+  "misc": {
+    "debug": true
+  },
+
   "gui": {
     "scale": 1.25,
     "frame": {
       "w": 360,
       "h": 640
-    }
-  },
-
-  "misc": {
-    "debug": true
-  },
-
-  "filters": {
-    "background": {
-      "chroma": {
-        "key": "#CC3733",
-        "replace": "#00FF00",
-        "refine": 0,
-        "fine": 0,
-        "blur": 1,
-        "power": 0,
-        "range": {
-          "h": 0.02,
-          "s": 0.4,
-          "l": 0.4
-        }
-      }
     }
   },
 
@@ -53,9 +35,24 @@
           "w": 1920,
           "h": 1080
         },
-        "filters": [
 
+        "filters": [
+          {
+            "type": "chroma",
+            "key": "#CC3733",
+            "replace": "#00FF00",
+            "refine": 0,
+            "fine": 0,
+            "blur": 1,
+            "power": 0,
+            "range": {
+              "h": 0.02,
+              "s": 0.4,
+              "l": 0.4
+            }
+          }
         ]
+
       }
     ]
   },

@@ -25,6 +25,12 @@ namespace xm::data {
         float l;
     } HSL;
 
+    typedef struct {
+        float b;
+        float g;
+        float r;
+    } BGR;
+
 }
 
 #endif //XMOTION_JSON_CONFIG_COMMON_H

@@ -32,8 +32,8 @@ namespace xm {
     }
 
     void FileWorker::prepare_filters() {
-        if (!config.filters._present)
-            return;
+//        if (!config.filters._present)
+//            return;
 
         // background filter
 //        opt_filter_chroma();
@@ -41,30 +41,30 @@ namespace xm {
     }
 
     void FileWorker::opt_filter_chroma() {
-        if (!config.filters.background.chroma._present)
-            return;
-
-        const auto &conf = config.filters.background.chroma;
-        auto filter = std::make_unique<xm::filters::ChromaKey>();
-        filter->init({
-            .range = xm::ds::Color4u::hls((int) (conf.range.h * 255.f), (int) (conf.range.l * 255.f), (int) (conf.range.s * 255.f)),
-            .color = xm::ocv::parse_hex_to_bgr_4u(conf.replace),
-            .key = xm::ocv::parse_hex_to_bgr_4u(conf.key),
-            .refine = conf.refine,
-            .fine = conf.fine,
-            .blur = conf.blur,
-            .power = conf.power,
-            .linear = conf.linear
-        });
-
-        filters.push_back(std::move(filter));
+//        if (!config.filters.background.chroma._present)
+//            return;
+//
+//        const auto &conf = config.filters.background.chroma;
+//        auto filter = std::make_unique<xm::filters::ChromaKey>();
+//        filter->init({
+//            .range = xm::ds::Color4u::hls((int) (conf.range.h * 255.f), (int) (conf.range.l * 255.f), (int) (conf.range.s * 255.f)),
+//            .color = xm::ocv::parse_hex_to_bgr_4u(conf.replace),
+//            .key = xm::ocv::parse_hex_to_bgr_4u(conf.key),
+//            .refine = conf.refine,
+//            .fine = conf.fine,
+//            .blur = conf.blur,
+//            .power = conf.power,
+//            .linear = conf.linear
+//        });
+//
+//        filters.push_back(std::move(filter));
     }
 
     void FileWorker::opt_filter_delta() {
 //        if (!config.filters.background.delta._present)
 //            return;
 
-        const auto &conf = config.filters.background.delta;
+//        const auto &conf = config.filters.background.delta;
         auto filter = std::make_unique<xm::filters::BgLbpSubtract>();
         filter->init({
             // TODO

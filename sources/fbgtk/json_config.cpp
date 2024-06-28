@@ -140,6 +140,28 @@ namespace xm::data::def {
         };
     }
 
+    BGR bgr() {
+        return {
+          .b = 0,
+          .g = 0,
+          .r = 0
+        };
+    }
+
+    Blur blur() {
+        return {
+            .power = 1,
+            ._present = false
+        };
+    }
+
+    Difference difference() {
+        return {
+          // TODO
+            ._present = false
+        };
+    }
+
     Chroma chroma() {
         return {
             .key = "#00FF00",
@@ -154,28 +176,15 @@ namespace xm::data::def {
         };
     }
 
-    Delta delta() {
+    Filter filter() {
         return {
-            .replace = "#00FF00",
-            .delay = 0,
-            ._present = false
+            .type = "",
+            .blur = xm::data::def::blur(),
+            .chroma = xm::data::def::chroma(),
+            .difference = xm::data::def::difference()
         };
     }
 
-    Background background() {
-        return {
-            .chroma = chroma(),
-            .delta = delta(),
-            ._present = false
-        };
-    }
-
-    Filters filters() {
-        return {
-            .background = background(),
-            ._present = false
-        };
-    }
 }
 
 namespace xm::data {
@@ -219,6 +228,52 @@ namespace xm::data {
             { F_32, "f_32" },
             { F_16, "f_16" },
         })
+    }
+
+    void from_json(const nlohmann::json &j, HSL &h) {
+        const auto def = xm::data::def::hsl();
+        h.h = j.value("h", def.h);
+        h.s = j.value("s", def.s);
+        h.l = j.value("l", def.l);
+    }
+
+    void from_json(const nlohmann::json &j, Blur &b) {
+        const auto def = xm::data::def::blur();
+        b.power = j.value("power", def.power);
+        b._present = true;
+    }
+
+    void from_json(const nlohmann::json &j, Difference &d) {
+        const auto def = xm::data::def::difference();
+        // TODO
+        d._present = true;
+    }
+
+    void from_json(const nlohmann::json &j, Chroma &c) {
+        const auto def = xm::data::def::chroma();
+        c.key = j.value("key", def.key);
+        c.replace = j.value("replace", def.replace);
+        c.range = j.value("range", def.range);
+        c.blur = j.value("blur", def.blur);
+        c.power = j.value("power", def.power);
+        c.refine = j.value("fine", def.fine);
+        c.refine = j.value("refine", def.refine);
+        c.linear = j.value("linear", def.linear);
+        c._present = true;
+    }
+
+    void from_json(const nlohmann::json &j, Filter &f) {
+        const auto def = xm::data::def::filter();
+        j.at("type").get_to(f.type);
+        f.difference = def.difference;
+        f.blur = def.blur;
+        f.chroma = def.chroma;
+        if (f.type == XM_FILTER_TYPE_BLUR)
+            j.get_to(f.blur);
+        if (f.type == XM_FILTER_TYPE_CHROMA)
+            j.get_to(f.chroma);
+        if (f.type == XM_FILTER_TYPE_DIFF)
+            j.get_to(f.difference);
     }
 
     void from_json(const nlohmann::json &j, Flip &f) {
@@ -271,6 +326,8 @@ namespace xm::data {
                 .x = false,
                 .y = false
         });
+
+        c.filters = j.value("filters", std::vector<Filter>{});
     }
 
     void from_json(const nlohmann::json &j, Camera &c) {
@@ -393,50 +450,10 @@ namespace xm::data {
         m.debug = j.value("debug", false);
     }
 
-    void from_json(const nlohmann::json &j, HSL &h) {
-        const auto def = xm::data::def::hsl();
-        h.h = j.value("h", def.h);
-        h.s = j.value("s", def.s);
-        h.l = j.value("l", def.l);
-    }
-
-    void from_json(const nlohmann::json &j, Chroma &c) {
-        const auto def = xm::data::def::chroma();
-        c.key = j.value("key", def.key);
-        c.replace = j.value("replace", def.replace);
-        c.range = j.value("range", def.range);
-        c.blur = j.value("blur", def.blur);
-        c.power = j.value("power", def.power);
-        c.refine = j.value("fine", def.fine);
-        c.refine = j.value("refine", def.refine);
-        c.linear = j.value("linear", def.linear);
-        c._present = true;
-    }
-
-    void from_json(const nlohmann::json &j, Delta &d) {
-        const auto def = xm::data::def::delta();
-        d.replace = j.value("replace", def.replace);
-        d.delay = j.value("delay", def.delay);
-        d._present = true;
-    }
-
-    void from_json(const nlohmann::json &j, Background &b) {
-        const auto def = xm::data::def::background();
-        b.chroma = j.value("chroma", def.chroma);
-        b.delta = j.value("delta", def.delta);
-        b._present = true;
-    }
-
-    void from_json(const nlohmann::json &j, Filters &f) {
-        const auto def = xm::data::def::filters();
-        f.background = j.value("background", def.background);
-        f._present = true;
-    }
-
     void from_json(const nlohmann::json &j, JsonConfig &c) {
         j.at("type").get_to(c.type);
         j.at("camera").get_to(c.camera);
-        c.filters = j.value("filters", xm::data::def::filters());
+
         c.misc = j.value("misc", xm::data::def::misc());
         c.gui = j.value("gui", xm::data::def::gui());
         c.pose = j.value("pose", xm::data::def::pose());

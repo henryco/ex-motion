@@ -125,6 +125,7 @@ set(HEADER_FILES
         xmotion/fbgtk/data/json_config_common.h
         xmotion/fbgtk/data/json_config_calibration.h
         xmotion/fbgtk/data/json_config_gui.h
+        xmotion/core/filter/blur.h
 )
 
 set(SOURCE_FILES
@@ -177,6 +178,7 @@ set(SOURCE_FILES
         sources/core/ocl_container.cpp
         sources/core/xm_data.cpp
         sources/core/bg_subtract.cpp
+        sources/core/blur.cpp
 )
 
 if (UNIX AND NOT APPLE)

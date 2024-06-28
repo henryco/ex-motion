@@ -36,6 +36,7 @@ namespace xm::data {
         Flip flip;
         Region region;
         bool rotate;
+        std::vector<Filter> filters;
     } Capture;
 
     typedef struct {
@@ -57,25 +58,7 @@ namespace xm::data {
     } Pose;
 
     typedef struct {
-        std::string replace; // hex color
-        int delay;
-        bool _present;
-    } Delta;
-
-    typedef struct {
-        Chroma chroma;
-        Delta delta;
-        bool _present;
-    } Background;
-
-    typedef struct {
-        Background background;
-        bool _present;
-    } Filters;
-
-    typedef struct {
         ConfigType type;
-        Filters filters;
         Misc misc;
         Gui gui;
         Pose pose;

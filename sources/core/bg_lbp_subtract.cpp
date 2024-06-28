@@ -37,19 +37,6 @@ namespace xm::filters {
         if (device_id != nullptr) clReleaseDevice(device_id);
     }
 
-
-    void BgLbpSubtract::start() {
-        ready = true;
-    }
-
-    void BgLbpSubtract::stop() {
-        ready = false;
-    }
-
-    void BgLbpSubtract::reset() {
-        model_i = 0;
-    }
-
     cl_command_queue BgLbpSubtract::retrieve_queue(int index) {
         if (index <= 0)
             return ocl_command_queue;
@@ -119,6 +106,12 @@ namespace xm::filters {
     }
 
     xm::ocl::iop::ClImagePromise BgLbpSubtract::filter(const ocl::iop::ClImagePromise &frame_in, int q_idx) {
+        return filter(frame_in, {}, q_idx);
+    }
+
+    xm::ocl::iop::ClImagePromise BgLbpSubtract::filter(const ocl::iop::ClImagePromise &frame_in,
+                                                       const ocl::iop::ClImagePromise &ex_mask,
+                                                       int q_idx) {
         if (!initialized)
             throw std::logic_error("Filter is not initialized");
 
@@ -133,9 +126,8 @@ namespace xm::filters {
             return frame_in;
         }
 
-        auto out1 = subsense(downscaled, frame_in, {/*TODO*/}, q_idx);
-
-        return debug(-1, out1);
+        auto result = subsense(downscaled, frame_in, ex_mask, q_idx);
+        return debug_on && debug_mode >= 0 ? debug(debug_mode, result) : result;
     }
 
     void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
@@ -584,9 +576,6 @@ namespace xm::filters {
     }
 
     xm::ocl::iop::ClImagePromise BgLbpSubtract::debug(int n, const xm::ocl::iop::ClImagePromise &ref) {
-        if (n < 0)
-            return ref;
-
         if (!debug_on)
             throw std::invalid_argument("Debug is disabled");
 
@@ -681,5 +670,22 @@ namespace xm::filters {
         if (t == bgs::KERNEL_TYPE_NONE) return 0;
         return ((int) t) < ((int) bgs::KERNEL_TYPE_RUBY_12) ? 1 : 2;
     }
+
+    void BgLbpSubtract::start() {
+        ready = true;
+    }
+
+    void BgLbpSubtract::stop() {
+        ready = false;
+    }
+
+    void BgLbpSubtract::reset() {
+        model_i = 0;
+    }
+
+    void BgLbpSubtract::set_debug_mode(int mode) {
+        debug_mode = mode;
+    }
+
 }
 #pragma clang diagnostic pop

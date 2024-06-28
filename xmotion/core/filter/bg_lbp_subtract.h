@@ -144,6 +144,7 @@ namespace xm::filters {
 
         bool initialized = false;
         bool ready = false;
+        int debug_mode = -1;
 
     public:
         BgLbpSubtract() = default;
@@ -154,11 +155,15 @@ namespace xm::filters {
 
         xm::ocl::iop::ClImagePromise filter(const ocl::iop::ClImagePromise &in, int q_idx) override;
 
+        xm::ocl::iop::ClImagePromise filter(const ocl::iop::ClImagePromise &in, const ocl::iop::ClImagePromise &ex_mask, int q_idx);
+
         void reset() override;
 
         void start() override;
 
         void stop() override;
+
+        void set_debug_mode(int mode);
 
     protected:
         cl_command_queue retrieve_queue(int index);

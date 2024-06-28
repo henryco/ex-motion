@@ -156,10 +156,7 @@ namespace xm::data::def {
     }
 
     Difference difference() {
-        return {
-          // TODO
-            ._present = false
-        };
+        return { /*See original definition*/ };
     }
 
     Chroma chroma() {
@@ -245,7 +242,43 @@ namespace xm::data {
 
     void from_json(const nlohmann::json &j, Difference &d) {
         const auto def = xm::data::def::difference();
-        // TODO
+        d.BASE_RESOLUTION = j.value("BASE_RESOLUTION", def.BASE_RESOLUTION);
+        d.color = j.value("color", def.color);
+        d.debug_on = j.value("debug_on", def.debug_on);
+        d.adapt_on = j.value("adapt_on", def.adapt_on);
+        d.ghost_on = j.value("ghost_on", def.ghost_on);
+        d.lbsp_on = j.value("lbsp_on", def.lbsp_on);
+        d.norm_l2 = j.value("norm_l2", def.norm_l2);
+        d.linear = j.value("linear", def.linear);
+        d.color_0 = j.value("color_0", def.color_0);
+        d.lbsp_0 = j.value("lbsp_0", def.lbsp_0);
+        d.lbsp_d = j.value("lbsp_d", def.lbsp_d);
+        d.n_matches = j.value("n_matches", def.n_matches);
+        d.t_upper = j.value("t_upper", def.t_upper);
+        d.t_lower = j.value("t_lower", def.t_lower);
+        d.model_size = j.value("model_size", def.model_size);
+        d.ghost_l = j.value("ghost_l", def.ghost_l);
+        d.ghost_n = j.value("ghost_n", def.ghost_n);
+        d.ghost_n_inc = j.value("ghost_n_inc", def.ghost_n_inc);
+        d.ghost_n_dec = j.value("ghost_n_dec", def.ghost_n_dec);
+        d.alpha_d_min = j.value("alpha_d_min", def.alpha_d_min);
+        d.alpha_norm = j.value("alpha_norm", def.alpha_norm);
+        d.ghost_t = j.value("ghost_t", def.ghost_t);
+        d.r_scale = j.value("r_scale", def.r_scale);
+        d.r_cap = j.value("r_cap", def.r_cap);
+        d.t_scale_inc = j.value("t_scale_inc", def.t_scale_inc);
+        d.t_scale_dec = j.value("t_scale_dec", def.t_scale_dec);
+        d.v_flicker_inc = j.value("v_flicker_inc", def.v_flicker_inc);
+        d.v_flicker_dec = j.value("v_flicker_dec", def.v_flicker_dec);
+        d.v_flicker_cap = j.value("v_flicker_cap", def.v_flicker_cap);
+        d.refine_gate = j.value("refine_gate", def.refine_gate);
+        d.refine_erode = j.value("refine_erode", def.refine_erode);
+        d.refine_dilate = j.value("refine_dilate", def.refine_dilate);
+        d.gate_threshold = j.value("gate_threshold", def.gate_threshold);
+        d.kernel = j.value("kernel", def.kernel);
+        d.gate_kernel = j.value("gate_kernel", def.gate_kernel);
+        d.erode_kernel = j.value("erode_kernel", def.erode_kernel);
+        d.dilate_kernel = j.value("dilate_kernel", def.dilate_kernel);
         d._present = true;
     }
 

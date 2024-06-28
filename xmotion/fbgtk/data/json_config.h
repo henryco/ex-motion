@@ -7,7 +7,12 @@
 
 #include <string>
 #include <vector>
-#include "nlohmann/json.hpp"
+#include <nlohmann/json.hpp>
+#include "json_config_calibration.h"
+#include "json_config_filters.h"
+#include "json_config_common.h"
+#include "json_config_pose.h"
+#include "json_config_gui.h"
 
 namespace xm::data {
 
@@ -19,48 +24,6 @@ namespace xm::data {
         COMPOSE,
         POSE
     };
-
-    namespace board {
-        enum Type {
-            PLAIN = -1,
-            CHESSBOARD,
-            RADON
-        };
-    }
-
-    namespace pose {
-        enum ModelBody {
-            HEAVY_ORIGIN = 0,
-            FULL_ORIGIN = 1,
-            LITE_ORIGIN = 2,
-
-            HEAVY_F32 = 3,
-            FULL_F32 = 4,
-            LITE_F32 = 5,
-
-            HEAVY_F16 = 6,
-            FULL_F16 = 7,
-            LITE_F16 = 8
-        };
-
-        enum ModeDetector {
-            ORIGIN = 0,
-            F_32 = 1,
-            F_16 = 2
-        };
-    }
-
-    typedef struct {
-        int x;
-        int y;
-        int w;
-        int h;
-    } Region;
-
-    typedef struct {
-        bool x;
-        bool y;
-    } Flip;
 
     typedef struct {
         std::string id;
@@ -85,104 +48,6 @@ namespace xm::data {
     } Camera;
 
     typedef struct {
-        int w;
-        int h;
-    } GuiFrame;
-
-    typedef struct {
-        std::vector<int> layout;
-        GuiFrame frame;
-        bool vertical;
-        float scale;
-        int fps;
-    } Gui;
-
-    typedef struct {
-        board::Type type;
-        int columns;
-        int rows;
-        float size;
-    } Pattern;
-
-    typedef struct {
-        float x;
-        float y;
-        bool fix;
-    } Intrinsic;
-
-    typedef struct {
-        Intrinsic f;
-        Intrinsic c;
-    } Intrinsics;
-
-    typedef struct {
-        std::vector<std::string> intrinsics;
-        bool closed;
-    } Chain;
-
-    typedef struct {
-        std::string name;
-        Intrinsics intrinsics;
-        Pattern pattern;
-        Chain chain;
-        int total;
-        int delay;
-    } Calibration;
-
-    typedef struct {
-        float rollback_window;
-        float center_window;
-        float clamp_window;
-        float scale;
-        float margin;
-        float padding_x;
-        float padding_y;
-    } PoseRoi;
-
-    typedef struct {
-        float detector;
-        float marks;
-        float pose;
-        float roi;
-    } PoseThresholds;
-
-    typedef struct {
-        float velocity;
-        int window;
-        int fps;
-    } PoseFilter;
-
-    typedef struct {
-        pose::ModeDetector detector;
-        pose::ModelBody body;
-    } PoseModel;
-
-    typedef struct {
-        bool source;
-        bool points;
-        float alpha;
-    } PoseUndistort;
-
-    typedef struct {
-        std::string intrinsics;
-        PoseThresholds threshold;
-        PoseUndistort undistort;
-        PoseFilter filter;
-        PoseModel model;
-        PoseRoi roi;
-    } PoseDevice;
-
-    typedef struct {
-        std::vector<std::string> files;
-        bool closed;
-        bool _present;
-    } ChainCalibration;
-
-    typedef struct {
-        bool _present;
-    } CrossCalibration;
-
-    typedef struct {
         std::vector<PoseDevice> devices;
         ChainCalibration chain;
         CrossCalibration cross;
@@ -190,29 +55,6 @@ namespace xm::data {
         bool segmentation;
         int threads;
     } Pose;
-
-    typedef struct {
-        bool debug;
-        int cpu;
-    } Misc;
-
-    typedef struct {
-        float h;
-        float s;
-        float l;
-    } HSL;
-
-    typedef struct {
-        std::string key; // hex color
-        std::string replace; // hex color
-        HSL range;
-        int blur;
-        int power;
-        int fine;
-        int refine;
-        bool linear;
-        bool _present;
-    } Chroma;
 
     typedef struct {
         std::string replace; // hex color

@@ -120,6 +120,11 @@ set(HEADER_FILES
         xmotion/core/ocl/ocl_container.h
         xmotion/core/utils/xm_data.h
         xmotion/core/filter/bg_subtract.h
+        xmotion/fbgtk/data/json_config_filters.h
+        xmotion/fbgtk/data/json_config_pose.h
+        xmotion/fbgtk/data/json_config_common.h
+        xmotion/fbgtk/data/json_config_calibration.h
+        xmotion/fbgtk/data/json_config_gui.h
 )
 
 set(SOURCE_FILES

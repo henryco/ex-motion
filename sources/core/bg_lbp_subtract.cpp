@@ -42,7 +42,7 @@ namespace xm::filters {
             return ocl_command_queue;
 
         if (ocl_queue_map.contains(index))
-            return ocl_queue_map.at(debug_on);
+            return ocl_queue_map.at(config.debug_on);
 
         ocl_queue_map.emplace(index, xm::ocl::create_queue_device(
                 ocl_context,
@@ -53,8 +53,7 @@ namespace xm::filters {
     }
 
     void BgLbpSubtract::init(const bgs::Conf &conf) {
-//        kernel_type = conf.kernel_type;
-//        bgr_bg_color = conf.color;
+        config = conf;
 
         reset();
         release();
@@ -68,13 +67,13 @@ namespace xm::filters {
             false);
 
         std::string options = std::string("")
-            + (norm_l2 ? " -DCOLOR_NORM_l2 " : "")
-            + (mask_xc ? "" : " -DDISABLED_EXCLUSION_MASK ")
-            + (lbsp_on ? "" : " -DDISABLED_LBSP ")
-            + (debug_on ? "" : " -DDISABLED_DEBUG ")
-            + (ghost_on ? "" : " -DDISABLED_GHOST ")
-            + (adapt_on ? "" : " -DDISABLED_ADAPT ")
-            + (morph_on ? "" : " -DDiSABLED_MORPH ")
+            + (config.norm_l2 ? " -DCOLOR_NORM_l2 " : "")
+            + (config.mask_xc ? "" : " -DDISABLED_EXCLUSION_MASK ")
+            + (config.lbsp_on ? "" : " -DDISABLED_LBSP ")
+            + (config.debug_on ? "" : " -DDISABLED_DEBUG ")
+            + (config.ghost_on ? "" : " -DDISABLED_GHOST ")
+            + (config.adapt_on ? "" : " -DDISABLED_ADAPT ")
+            + (config.morph_on ? "" : " -DDiSABLED_MORPH ")
             ;
 
         program_subsense = xm::ocl::build_program(
@@ -91,13 +90,13 @@ namespace xm::filters {
         kernel_downscale = xm::ocl::build_kernel(program_subsense, "kernel_downscale");
         kernel_upscale = xm::ocl::build_kernel(program_subsense, "kernel_upscale");
 
-        if (morph_on) {
+        if (config.morph_on) {
             kernel_dilate = xm::ocl::build_kernel(program_subsense, "kernel_dilate");
             kernel_erode = xm::ocl::build_kernel(program_subsense, "kernel_erode");
             kernel_gate = xm::ocl::build_kernel(program_subsense, "kernel_gate_mask");
         }
 
-        if (debug_on)
+        if (config.debug_on)
             kernel_debug = xm::ocl::build_kernel(program_subsense, "kernel_debug");
 
         pref_size = xm::ocl::optimal_local_size(device_id, kernel_subsense);
@@ -118,16 +117,16 @@ namespace xm::filters {
         if (!ready)
             return frame_in;
 
-        auto downscaled = downscale(frame_in, BASE_RESOLUTION, q_idx);
+        auto downscaled = downscale(frame_in, config.BASE_RESOLUTION, q_idx);
 
-        if (model_i < model_size) {
+        if (model_i < config.model_size) {
             prepare_update_model(downscaled, q_idx);
             model_i += 1;
             return frame_in;
         }
 
         auto result = subsense(downscaled, frame_in, ex_mask, q_idx);
-        return debug_on && debug_mode >= 0 ? debug(debug_mode, result) : result;
+        return config.debug_on && debug_mode >= 0 ? debug(debug_mode, result) : result;
     }
 
     void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
@@ -141,16 +140,16 @@ namespace xm::filters {
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) n_w, pref_size),
                             xm::ocl::optimal_global_size((int) n_h, pref_size)};
 
-        const int lbsp_c_size = lbsp_on ? bgs::lbsp_k_size_bytes(kernel_type) : 0;
+        const int lbsp_c_size = config.lbsp_on ? bgs::lbsp_k_size_bytes(config.kernel) : 0;
         if (bg_model.empty()) {
             bg_model = xm::ocl::Image2D::allocate(
-                n_w, n_h, (size_t) model_size * (color_c + color_c * lbsp_c_size), 1,
+                n_w, n_h, (size_t) config.model_size * (config.color_channels + (config.color_channels * lbsp_c_size)), 1,
                 ocl_context, device_id);
         }
 
         if (utility_1.empty()) {
             utility_1 = xm::ocl::Image2D::allocate(
-                n_w, n_h, debug_on ? 5 : 4, sizeof(float),
+                n_w, n_h, config.debug_on ? 5 : 4, sizeof(float),
                 ocl_context, device_id);
         }
 
@@ -186,13 +185,13 @@ namespace xm::filters {
         cl_mem buffer_utility1 = (cl_mem) utility_1.handle;
         cl_mem buffer_utility2 = (cl_mem) utility_2.handle;
 
-        auto lbsp_kernel = (uchar) kernel_type;
-        auto lbsp_threshold = (uchar) std::min(255.f, lbsp_d * 255.f);
+        auto lbsp_kernel = (uchar) config.kernel;
+        auto lbsp_threshold = (uchar) std::min(255.f, config.lbsp_d * 255.f);
         auto _model_i = (uchar) model_i;
-        auto _model_size = (uchar) model_size;
-        auto _channels_n = (uchar) color_c;
-        auto _t_higher = (ushort) t_upper;
-        auto _flicker_v_dec = (float) v_flicker_dec;
+        auto _model_size = (uchar) config.model_size;
+        auto _channels_n = (uchar) config.color_channels;
+        auto _t_higher = (ushort) config.t_upper;
+        auto _flicker_v_dec = (float) config.v_flicker_dec;
         auto _width = (ushort) n_w;
         auto _height = (ushort) n_h;
 
@@ -204,7 +203,7 @@ namespace xm::filters {
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility1);
         idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(cl_mem), &buffer_utility2);
 
-        if (lbsp_on) {
+        if (config.lbsp_on) {
             idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &lbsp_kernel);
             idx_1 = xm::ocl::set_kernel_arg(kernel_prepare, idx_1, sizeof(uchar), &lbsp_threshold);
         }
@@ -234,7 +233,7 @@ namespace xm::filters {
         int n_w, n_h;
 
         new_size((int) in.cols, (int) in.rows, base, n_w, n_h, scale);
-        const int inter_size = n_w * n_h * color_c * (int) sizeof(char);
+        const int inter_size = n_w * n_h * config.color_channels * (int) sizeof(char);
         size_t l_size[2] = {pref_size, pref_size};
         size_t g_size[2] = {xm::ocl::optimal_global_size((int) n_w, pref_size),
                             xm::ocl::optimal_global_size((int) n_h, pref_size)};
@@ -251,8 +250,8 @@ namespace xm::filters {
         auto out_h = (ushort) n_h;
         auto scale_w = (float) scale;
         auto scale_h = (float) scale;
-        auto channels_n = (uchar) color_c;
-        auto is_linear = (uchar) linear ? 255 : 0;
+        auto channels_n = (uchar) config.color_channels;
+        auto is_linear = (uchar) config.linear ? 255 : 0;
 
         cl_uint idx_0 = 0;
         idx_0 = xm::ocl::set_kernel_arg(kernel_downscale, idx_0, sizeof(cl_mem), &buffer_in);
@@ -276,7 +275,7 @@ namespace xm::filters {
 
         return xm::ocl::iop::ClImagePromise(
             xm::ocl::Image2D(
-                n_w, n_h, color_c, sizeof(uchar),
+                n_w, n_h, config.color_channels, sizeof(uchar),
                 buffer_io_1, ocl_context, device_id),
                 queue);
     }
@@ -303,37 +302,37 @@ namespace xm::filters {
         cl_mem buffer_utility1 = (cl_mem) utility_1.handle;
         cl_mem buffer_utility2 = (cl_mem) utility_2.handle;
 
-        auto _lbsp_kernel = (uchar) kernel_type;
-        auto _lbsp_threshold = (uchar) std::min(255.f, lbsp_d * 255.f);
-        auto _n_norm_alpha = (float) alpha_norm;
-        auto _lbsp_0 = (ushort) denorm_lbsp_threshold(lbsp_0);
+        auto _lbsp_kernel = (uchar) config.kernel;
+        auto _lbsp_threshold = (uchar) std::min(255.f, config.lbsp_d * 255.f);
+        auto _n_norm_alpha = (float) config.alpha_norm;
+        auto _lbsp_0 = (ushort) denorm_lbsp_threshold(config.lbsp_0);
 
-        auto _color_0 = (ushort) denorm_color_threshold(color_0);
-        auto _t_lower = (ushort) t_lower;
-        auto _t_upper = (ushort) t_upper;
-        auto _ghost_n = (ushort) ghost_n;
-        auto _ghost_l = (ushort) ghost_l;
-        auto _ghost_n_inc = (ushort) ghost_n_inc;
-        auto _ghost_n_dec = (ushort) ghost_n_dec;
-        auto _ghost_t = (float) ghost_t;
-        auto _d_min_alpha = (float) alpha_d_min;
-        auto _flicker_v_inc = (float) v_flicker_inc;
-        auto _flicker_v_dec = (float) v_flicker_dec;
-        auto _flicker_v_cap = (float) v_flicker_cap;
-        auto _t_scale_inc = (float) t_scale_inc;
-        auto _t_scale_dec = (float) t_scale_dec;
-        auto _r_scale = (float) r_scale;
-        auto _r_cap = (float) r_cap;
-        auto _matches_req = (uchar) n_matches;
-        auto _model_size = (uchar) model_size;
-        auto _channels_n = (uchar) color_c;
+        auto _color_0 = (ushort) denorm_color_threshold(config.color_0);
+        auto _t_lower = (ushort) config.t_lower;
+        auto _t_upper = (ushort) config.t_upper;
+        auto _ghost_n = (ushort) config.ghost_n;
+        auto _ghost_l = (ushort) config.ghost_l;
+        auto _ghost_n_inc = (ushort) config.ghost_n_inc;
+        auto _ghost_n_dec = (ushort) config.ghost_n_dec;
+        auto _ghost_t = (float) config.ghost_t;
+        auto _d_min_alpha = (float) config.alpha_d_min;
+        auto _flicker_v_inc = (float) config.v_flicker_inc;
+        auto _flicker_v_dec = (float) config.v_flicker_dec;
+        auto _flicker_v_cap = (float) config.v_flicker_cap;
+        auto _t_scale_inc = (float) config.t_scale_inc;
+        auto _t_scale_dec = (float) config.t_scale_dec;
+        auto _r_scale = (float) config.r_scale;
+        auto _r_cap = (float) config.r_cap;
+        auto _matches_req = (uchar) config.n_matches;
+        auto _model_size = (uchar) config.model_size;
+        auto _channels_n = (uchar) config.color_channels;
         auto _rng_seed = (uint) time_seed();
         auto _width = (ushort) image.cols;
         auto _height = (ushort) image.rows;
 
         cl_uint idx_0 = 0;
 
-        if (mask_xc) {
+        if (config.mask_xc) {
             const auto ex_mask = exclusion_p.getImage2D();
 
             cl_mem buffer_ex = (cl_mem) ex_mask.get_handle(ocl::ACCESS::RO);
@@ -350,7 +349,7 @@ namespace xm::filters {
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_utility2);
         idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(cl_mem), &buffer_seg_mask);
 
-        if (lbsp_on) {
+        if (config.lbsp_on) {
             idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_lbsp_kernel);
             idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(uchar), &_lbsp_threshold);
             idx_0 = xm::ocl::set_kernel_arg(kernel_subsense, idx_0, sizeof(float), &_n_norm_alpha);
@@ -391,7 +390,7 @@ namespace xm::filters {
 
         // ============================================= MORPHOLOGY =============================================
 
-        if (morph_on) {
+        if (config.morph_on) {
             gate(queue, l_size, g_size);
             dilate(queue, l_size, g_size);
             erode(queue, l_size, g_size);
@@ -412,9 +411,9 @@ namespace xm::filters {
         auto _scale_h = (float) img_out.rows / (float) image.rows;
         auto _d_x = (uchar) std::ceil(_scale_w);
         auto _d_y = (uchar) std::ceil(_scale_h);
-        auto _color_b = (uchar) bgr_bg_color.b;
-        auto _color_g = (uchar) bgr_bg_color.g;
-        auto _color_r = (uchar) bgr_bg_color.r;
+        auto _color_b = (uchar) config.color.b;
+        auto _color_g = (uchar) config.color.g;
+        auto _color_r = (uchar) config.color.r;
 
         cl_uint idx_1 = 0;
         idx_1 = xm::ocl::set_kernel_arg(kernel_apply, idx_1, sizeof(cl_mem), &buffer_in);
@@ -447,11 +446,11 @@ namespace xm::filters {
 
 
     void BgLbpSubtract::gate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
-        if (refine_gate <= 0 || !morph_on)
+        if (config.refine_gate <= 0 || !config.morph_on)
             return;
 
-        auto gate_kernel_type = (uchar) gate_type;
-        auto gate_threshold = (uchar) ((float) gate_kernel_type * 4.f * refine_gate_threshold);
+        auto gate_kernel_type = (uchar) config.gate_kernel;
+        auto gate_threshold = (uchar) ((float) gate_kernel_type * 4.f * config.refine_gate_threshold);
         auto gate_c_size = (uchar) 1;
         auto _width = (ushort) seg_mask.cols;
         auto _height = (ushort) seg_mask.rows;
@@ -459,7 +458,7 @@ namespace xm::filters {
         xm::ocl::Image2D im_1 = seg_mask;
         xm::ocl::Image2D im_2 = tmp_mask;
 
-        for (int i = 0; i < refine_gate; i++) {
+        for (int i = 0; i < config.refine_gate; i++) {
 
             cl_uint idx_2 = 0;
 
@@ -492,10 +491,10 @@ namespace xm::filters {
     }
 
     void BgLbpSubtract::erode(cl_command_queue queue, size_t *l_size, size_t *g_size) {
-        if (refine_erode <= 0 || !morph_on)
+        if (config.refine_erode <= 0 || !config.morph_on)
             return;
 
-        auto erode_kernel_type = (uchar) erode_type;
+        auto erode_kernel_type = (uchar) config.erode_kernel;
         auto erode_c_size = (uchar) 1;
         auto _width = (ushort) seg_mask.cols;
         auto _height = (ushort) seg_mask.rows;
@@ -503,7 +502,7 @@ namespace xm::filters {
         xm::ocl::Image2D im_1 = seg_mask;
         xm::ocl::Image2D im_2 = tmp_mask;
 
-        for (int i = 0; i < refine_erode; i++) {
+        for (int i = 0; i < config.refine_erode; i++) {
 
             cl_uint idx_2 = 0;
 
@@ -535,10 +534,10 @@ namespace xm::filters {
     }
 
     void BgLbpSubtract::dilate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
-        if (refine_dilate <= 0 || !morph_on)
+        if (config.refine_dilate <= 0 || !config.morph_on)
             return;
 
-        auto dilate_kernel_type = (uchar) dilate_type;
+        auto dilate_kernel_type = (uchar) config.dilate_kernel;
         auto dilate_c_size = (uchar) 1;
         auto _width = (ushort) seg_mask.cols;
         auto _height = (ushort) seg_mask.rows;
@@ -546,7 +545,7 @@ namespace xm::filters {
         xm::ocl::Image2D im_1 = seg_mask;
         xm::ocl::Image2D im_2 = tmp_mask;
 
-        for (int i = 0; i < refine_dilate; i++) {
+        for (int i = 0; i < config.refine_dilate; i++) {
             cl_uint idx_3 = 0;
 
             cl_mem b1 = im_1.handle;
@@ -576,7 +575,7 @@ namespace xm::filters {
     }
 
     xm::ocl::iop::ClImagePromise BgLbpSubtract::debug(int n, const xm::ocl::iop::ClImagePromise &ref) {
-        if (!debug_on)
+        if (!config.debug_on)
             throw std::invalid_argument("Debug is disabled");
 
         auto queue = ref.queue() == nullptr ? retrieve_queue(-1) : ref.queue();
@@ -596,13 +595,13 @@ namespace xm::filters {
         cl_mem buffer_noise = (cl_mem) noise_map.handle;
         cl_mem buffer_out = (cl_mem) out.handle;
 
-        auto _lbsp_kernel = (uchar) kernel_type;
-        auto _model_size = (uchar) model_size;
+        auto _lbsp_kernel = (uchar) config.kernel;
+        auto _model_size = (uchar) config.model_size;
         auto _select_n = (uchar) n;
-        auto _flicker_v_cap = (float) v_flicker_cap;
-        auto _r_cap = (float) r_cap;
+        auto _flicker_v_cap = (float) config.v_flicker_cap;
+        auto _r_cap = (float) config.r_cap;
         auto _rng_seed = (uint) time_seed();
-        auto _ghost_n = (ushort) ghost_n;
+        auto _ghost_n = (ushort) config.ghost_n;
         auto _width = (ushort) out.cols;
         auto _height = (ushort) out.rows;
 
@@ -636,14 +635,14 @@ namespace xm::filters {
     }
 
     int BgLbpSubtract::denorm_color_threshold(float v) const {
-        return (int) std::ceil(v * (norm_l2
-            ? std::sqrt((float) color_c * std::pow(255.f, 2.f))
-            : (float) color_c * 255
+        return (int) std::ceil(v * (config.norm_l2
+            ? std::sqrt((float) config.color_channels * std::pow(255.f, 2.f))
+            : (float) config.color_channels * 255
         ));
     }
 
     int BgLbpSubtract::denorm_lbsp_threshold(float v) const {
-        return (int) std::ceil((float) color_c * v * 4.f * (float) ((int) kernel_type));
+        return (int) std::ceil((float) config.color_channels * v * 4.f * (float) ((int) config.kernel));
     }
 
     void new_size(const int w, const int h, const int base, int &new_w, int &new_h, float &scale) {

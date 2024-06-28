@@ -156,7 +156,7 @@ namespace xm::data::def {
     }
 
     Difference difference() {
-        return { /*See original definition*/ };
+        return { ._present = false /*See original definition*/ };
     }
 
     Chroma chroma() {

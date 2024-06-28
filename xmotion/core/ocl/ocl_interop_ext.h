@@ -120,7 +120,7 @@ namespace xm::ocl::iop {
         static void finalizeAll(std::vector<CLPromise<T>> &promises, bool force = false) {
             int n = 0;
             auto list = new cl_command_queue[promises.size()];
-            // this is narrow/naive map implementation, but for not reasonably small input size
+            // this is narrow/naive map implementation, but for reasonably small input size
             // this would be much faster then proper nlog(n) map/set due to much smaller overhead,
             // which is exactly the case here
             for (auto &p: promises) {

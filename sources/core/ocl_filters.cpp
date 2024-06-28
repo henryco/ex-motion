@@ -802,11 +802,12 @@ namespace xm::ocl {
                 aux::DEBUG);
 
         return xm::ocl::iop::ClImagePromise(xm::ocl::Image2D(
-                                                    rotate ? height : width,
-                                                    rotate ? width : height,
-                                                    in.channels, in.channel_size,
-                                                    buffer_out, in.context, in.device, xm::ocl::ACCESS::RW),
-                                            queue, flip_rotate_event).withCleanup(in_p);
+                rotate ? height : width,
+                rotate ? width : height,
+                in.channels, in.channel_size,
+                buffer_out, in.context, in.device, xm::ocl::ACCESS::RW),
+                                            queue, flip_rotate_event)
+                .withCleanup(in_p);
     }
 
 }

@@ -277,7 +277,8 @@ namespace xm::filters {
             xm::ocl::Image2D(
                 n_w, n_h, config.color_channels, sizeof(uchar),
                 buffer_io_1, ocl_context, device_id),
-                queue);
+                queue)
+                .withCleanup(in_p);
     }
 
     xm::ocl::iop::ClImagePromise BgLbpSubtract::subsense(const ocl::iop::ClImagePromise &downscaled_p,
@@ -441,7 +442,10 @@ namespace xm::filters {
             l_size,
             false);
 
-        return xm::ocl::iop::ClImagePromise(img_out,queue);
+        return xm::ocl::iop::ClImagePromise(img_out,queue)
+        .withCleanup(downscaled_p)
+        .withCleanup(exclusion_p)
+        .withCleanup(original_p);
     }
 
 
@@ -631,7 +635,8 @@ namespace xm::filters {
                 l_size,
                 false);
 
-        return xm::ocl::iop::ClImagePromise(out, queue);
+        return xm::ocl::iop::ClImagePromise(out, queue)
+        .withCleanup(ref);
     }
 
     int BgLbpSubtract::denorm_color_threshold(float v) const {

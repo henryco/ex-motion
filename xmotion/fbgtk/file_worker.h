@@ -30,7 +30,7 @@ namespace xm {
         xm::SimpleImageWindow *window;
         // ==== pointers managed externally ====
 
-        std::vector<std::unique_ptr<xm::Filter>> filters;
+        std::vector<std::vector<std::unique_ptr<xm::Filter>>> filters;
         std::unique_ptr<xm::StereoCamera> camera;
         std::unique_ptr<xm::Logic> logic;
 
@@ -70,10 +70,6 @@ namespace xm {
         void on_camera_save(const std::string &device_id);
 
         void on_camera_read(const std::string &device_id, const std::string &name);
-
-        void opt_filter_chroma();
-
-        void opt_filter_delta();
 
         void opt_single_calibration();
 

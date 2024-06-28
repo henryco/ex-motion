@@ -80,8 +80,50 @@ namespace xm {
                 }
 
                 if (f.difference._present) {
+                    const auto &conf = f.difference;
                     auto filter = std::make_unique<xm::filters::BgSubtract>();
-
+                    filter->init({
+                        .BASE_RESOLUTION = conf.BASE_RESOLUTION,
+                        .color_channels = 3,
+                        .adapt_on = conf.adapt_on,
+                        .debug_on = conf.debug_on,
+                        .morph_on = (conf.refine_gate + conf.refine_erode + conf.refine_dilate) > 0,
+                        .ghost_on = conf.ghost_on,
+                        .lbsp_on = conf.lbsp_on,
+                        .norm_l2 = conf.norm_l2,
+                        .mask_xc = false,
+                        .linear = conf.linear,
+                        .color_0 = conf.color_0,
+                        .lbsp_0 = conf.lbsp_0,
+                        .lbsp_d = conf.lbsp_d,
+                        .n_matches = conf.n_matches,
+                        .t_upper = conf.t_upper,
+                        .t_lower = conf.t_lower,
+                        .model_size = conf.model_size,
+                        .ghost_l = conf.ghost_l,
+                        .ghost_n = conf.ghost_n,
+                        .ghost_n_inc = conf.ghost_n_inc,
+                        .ghost_n_dec = conf.ghost_n_dec,
+                        .alpha_d_min = conf.alpha_d_min,
+                        .alpha_norm = conf.alpha_norm,
+                        .ghost_t = conf.ghost_t,
+                        .r_scale = conf.r_scale,
+                        .r_cap = conf.r_cap,
+                        .t_scale_inc = conf.t_scale_inc,
+                        .t_scale_dec = conf.t_scale_dec,
+                        .v_flicker_inc = conf.v_flicker_inc,
+                        .v_flicker_dec = conf.v_flicker_dec,
+                        .v_flicker_cap = conf.v_flicker_cap,
+                        .kernel = static_cast<xm::filters::bgs::KernelType>((int) conf.kernel),
+                        .color = xm::ocv::parse_hex_to_bgr_4u(conf.color),
+                        .refine_gate = conf.refine_gate,
+                        .refine_erode = conf.refine_erode,
+                        .refine_dilate = conf.refine_dilate,
+                        .refine_gate_threshold = conf.gate_threshold,
+                        .gate_kernel = static_cast<xm::filters::bgs::KernelType>((int) conf.gate_kernel),
+                        .erode_kernel = static_cast<xm::filters::bgs::KernelType>((int) conf.erode_kernel),
+                        .dilate_kernel = static_cast<xm::filters::bgs::KernelType>((int) conf.dilate_kernel),
+                    });
                     vec.push_back(std::move(filter));
                     continue;
                 }

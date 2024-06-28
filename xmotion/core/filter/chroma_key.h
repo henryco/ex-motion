@@ -86,6 +86,7 @@ namespace xm::filters {
         int mask_size = 0;
         int blur_kernel = 0;
         int fine_kernel = 0;
+        bool initialized = false;
         bool ready = false;
 
     public:

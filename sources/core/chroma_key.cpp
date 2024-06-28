@@ -8,6 +8,8 @@
 
 namespace xm::filters {
 
+    void ChromaKey::reset() { /*void*/ }
+
     void ChromaKey::init(const chroma::Conf &conf) {
         const auto key_hls = xm::ocv::bgr_to_hls(conf.key);
 
@@ -32,11 +34,13 @@ namespace xm::filters {
         log->info("L: {}, {}, {}", hls_key_lower[0], hls_key_lower[1], hls_key_lower[2]);
         log->info("U: {}, {}, {}", hls_key_upper[0], hls_key_upper[1], hls_key_upper[2]);
 
-        ready = true;
+        initialized = true;
     }
 
     xm::ocl::iop::ClImagePromise ChromaKey::filter(const ocl::iop::ClImagePromise &in, int q_idx) {
         if (!ready)
+            return in;
+        if (!initialized)
             throw std::logic_error("Filter is not initialized");
         if (mask_iterations > 0 && fine_kernel >= 3)
             return xm::ocl::chroma_key(
@@ -61,16 +65,12 @@ namespace xm::filters {
                 q_idx);
     }
 
-    void ChromaKey::reset() {
-        // TODO?
-    }
-
     void ChromaKey::start() {
-
+        ready = true;
     }
 
     void ChromaKey::stop() {
-
+        ready = false;
     }
 
 } // xm

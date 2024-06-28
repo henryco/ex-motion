@@ -2,8 +2,8 @@
 // Created by henryco on 16/06/24.
 //
 
-#ifndef XMOTION_BG_LBP_SUBTRACT_H
-#define XMOTION_BG_LBP_SUBTRACT_H
+#ifndef XMOTION_BG_SUBTRACT_H
+#define XMOTION_BG_SUBTRACT_H
 
 #include "../utils/xm_data.h"
 #include "i_filter.h"
@@ -178,4 +178,4 @@ namespace xm::filters {
     };
 }
 
-#endif //XMOTION_BG_LBP_SUBTRACT_H
+#endif //XMOTION_BG_SUBTRACT_H

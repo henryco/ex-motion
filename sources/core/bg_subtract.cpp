@@ -2,7 +2,7 @@
 // Created by henryco on 16/06/24.
 //
 
-#include "../../xmotion/core/filter/bg_lbp_subtract.h"
+#include "../../xmotion/core/filter/bg_subtract.h"
 #include "../../xmotion/core/ocl/ocl_filters.h"
 #include "../../kernels/subsense.h"
 

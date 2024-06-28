@@ -5,7 +5,7 @@
 #include "../../xmotion/fbgtk/file_worker.h"
 #include "../../xmotion/core/filter/chroma_key.h"
 #include "../../xmotion/core/utils/cv_utils.h"
-#include "../../xmotion/core/filter/bg_lbp_subtract.h"
+#include "../../xmotion/core/filter/bg_subtract.h"
 
 namespace xm {
 

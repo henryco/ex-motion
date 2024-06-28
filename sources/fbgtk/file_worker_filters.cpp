@@ -80,7 +80,7 @@ namespace xm {
                 }
 
                 if (f.difference._present) {
-                    auto filter = std::make_unique<xm::filters::BgLbpSubtract>();
+                    auto filter = std::make_unique<xm::filters::BgSubtract>();
 
                     vec.push_back(std::move(filter));
                     continue;

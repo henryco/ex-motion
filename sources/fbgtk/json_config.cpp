@@ -303,10 +303,12 @@ namespace xm::data {
         f.chroma = def.chroma;
         if (f.type == XM_FILTER_TYPE_BLUR)
             j.get_to(f.blur);
-        if (f.type == XM_FILTER_TYPE_CHROMA)
+        else if (f.type == XM_FILTER_TYPE_CHROMA)
             j.get_to(f.chroma);
-        if (f.type == XM_FILTER_TYPE_DIFF)
+        else if (f.type == XM_FILTER_TYPE_DIFF)
             j.get_to(f.difference);
+        else
+            throw std::invalid_argument("Unknown filter type: " + f.type);
     }
 
     void from_json(const nlohmann::json &j, Flip &f) {

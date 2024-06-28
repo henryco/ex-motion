@@ -38,7 +38,7 @@
 
         "filters": [
           {
-            "type": "chroma",
+            "type": "chromakey",
             "key": "#CC3733",
             "replace": "#00FF00",
             "refine": 0,

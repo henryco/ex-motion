@@ -11,11 +11,11 @@
 #pragma ide diagnostic ignored "ConstantConditionsOC"
 namespace xm::filters {
 
-    BgLbpSubtract::~BgLbpSubtract() {
+    BgSubtract::~BgSubtract() {
         release();
     }
 
-    void BgLbpSubtract::release() {
+    void BgSubtract::release() {
         for (auto &item: ocl_queue_map) {
             if (item.second == nullptr)
                 continue;
@@ -37,7 +37,7 @@ namespace xm::filters {
         if (device_id != nullptr) clReleaseDevice(device_id);
     }
 
-    cl_command_queue BgLbpSubtract::retrieve_queue(int index) {
+    cl_command_queue BgSubtract::retrieve_queue(int index) {
         if (index <= 0)
             return ocl_command_queue;
 
@@ -52,7 +52,7 @@ namespace xm::filters {
         return ocl_queue_map[index];
     }
 
-    void BgLbpSubtract::init(const bgs::Conf &conf) {
+    void BgSubtract::init(const bgs::Conf &conf) {
         config = conf;
 
         reset();
@@ -104,13 +104,13 @@ namespace xm::filters {
         initialized = true;
     }
 
-    xm::ocl::iop::ClImagePromise BgLbpSubtract::filter(const ocl::iop::ClImagePromise &frame_in, int q_idx) {
+    xm::ocl::iop::ClImagePromise BgSubtract::filter(const ocl::iop::ClImagePromise &frame_in, int q_idx) {
         return filter(frame_in, {}, q_idx);
     }
 
-    xm::ocl::iop::ClImagePromise BgLbpSubtract::filter(const ocl::iop::ClImagePromise &frame_in,
-                                                       const ocl::iop::ClImagePromise &ex_mask,
-                                                       int q_idx) {
+    xm::ocl::iop::ClImagePromise BgSubtract::filter(const ocl::iop::ClImagePromise &frame_in,
+                                                    const ocl::iop::ClImagePromise &ex_mask,
+                                                    int q_idx) {
         if (!initialized)
             throw std::logic_error("Filter is not initialized");
 
@@ -129,7 +129,7 @@ namespace xm::filters {
         return config.debug_on && debug_mode >= 0 ? debug(debug_mode, result) : result;
     }
 
-    void BgLbpSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
+    void BgSubtract::prepare_update_model(const ocl::iop::ClImagePromise &in_p, int q_idx) {
         cl_command_queue queue = q_idx < 0 && in_p.queue() != nullptr ? in_p.queue() : retrieve_queue(q_idx);
         const auto &in = in_p.getImage2D();
 
@@ -225,7 +225,7 @@ namespace xm::filters {
             false);
     }
 
-    xm::ocl::iop::ClImagePromise BgLbpSubtract::downscale(const ocl::iop::ClImagePromise &in_p, int base, int q_idx) {
+    xm::ocl::iop::ClImagePromise BgSubtract::downscale(const ocl::iop::ClImagePromise &in_p, int base, int q_idx) {
         cl_command_queue queue = q_idx < 0 && in_p.queue() != nullptr ? in_p.queue() : retrieve_queue(q_idx);
         const auto &in = in_p.getImage2D();
 
@@ -281,10 +281,10 @@ namespace xm::filters {
                 .withCleanup(in_p);
     }
 
-    xm::ocl::iop::ClImagePromise BgLbpSubtract::subsense(const ocl::iop::ClImagePromise &downscaled_p,
-                                                         const ocl::iop::ClImagePromise &original_p,
-                                                         const ocl::iop::ClImagePromise &exclusion_p,
-                                                         int q_idx) {
+    xm::ocl::iop::ClImagePromise BgSubtract::subsense(const ocl::iop::ClImagePromise &downscaled_p,
+                                                      const ocl::iop::ClImagePromise &original_p,
+                                                      const ocl::iop::ClImagePromise &exclusion_p,
+                                                      int q_idx) {
         cl_command_queue queue = q_idx < 0 && downscaled_p.queue() != nullptr
             ? downscaled_p.queue()
             : retrieve_queue(q_idx);
@@ -449,7 +449,7 @@ namespace xm::filters {
     }
 
 
-    void BgLbpSubtract::gate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
+    void BgSubtract::gate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
         if (config.refine_gate <= 0 || !config.morph_on)
             return;
 
@@ -494,7 +494,7 @@ namespace xm::filters {
         seg_mask = std::move(im_1);
     }
 
-    void BgLbpSubtract::erode(cl_command_queue queue, size_t *l_size, size_t *g_size) {
+    void BgSubtract::erode(cl_command_queue queue, size_t *l_size, size_t *g_size) {
         if (config.refine_erode <= 0 || !config.morph_on)
             return;
 
@@ -537,7 +537,7 @@ namespace xm::filters {
         seg_mask = std::move(im_1);
     }
 
-    void BgLbpSubtract::dilate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
+    void BgSubtract::dilate(cl_command_queue queue, size_t *l_size, size_t *g_size) {
         if (config.refine_dilate <= 0 || !config.morph_on)
             return;
 
@@ -578,7 +578,7 @@ namespace xm::filters {
         seg_mask = std::move(im_1);
     }
 
-    xm::ocl::iop::ClImagePromise BgLbpSubtract::debug(int n, const xm::ocl::iop::ClImagePromise &ref) {
+    xm::ocl::iop::ClImagePromise BgSubtract::debug(int n, const xm::ocl::iop::ClImagePromise &ref) {
         if (!config.debug_on)
             throw std::invalid_argument("Debug is disabled");
 
@@ -639,14 +639,14 @@ namespace xm::filters {
         .withCleanup(ref);
     }
 
-    int BgLbpSubtract::denorm_color_threshold(float v) const {
+    int BgSubtract::denorm_color_threshold(float v) const {
         return (int) std::ceil(v * (config.norm_l2
             ? std::sqrt((float) config.color_channels * std::pow(255.f, 2.f))
             : (float) config.color_channels * 255
         ));
     }
 
-    int BgLbpSubtract::denorm_lbsp_threshold(float v) const {
+    int BgSubtract::denorm_lbsp_threshold(float v) const {
         return (int) std::ceil((float) config.color_channels * v * 4.f * (float) ((int) config.kernel));
     }
 
@@ -675,19 +675,19 @@ namespace xm::filters {
         return ((int) t) < ((int) bgs::KERNEL_TYPE_RUBY_12) ? 1 : 2;
     }
 
-    void BgLbpSubtract::start() {
+    void BgSubtract::start() {
         ready = true;
     }
 
-    void BgLbpSubtract::stop() {
+    void BgSubtract::stop() {
         ready = false;
     }
 
-    void BgLbpSubtract::reset() {
+    void BgSubtract::reset() {
         model_i = 0;
     }
 
-    void BgLbpSubtract::set_debug_mode(int mode) {
+    void BgSubtract::set_debug_mode(int mode) {
         debug_mode = mode;
     }
 

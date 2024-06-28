@@ -82,7 +82,7 @@ namespace xm::filters {
         };
     }
 
-    class BgLbpSubtract : public xm::Filter {
+    class BgSubtract : public xm::Filter {
         static inline const auto log =
                 spdlog::stdout_color_mt("filter_bg_lbp_subtract");
 
@@ -132,9 +132,9 @@ namespace xm::filters {
         int model_i = 0;
 
     public:
-        BgLbpSubtract() = default;
+        BgSubtract() = default;
 
-        ~BgLbpSubtract() override;
+        ~BgSubtract() override;
 
         void init(const bgs::Conf &conf);
 

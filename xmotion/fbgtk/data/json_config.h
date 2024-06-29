@@ -160,6 +160,9 @@ namespace xm::data {
         FileNames chain;
     } Compose;
 
+    /**
+     * THIS IS TOP LEVEL CONFIG, whom json config file is built on
+     */
     typedef struct {
         /**
          * Configuration type

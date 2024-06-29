@@ -814,19 +814,19 @@
 ### Capture
 - **Type:** Object
 
-  | Property | Type                  | Description                                                      |
-  |----------|-----------------------|------------------------------------------------------------------|
-  | id       | `string`              | Capture device id  `"/dev/video1"` or `"usb-0000:02:00.0-2"` etc |
-  | name     | `string`              | Capture device name (arbitrary)                                  |
-  | codec    | `string`              | Capture codec. i.e: `"MJPG"` \| `"YUYV"` \| `"H264"` \| `"BGR3"` |
-  | width    | `integer`             | Captured frame width                                             |
-  | height   | `integer`             | Captured frame height                                            |
-  | buffer   | `integer`             | Capture buffer size. May introduce lag, smoothes fps.            |
-  | fps      | `integer`             | Capture FPS                                                      |
-  | rotate   | `boolean`             | Frame rotation (optional). Applied after `flip`                  |
-  | flip     | [`Flip`](#flip)       | Frame flip (optional). Applied after `region`                    |
-  | region   | [`Region`](#region)   | Frame subregion (optional)                                       |
-  | filters  | [`Filter[]`](#filter) | Array of filters (optional)                                      |
+  | Property | Type                  | Description                                                            |
+  |----------|-----------------------|------------------------------------------------------------------------|
+  | id       | `string`              | Capture device id. i.e:  `"/dev/video1"` or `"usb-0000:02:00.0-2"` etc |
+  | name     | `string`              | Capture device name (arbitrary)                                        |
+  | codec    | `string`              | Capture codec. i.e: `"MJPG"` \| `"YUYV"` \| `"H264"` \| `"BGR3"`       |
+  | width    | `integer`             | Captured frame width                                                   |
+  | height   | `integer`             | Captured frame height                                                  |
+  | buffer   | `integer`             | Capture buffer size. May introduce lag, smoothes fps.                  |
+  | fps      | `integer`             | Capture FPS                                                            |
+  | rotate   | `boolean`             | Frame rotation (optional). Applied after `flip`                        |
+  | flip     | [`Flip`](#flip)       | Frame flip (optional). Applied after `region`                          |
+  | region   | [`Region`](#region)   | Frame subregion (optional)                                             |
+  | filters  | [`Filter[]`](#filter) | Array of filters (optional)                                            |
 
 - **Example:**
   ```json

@@ -154,7 +154,7 @@ namespace xm::util::epi {
          * Size of one of the dimensions [ N ], \n
          * So the whole matrix size is [ N x N ]
          */
-        int epipolar_matrix_size = 0;
+        unsigned long epipolar_matrix_size = 0;
 
         Matrix() = default;
 

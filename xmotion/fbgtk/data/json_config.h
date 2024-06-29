@@ -58,12 +58,18 @@ namespace xm::data {
     } Pose;
 
     typedef struct {
+        std::string name;
+        FileNames chain;
+    } Compose;
+
+    typedef struct {
         ConfigType type;
         Misc misc;
         Gui gui;
         Pose pose;
         Camera camera;
         Calibration calibration;
+        Compose compose;
     } JsonConfig;
 
     JsonConfig config_from_file(const std::string &file);

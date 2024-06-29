@@ -12,7 +12,7 @@ class EpiComposer {
     static inline const auto log =
             spdlog::stdout_color_mt("epi_composer");
 
-
+    // TODO: Mergin two pairs into one
 };
 
 #endif //XMOTION_COMPOSE_H

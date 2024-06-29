@@ -5,6 +5,8 @@
 #ifndef XMOTION_JSON_CONFIG_CALIBRATION_H
 #define XMOTION_JSON_CONFIG_CALIBRATION_H
 
+#include "json_config_common.h"
+
 namespace xm::data {
 
     namespace board {
@@ -34,7 +36,7 @@ namespace xm::data {
     } Intrinsics;
 
     typedef struct {
-        std::vector<std::string> intrinsics;
+        FileNames intrinsics;
         bool closed;
     } Chain;
 
@@ -48,7 +50,7 @@ namespace xm::data {
     } Calibration;
 
     typedef struct {
-        std::vector<std::string> files;
+        FileNames files;
         bool closed;
         bool _present;
     } ChainCalibration;

@@ -8,23 +8,23 @@
 namespace xm::data::def {
     Intrinsic intrinsic() {
         return {
-                .x = -1,
-                .y = -1,
-                .fix = false
+            .x = -1,
+            .y = -1,
+            .fix = false
         };
     }
 
     Intrinsics intrinsics() {
         return {
-                .f = intrinsic(),
-                .c = intrinsic()
+            .f = intrinsic(),
+            .c = intrinsic()
         };
     }
 
     Chain chain() {
         return {
-                .intrinsics = std::vector<std::string>{},
-                .closed = false
+            .intrinsics = std::vector<std::string>{},
+            .closed = false
         };
     }
 
@@ -37,30 +37,30 @@ namespace xm::data::def {
 
     Gui gui() {
         return {
-                .layout = std::vector<int>{},
-                .frame = guiFrame(),
-                .vertical = false,
-                .scale = 1.f,
-                .fps = 300
+            .layout = std::vector<int>{},
+            .frame = guiFrame(),
+            .vertical = false,
+            .scale = 1.f,
+            .fps = 300
         };
     }
 
     Misc misc() {
         return {
-                .debug = false,
-                .cpu = 8
+            .debug = false,
+            .cpu = 8
         };
     }
 
     PoseRoi poseRoi() {
         return {
-                .rollback_window = 0.f,
-                .center_window = 0.f,
-                .clamp_window = 0.f,
-                .scale = 1.2f,
-                .margin = 0.f,
-                .padding_x = 0.f,
-                .padding_y = 0.f
+            .rollback_window = 0.f,
+            .center_window = 0.f,
+            .clamp_window = 0.f,
+            .scale = 1.2f,
+            .margin = 0.f,
+            .padding_x = 0.f,
+            .padding_y = 0.f
         };
     }
 
@@ -74,36 +74,36 @@ namespace xm::data::def {
 
     PoseThresholds poseThresholds() {
         return {
-                .detector = 0.5f,
-                .marks = 0.5f,
-                .pose = 0.5f,
-                .roi = 0.f
+            .detector = 0.5f,
+            .marks = 0.5f,
+            .pose = 0.5f,
+            .roi = 0.f
         };
     }
 
     PoseFilter poseFilter() {
         return {
-                .velocity = 0.5f,
-                .window = 30,
-                .fps = 30
+            .velocity = 0.5f,
+            .window = 30,
+            .fps = 30
         };
     }
 
     PoseModel poseModel() {
         return {
-                .detector = pose::F_16,
-                .body = pose::FULL_F32,
+            .detector = pose::F_16,
+            .body = pose::FULL_F32,
         };
     }
 
     PoseDevice poseDevice() {
         return {
-                .intrinsics = "",
-                .threshold = xm::data::def::poseThresholds(),
-                .undistort = xm::data::def::poseUndistort(),
-                .filter = xm::data::def::poseFilter(),
-                .model = xm::data::def::poseModel(),
-                .roi = xm::data::def::poseRoi()
+            .intrinsics = "",
+            .threshold = xm::data::def::poseThresholds(),
+            .undistort = xm::data::def::poseUndistort(),
+            .filter = xm::data::def::poseFilter(),
+            .model = xm::data::def::poseModel(),
+            .roi = xm::data::def::poseRoi()
         };
     }
 
@@ -123,12 +123,12 @@ namespace xm::data::def {
 
     Pose pose() {
         return {
-                .devices = {},
-                .chain = xm::data::def::chainCalibration(),
-                .cross = xm::data::def::crossCalibration(),
-                .show_epilines = false,
-                .segmentation = false,
-                .threads = 0
+            .devices = {},
+            .chain = xm::data::def::chainCalibration(),
+            .cross = xm::data::def::crossCalibration(),
+            .show_epilines = false,
+            .segmentation = false,
+            .threads = 0
         };
     }
 
@@ -182,6 +182,12 @@ namespace xm::data::def {
         };
     }
 
+    Compose compose() {
+        return {
+          .name = "",
+          .chain = {}
+        };
+    }
 }
 
 namespace xm::data {
@@ -485,6 +491,12 @@ namespace xm::data {
         m.debug = j.value("debug", false);
     }
 
+    void from_json(const nlohmann::json &j, Compose &c) {
+        const auto def = xm::data::def::compose();
+        c.name = j.value("name", def.name);
+        c.chain = j.value("chain", def.chain);
+    }
+
     void from_json(const nlohmann::json &j, JsonConfig &c) {
         j.at("type").get_to(c.type);
         j.at("camera").get_to(c.camera);
@@ -492,6 +504,7 @@ namespace xm::data {
         c.misc = j.value("misc", xm::data::def::misc());
         c.gui = j.value("gui", xm::data::def::gui());
         c.pose = j.value("pose", xm::data::def::pose());
+        c.compose = j.value("compose", xm::data::def::compose());
 
         if (c.type == ConfigType::CALIBRATION || c.type == ConfigType::CROSS_CALIBRATION) {
             j.at("calibration").get_to(c.calibration);

@@ -39,12 +39,12 @@ namespace xm::util::epi {
 
     Matrix::Row Matrix::operator[](int row) {
         assert(row >= 0 && row < epipolar_matrix_size);
-        return {epipolar_matrix, epipolar_matrix_size, row};
+        return {epipolar_matrix, (int) epipolar_matrix_size, row};
     }
 
     const Matrix::Row Matrix::operator[](int row) const {
         assert(row >= 0 && row < epipolar_matrix_size);
-        return {epipolar_matrix, epipolar_matrix_size, row};
+        return {epipolar_matrix, (int) epipolar_matrix_size, row};
     }
 
     void Matrix::release() {
@@ -102,15 +102,15 @@ namespace xm::util::epi {
     }
 
     int Matrix::rows() const {
-        return epipolar_matrix_size;
+        return (int) epipolar_matrix_size;
     }
 
     int Matrix::cols() const {
-        return epipolar_matrix_size;
+        return (int) epipolar_matrix_size;
     }
 
     int Matrix::size() const {
-        return epipolar_matrix_size * epipolar_matrix_size;
+        return (int) (epipolar_matrix_size * epipolar_matrix_size);
     }
 
     bool Matrix::empty() const {
@@ -200,7 +200,7 @@ namespace xm::util::epi {
                 ? xm::util::epi::chain_to_origin(chain, closed)
                 : chain;
 
-        const int size = (int) devices.size();
+        const ulong size = (ulong) devices.size();
 
         /*
          *    t0 t1 t2
@@ -260,7 +260,7 @@ namespace xm::util::epi {
             }
         }
 
-        return {epipolar_matrix, size};
+        return {epipolar_matrix, (int) size};
     }
 
     std::string Matrix::to_string() const {

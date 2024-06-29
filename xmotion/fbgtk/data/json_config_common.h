@@ -7,6 +7,8 @@
 
 namespace xm::data {
 
+    typedef std::vector<std::string> FileNames;
+
     typedef struct {
         int x;
         int y;

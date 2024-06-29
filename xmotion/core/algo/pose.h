@@ -231,12 +231,6 @@ namespace xm::nview {
         cv::Mat map2;
     } ReMaps;
 
-    typedef struct Epilines {
-        cv::Vec3f line;
-        cv::Point2i p1;
-        cv::Point2i p2;
-    } Epilines;
-
     typedef struct Result {
         bool error;
         std::string err_msg;

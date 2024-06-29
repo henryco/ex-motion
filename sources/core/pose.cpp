@@ -207,12 +207,6 @@ cv::Vec3f xm::Pose::epi_line_from_point(const cv::Point2f &point, int idx_point,
     // map point to line: idx_point -> idx_line
     const auto &F = config.epi_matrix[idx_point][idx_line].F;
 
-//    {
-//        std::vector<cv::Vec3f> vec;
-//        cv::computeCorrespondEpilines(std::vector<cv::Point2f>{point}, 1, F, vec);
-//        return vec[0];
-//    }
-
     {
         const cv::Mat pt = (cv::Mat_<double>(3, 1) << point.x, point.y, 1.f);
         const cv::Mat line = F * pt;

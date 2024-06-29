@@ -40,15 +40,6 @@ namespace xm::data {
     } Capture;
 
     typedef struct {
-        std::vector<Capture> capture;
-        bool fast;
-        bool dummy;
-
-        std::vector<std::string> _names;
-        std::vector<std::string> _ids;
-    } Camera;
-
-    typedef struct {
         std::vector<PoseDevice> devices;
         ChainCalibration chain;
         CrossCalibration cross;
@@ -67,7 +58,7 @@ namespace xm::data {
         Misc misc;
         Gui gui;
         Pose pose;
-        Camera camera;
+        std::vector<Capture> captures;
         Calibration calibration;
         Compose compose;
     } JsonConfig;

@@ -22,6 +22,8 @@ namespace xm::data {
     } Gui;
 
     typedef struct {
+        bool capture_dummy;
+        bool capture_fast;
         bool debug;
         int cpu;
     } Misc;

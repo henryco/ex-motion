@@ -9,11 +9,11 @@
 namespace xm {
 
     void FileWorker::prepare_cam() {
-        camera = config.camera.dummy
+        camera = config.misc.capture_dummy
                 ? std::make_unique<xm::DummyCamera>()
                 : std::make_unique<xm::StereoCamera>();
-        camera->setFastMode(config.camera.fast);
-        for (const auto &c: config.camera.capture) {
+        camera->setFastMode(config.misc.capture_fast);
+        for (const auto &c: config.captures) {
             camera->open({
                                 .device_id = c.id,
                                 .name = c.name,
@@ -37,7 +37,7 @@ namespace xm {
     void FileWorker::on_camera_save(const std::string &device_id) {
         const std::filesystem::path project_dir = xm::data::prepare_project_dir(project_file);
         const std::filesystem::path parent = xm::data::create_dir_rec(project_dir / "cam");
-        for (const auto &c: config.camera.capture) {
+        for (const auto &c: config.captures) {
             if (c.id != device_id)
                 continue;
 

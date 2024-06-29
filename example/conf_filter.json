@@ -13,49 +13,46 @@
     }
   },
 
-  "camera": {
-    "fast": false,
-    "capture": [
-      {
-        "id": "/dev/video104",
-        "name": "razer",
-        "width": 1920,
-        "height": 1080,
-        "fps": 30,
-        "codec": "MJPG",
-        "buffer": 2,
-        "rotate": true,
-        "flip": {
-          "x": true,
-          "y": true
-        },
-        "region": {
-          "x": 0,
-          "y": 0,
-          "w": 1920,
-          "h": 1080
-        },
+  "captures": [
+    {
+      "id": "/dev/video104",
+      "name": "razer",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "codec": "MJPG",
+      "buffer": 2,
+      "rotate": true,
+      "flip": {
+        "x": true,
+        "y": true
+      },
+      "region": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
 
-        "filters": [
-          {
-            "type": "chromakey",
-            "key": "#CC3733",
-            "replace": "#00FF00",
-            "refine": 0,
-            "fine": 0,
-            "blur": 1,
-            "power": 0,
-            "range": {
-              "h": 0.02,
-              "s": 0.4,
-              "l": 0.4
-            }
+      "filters": [
+        {
+          "type": "chromakey",
+          "key": "#CC3733",
+          "replace": "#00FF00",
+          "refine": 0,
+          "fine": 0,
+          "blur": 1,
+          "power": 0,
+          "range": {
+            "h": 0.02,
+            "s": 0.4,
+            "l": 0.4
           }
-        ]
+        }
+      ]
 
-      }
-    ]
-  },
+    }
+  ],
 
   "calibration": {
     "name": "test",

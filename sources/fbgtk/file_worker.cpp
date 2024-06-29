@@ -99,9 +99,9 @@ namespace xm {
         logic = std::make_unique<xm::Calibration>();
         logic->debug(config.misc.debug);
 
-        const auto w = config.camera.capture[0].region.w;
-        const auto h = config.camera.capture[0].region.h;
-        const auto r = config.camera.capture[0].rotate;
+        const auto w = config.captures[0].region.w;
+        const auto h = config.captures[0].region.h;
+        const auto r = config.captures[0].rotate;
 
         xm::calib::Initial params = {
                 .delay = config.calibration.delay,
@@ -178,9 +178,9 @@ namespace xm {
 
             log->info("Reading calibration file: {}, {}", device.intrinsics, file);
             const auto calibration = xm::data::ocv::read_calibration(file);
-            const auto rotate = config.camera.capture[i].rotate;
-            const auto width = config.camera.capture[i].region.w;
-            const auto height = config.camera.capture[i].region.h;
+            const auto rotate = config.captures[i].rotate;
+            const auto width = config.captures[i].region.w;
+            const auto height = config.captures[i].region.h;
             vec.push_back(
                     {
                             .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),

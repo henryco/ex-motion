@@ -47,6 +47,8 @@ namespace xm::data::def {
 
     Misc misc() {
         return {
+            .capture_dummy = false,
+            .capture_fast = false,
             .debug = false,
             .cpu = 8
         };
@@ -371,19 +373,6 @@ namespace xm::data {
         c.filters = j.value("filters", std::vector<Filter>{});
     }
 
-    void from_json(const nlohmann::json &j, Camera &c) {
-        j.at("capture").get_to(c.capture);
-        c.fast = j.value("fast", false);
-        c.dummy = j.value("dummy", false);
-
-        c._names = {};
-        c._ids = {};
-        for (const auto &d: c.capture) {
-            c._names.push_back(d.name);
-            c._ids.push_back(d.id);
-        }
-    }
-
     void from_json(const nlohmann::json &j, GuiFrame &f) {
         const auto def = xm::data::def::guiFrame();
         f.w = j.value("w", def.w);
@@ -487,8 +476,11 @@ namespace xm::data {
     }
 
     void from_json(const nlohmann::json &j, Misc &m) {
-        m.cpu = j.value("cpu", 8);
-        m.debug = j.value("debug", false);
+        const auto def = xm::data::def::misc();
+        m.cpu = j.value("cpu", def.cpu);
+        m.debug = j.value("debug", def.debug);
+        m.capture_fast = j.value("capture_fast", def.capture_fast);
+        m.capture_dummy = j.value("capture_dummy", def.capture_dummy);
     }
 
     void from_json(const nlohmann::json &j, Compose &c) {
@@ -499,7 +491,7 @@ namespace xm::data {
 
     void from_json(const nlohmann::json &j, JsonConfig &c) {
         j.at("type").get_to(c.type);
-        j.at("camera").get_to(c.camera);
+        j.at("captures").get_to(c.captures);
 
         c.misc = j.value("misc", xm::data::def::misc());
         c.gui = j.value("gui", xm::data::def::gui());

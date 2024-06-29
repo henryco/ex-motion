@@ -19,7 +19,7 @@ namespace xm {
     }
 
     void FileWorker::load_device_params() {
-        for (const auto &cap: config.camera.capture) {
+        for (const auto &cap: config.captures) {
             const auto props = camera->getControls(cap.id);
             std::vector<eox::xgtk::GtkCamProp> vec;
             vec.reserve(props.controls.size());
@@ -72,22 +72,28 @@ namespace xm {
                 button_filter->proxy().set_label(do_filter ? "(F)" : "F");
             });
 
-            const auto &cam = config.camera;
+            const auto &captures = config.captures;
             const auto &gui = config.gui;
+
+            std::vector<std::string> c_names;
+            c_names.reserve(captures.size());
+            for (const auto &d: captures)
+                c_names.push_back(d.name);
+
 
             int fw, fh;
             if (gui.frame.w <= 0 || gui.frame.h <= 0) {
-                fw = cam.capture[0].region.w;
-                fh = cam.capture[0].region.h;
+                fw = captures[0].region.w;
+                fh = captures[0].region.h;
             } else {
                 fw = gui.frame.w;
                 fh = gui.frame.h;
             }
 
             if (gui.layout.size() < 2)
-                window->init(fw, fh, cam._names, gui.vertical);
+                window->init(fw, fh, c_names, gui.vertical);
             else
-                window->init(fw, fh, cam._names, gui.layout[0], gui.layout[1]);
+                window->init(fw, fh, c_names, gui.layout[0], gui.layout[1]);
 
             window->scale(config.gui.scale);
             window->add_one(*button_conf);
@@ -100,7 +106,7 @@ namespace xm {
             params_window->set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
             params_window->set_visible(false);
 
-            const auto a1 = (int) (gui.scale * (float) cam.capture[0].region.h);
+            const auto a1 = (int) (gui.scale * (float) captures[0].region.h);
             const auto a2 = window->get_screen()->get_height();
             const auto a3 = window->get_screen()->get_width();
             const auto a4 = std::min(a2, a3);

@@ -14,74 +14,71 @@
     }
   },
 
-  "camera": {
-    "fast": false,
-    "capture": [
-      {
-        "id": "/dev/video11",
-        "name": "vid100",
-        "width": 4320,
-        "height": 1920,
-        "fps": 30,
-        "codec": "YU12",
-        "buffer": 2,
-        "region": {
-          "x": 0,
-          "y": 0,
-          "w": 1080,
-          "h": 1920
-        }
-      },
-
-      {
-        "id": "/dev/video11",
-        "name": "vid103",
-        "width": 4320,
-        "height": 1920,
-        "fps": 30,
-        "codec": "YU12",
-        "buffer": 2,
-        "region": {
-          "x": 1080,
-          "y": 0,
-          "w": 1080,
-          "h": 1920
-        }
-      },
-
-      {
-        "id": "/dev/video11",
-        "name": "vid101",
-        "width": 4320,
-        "height": 1920,
-        "fps": 30,
-        "codec": "YU12",
-        "buffer": 2,
-        "region": {
-          "x": 2160,
-          "y": 0,
-          "w": 1080,
-          "h": 1920
-        }
-      },
-
-      {
-        "id": "/dev/video11",
-        "name": "vid102",
-        "width": 4320,
-        "height": 1920,
-        "fps": 30,
-        "codec": "YU12",
-        "buffer": 2,
-        "region": {
-          "x": 3240,
-          "y": 0,
-          "w": 1080,
-          "h": 1920
-        }
+  "captures": [
+    {
+      "id": "/dev/video11",
+      "name": "vid100",
+      "width": 4320,
+      "height": 1920,
+      "fps": 30,
+      "codec": "YU12",
+      "buffer": 2,
+      "region": {
+        "x": 0,
+        "y": 0,
+        "w": 1080,
+        "h": 1920
       }
-    ]
-  },
+    },
+
+    {
+      "id": "/dev/video11",
+      "name": "vid103",
+      "width": 4320,
+      "height": 1920,
+      "fps": 30,
+      "codec": "YU12",
+      "buffer": 2,
+      "region": {
+        "x": 1080,
+        "y": 0,
+        "w": 1080,
+        "h": 1920
+      }
+    },
+
+    {
+      "id": "/dev/video11",
+      "name": "vid101",
+      "width": 4320,
+      "height": 1920,
+      "fps": 30,
+      "codec": "YU12",
+      "buffer": 2,
+      "region": {
+        "x": 2160,
+        "y": 0,
+        "w": 1080,
+        "h": 1920
+      }
+    },
+
+    {
+      "id": "/dev/video11",
+      "name": "vid102",
+      "width": 4320,
+      "height": 1920,
+      "fps": 30,
+      "codec": "YU12",
+      "buffer": 2,
+      "region": {
+        "x": 3240,
+        "y": 0,
+        "w": 1080,
+        "h": 1920
+      }
+    }
+  ],
 
   "pose": {
     "segmentation": false,

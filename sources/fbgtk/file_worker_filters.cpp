@@ -50,8 +50,8 @@ namespace xm {
 
     void FileWorker::prepare_filters() {
         filters.clear();
-        filters.reserve(config.camera.capture.size());
-        for (const auto &capture: config.camera.capture) {
+        filters.reserve(config.captures.size());
+        for (const auto &capture: config.captures) {
             std::vector<std::unique_ptr<xm::Filter>> vec;
 
             for (const auto &f: capture.filters) {

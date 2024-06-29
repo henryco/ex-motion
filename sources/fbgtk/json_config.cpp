@@ -152,7 +152,7 @@ namespace xm::data::def {
 
     Blur blur() {
         return {
-            .power = 1,
+            .blur = 1,
             ._present = false
         };
     }
@@ -244,7 +244,7 @@ namespace xm::data {
 
     void from_json(const nlohmann::json &j, Blur &b) {
         const auto def = xm::data::def::blur();
-        b.power = j.value("power", def.power);
+        b.blur = j.value("power", def.blur);
         b._present = true;
     }
 

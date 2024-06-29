@@ -57,7 +57,7 @@ namespace xm {
             for (const auto &f: capture.filters) {
                 if (f.blur._present) {
                     auto filter = std::make_unique<xm::filters::Blur>();
-                    filter->init(f.blur.power);
+                    filter->init(f.blur.blur);
                     vec.push_back(std::move(filter));
                     continue;
                 }

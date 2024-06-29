@@ -16,28 +16,99 @@ namespace xm::data {
 
     namespace fbg {
         enum BgKernelType {
+
+            /**
+             \code
+                 O
+               O X O
+                 O
+             \endcode
+             */
             CROSS_4 = 1,
+
+            /**
+             \code
+               O O O
+               O X O
+               O O O
+             \endcode
+             */
             SQUARE_8 = 2,
+
+            /**
+             \code
+                 O
+               O O O
+             O O X O O
+               O O O
+                 O
+             \endcode
+             */
             RUBY_12 = 3,
+
+            /**
+             \code
+             O   O   O
+               O O O
+             O O X O O
+               O O O
+             O   O   O
+             \endcode
+             */
             DIAMOND_16 = 4
         };
     }
 
     typedef struct {
-        std::string key; // hex color
-        std::string replace; // hex color
-        HSL range;
+        std::string key;      // chromakey key color (hex, ie: #ffffff)
+        std::string replace;  // chromakey replacement color (hex, ie: #ffffff)
+        HSL range;            // HSL range (threshold)
+
+        /**
+         * Blur intensity,
+         * used to calculate gaussian blur kernel
+         *
+         * \code
+         * (CxC): C = (blur * 2) + 1
+         * \endcode
+         */
         int blur;
+
+        /**
+         * Mask size, multiple of 256
+         *
+         * \code
+         * (TxT): T = (1 + power) * 256
+         * \endcode
+         */
         int power;
+
+        /**
+         * Mask refinement kernel
+         *
+         * \code
+         * (CxC): C = max(3, (fine * 2) + 1)
+         * \endcode
+         */
         int fine;
+
+        /**
+         * Mask refinement iterations
+         */
         int refine;
+
+        /**
+         * Should use linear interpolation
+         * (mask is slower but smoother)
+         */
         bool linear;
+
         bool _present;
     } Chroma;
 
     typedef struct Difference {
         int BASE_RESOLUTION = 240;       // Segmentation mask base resolution (px)
-        std::string color = "#ffffff";   // New background color
+        std::string color = "#ffffff";   // New background color (hex, ie: #ffffff)
 
         bool debug_on = false;           // Should enable debug functions
         bool adapt_on = true;            // Should enable updates of background model B(x)
@@ -84,11 +155,21 @@ namespace xm::data {
     } Difference;
 
     typedef struct {
-        int power;
+        /**
+         * Property used for calculating kernel size:
+         * \code
+         * K_size: (power * 2) + 1
+         * \endcode
+         */
+        int blur;
+
         bool _present;
     } Blur;
 
-    // Yes, I'm not going to practice polymorphic type gymnastics here
+    /**
+     * This structure in fact results in a combined json object
+     * (fields union of all child structures: {type, ...blur, ...chroma, ...difference})
+     */
     typedef struct {
         xm::data::FilterType type;
         Blur blur;

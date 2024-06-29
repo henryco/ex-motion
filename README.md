@@ -17,3 +17,16 @@ git clone \
 - [TensorFlow](https://github.com/tensorflow/tensorflow) (external/tensorflow)
 - [Argparse](https://github.com/p-ranav/argparse#positional-arguments) (external/argparse)
 - [Glm](https://github.com/g-truc/glm) (external/glm)
+
+#### How to install dependencies (Debian/Nvidia)
+```shell
+apt install -y         \
+    opencl-headers     \
+    ocl-icd-libopencl1 \
+    nvidia-opencl-dev  \
+    libopencv-dev      \
+    libgtkmm-3.0-dev   \
+    libgtkmm-4.0-dev   \
+    libspdlog-dev      \
+    libv4l-dev
+```

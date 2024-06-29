@@ -62,7 +62,7 @@ namespace xm::nview {
         BodyModel body_model = eox::dnn::pose::FULL_F32;
 
         /**
-         * Distance between detectors and actual ROI mid point
+         * Distance between detectors and actual ROI middle point
          * for which detected ROI should be rolled back to previous one
          *
          * [0.0 ... 1.0]

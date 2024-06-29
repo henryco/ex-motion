@@ -143,13 +143,13 @@
 ### Gui
 - **Type:** Object
 
-  | Property | Type        | Description                          |
-  |----------|-------------|--------------------------------------|
-  | layout   | `integer[]` | Layout of gui grid                   |
-  | frame    | `GuiFrame`  | Gui frame properties                 |
-  | vertical | `boolean`   | Force vertical layout (optional)     |
-  | scale    | `float`     | Gui window scaling                   |
-  | fps      | `integer`   | Gui render FPS limit                 |
+  | Property | Type                    | Description                          |
+  |----------|-------------------------|--------------------------------------|
+  | layout   | `integer[]`             | Layout of gui grid                   |
+  | frame    | [`GuiFrame`](#guiframe) | Gui frame properties                 |
+  | vertical | `boolean`               | Force vertical layout (optional)     |
+  | scale    | `float`                 | Gui window scaling                   |
+  | fps      | `integer`               | Gui render FPS limit                 |
 
 - **Example:**
   ```json
@@ -238,10 +238,10 @@
 ### Intrinsics
 - **Type:** Object
 
-  | Property | Type        | Description                |
-  |----------|-------------|----------------------------|
-  | f        | `Intrinsic` | Camera focal length values |
-  | c        | `Intrinsic` | Camera center position     |
+  | Property | Type                      | Description                |
+  |----------|---------------------------|----------------------------|
+  | f        | [`Intrinsic`](#intrinsic) | Camera focal length values |
+  | c        | [`Intrinsic`](#intrinsic) | Camera center position     |
 
 - **Example:**
   ```json
@@ -284,14 +284,14 @@
 ### Calibration
 - **Type:** Object
 
-  | Property   | Type         | Description                                                          |
-  |------------|--------------|----------------------------------------------------------------------|
-  | name       | `string`     | Calibration session name                                             |
-  | intrinsics | `Intrinsics` | Calibration intrinsic properties                                     |
-  | pattern    | `Pattern`    | Calibration pattern properties                                       |
-  | chain      | `Chain`      | Calibration chain properties                                         |
-  | total      | `integer`    | Total frames used in calibration process                             |
-  | delay      | `integer`    | Delay between consecutive frame shots in calibration process (in ms) |
+  | Property   | Type                        | Description                                                          |
+  |------------|-----------------------------|----------------------------------------------------------------------|
+  | name       | `string`                    | Calibration session name                                             |
+  | intrinsics | [`Intrinsics`](#intrinsics) | Calibration intrinsic properties                                     |
+  | pattern    | [`Pattern`](#pattern)       | Calibration pattern properties                                       |
+  | chain      | [`Chain`](#chain)           | Calibration chain properties                                         |
+  | total      | `integer`                   | Total frames used in calibration process                             |
+  | delay      | `integer`                   | Delay between consecutive frame shots in calibration process (in ms) |
 
 - **Example:**
   ```json
@@ -367,16 +367,16 @@
 ### Chroma
 - **Type:** Object
 
-  | Property | Type      | Description                                                |
-  |----------|-----------|------------------------------------------------------------|
-  | key      | `string`  | Chromakey key color (hex)                                  |
-  | replace  | `string`  | Chromakey replacement color (hex)                          |
-  | range    | `HSL`     | HSL range (similarity threshold)                           |
-  | blur     | `integer` | Blur intensity `(CxC): C = (blur * 2) + 1`                 |
-  | power    | `integer` | Mask size (multiple of 256) `(TxT): T = (1 + power) * 256` |
-  | fine     | `integer` | Mask refinement kernel                                     |
-  | refine   | `integer` | Mask refinement iterations                                 |
-  | linear   | `boolean` | Use linear interpolation                                   |
+  | Property | Type          | Description                                                |
+  |----------|---------------|------------------------------------------------------------|
+  | key      | `string`      | Chromakey key color (hex)                                  |
+  | replace  | `string`      | Chromakey replacement color (hex)                          |
+  | range    | [`HSL`](#hsl) | HSL range (similarity threshold)                           |
+  | blur     | `integer`     | Blur intensity `(CxC): C = (blur * 2) + 1`                 |
+  | power    | `integer`     | Mask size (multiple of 256) `(TxT): T = (1 + power) * 256` |
+  | fine     | `integer`     | Mask refinement kernel                                     |
+  | refine   | `integer`     | Mask refinement iterations                                 |
+  | linear   | `boolean`     | Use linear interpolation                                   |
 
 - **Example:**
   ```json
@@ -428,45 +428,45 @@
 ### Difference
 - **Type:** Object
 
-  | Property        | Type           | Description                                      |
-  |-----------------|----------------|--------------------------------------------------|
-  | BASE_RESOLUTION | `integer`      | Segmentation mask base resolution (px)           |
-  | color           | `string`       | New background color (hex), ie: `"#ffffff"`      |
-  | debug_on        | `boolean`      | Enable debug functions                           |
-  | adapt_on        | `boolean`      | Enable updates of background model               |
-  | ghost_on        | `boolean`      | Enable "ghost" detection                         |
-  | lbsp_on         | `boolean`      | Use LBSP for spatial comparison                  |
-  | norm_l2         | `boolean`      | Use L2 distance for color comparison             |
-  | linear          | `boolean`      | Use linear interpolation for image downscaling   |
-  | color_0         | `float`        | Threshold for color comparison                   |
-  | lbsp_0          | `float`        | Threshold for LBSP comparison                    |
-  | lbsp_d          | `float`        | Threshold for LBSP calculation                   |
-  | n_matches       | `integer`      | Number of intersections for background detection |
-  | t_upper         | `integer`      | Maximal value of T(x)                            |
-  | t_lower         | `integer`      | Minimal value of T(x)                            |
-  | model_size      | `integer`      | Number of frames in background model             |
-  | ghost_l         | `integer`      | Temporary new T(x) value for "ghost" pixels      |
-  | ghost_n         | `integer`      | Number of frames for ghost classification        |
-  | ghost_n_inc     | `integer`      | Increment value for ghost_n                      |
-  | ghost_n_dec     | `integer`      | Decrement value for ghost_n                      |
-  | alpha_d_min     | `float`        | Constant learning rate for D_min(x)              |
-  | alpha_norm      | `float`        | Mixing alpha for dt(x) calculation               |
-  | ghost_t         | `float`        | Ghost threshold for local variations             |
-  | r_scale         | `float`        | Scale for R(x) feedback change                   |
-  | r_cap           | `float`        | Max value for R(x)                               |
-  | t_scale_inc     | `float`        | Scale for T(x) feedback increment                |
-  | t_scale_dec     | `float`        | Scale for T(x) feedback decrement                |
-  | v_flicker_inc   | `float`        | Increment v(x) value for flickering pixels       |
-  | v_flicker_dec   | `float`        | Decrement v(x) value for flickering pixels       |
-  | v_flicker_cap   | `float`        | Max value for v(x)                               |
-  | refine_gate     | `integer`      | Number of gate operations                        |
-  | refine_erode    | `integer`      | Number of erosion operations                     |
-  | refine_dilate   | `integer`      | Number of dilation operations                    |
-  | gate_threshold  | `float`        | Gate operation threshold                         |
-  | kernel          | `BgKernelType` | Background kernel type                           |
-  | gate_kernel     | `BgKernelType` | Gate kernel type                                 |
-  | erode_kernel    | `BgKernelType` | Erode kernel type                                |
-  | dilate_kernel   | `BgKernelType` | Dilate kernel type                               |
+  | Property        | Type                            | Description                                      |
+  |-----------------|---------------------------------|--------------------------------------------------|
+  | BASE_RESOLUTION | `integer`                       | Segmentation mask base resolution (px)           |
+  | color           | `string`                        | New background color (hex), ie: `"#ffffff"`      |
+  | debug_on        | `boolean`                       | Enable debug functions                           |
+  | adapt_on        | `boolean`                       | Enable updates of background model               |
+  | ghost_on        | `boolean`                       | Enable "ghost" detection                         |
+  | lbsp_on         | `boolean`                       | Use LBSP for spatial comparison                  |
+  | norm_l2         | `boolean`                       | Use L2 distance for color comparison             |
+  | linear          | `boolean`                       | Use linear interpolation for image downscaling   |
+  | color_0         | `float`                         | Threshold for color comparison                   |
+  | lbsp_0          | `float`                         | Threshold for LBSP comparison                    |
+  | lbsp_d          | `float`                         | Threshold for LBSP calculation                   |
+  | n_matches       | `integer`                       | Number of intersections for background detection |
+  | t_upper         | `integer`                       | Maximal value of T(x)                            |
+  | t_lower         | `integer`                       | Minimal value of T(x)                            |
+  | model_size      | `integer`                       | Number of frames in background model             |
+  | ghost_l         | `integer`                       | Temporary new T(x) value for "ghost" pixels      |
+  | ghost_n         | `integer`                       | Number of frames for ghost classification        |
+  | ghost_n_inc     | `integer`                       | Increment value for ghost_n                      |
+  | ghost_n_dec     | `integer`                       | Decrement value for ghost_n                      |
+  | alpha_d_min     | `float`                         | Constant learning rate for D_min(x)              |
+  | alpha_norm      | `float`                         | Mixing alpha for dt(x) calculation               |
+  | ghost_t         | `float`                         | Ghost threshold for local variations             |
+  | r_scale         | `float`                         | Scale for R(x) feedback change                   |
+  | r_cap           | `float`                         | Max value for R(x)                               |
+  | t_scale_inc     | `float`                         | Scale for T(x) feedback increment                |
+  | t_scale_dec     | `float`                         | Scale for T(x) feedback decrement                |
+  | v_flicker_inc   | `float`                         | Increment v(x) value for flickering pixels       |
+  | v_flicker_dec   | `float`                         | Decrement v(x) value for flickering pixels       |
+  | v_flicker_cap   | `float`                         | Max value for v(x)                               |
+  | refine_gate     | `integer`                       | Number of gate operations                        |
+  | refine_erode    | `integer`                       | Number of erosion operations                     |
+  | refine_dilate   | `integer`                       | Number of dilation operations                    |
+  | gate_threshold  | `float`                         | Gate operation threshold                         |
+  | kernel          | [`BgKernelType`](#bgkerneltype) | Background kernel type                           |
+  | gate_kernel     | [`BgKernelType`](#bgkerneltype) | Gate kernel type                                 |
+  | erode_kernel    | [`BgKernelType`](#bgkerneltype) | Erode kernel type                                |
+  | dilate_kernel   | [`BgKernelType`](#bgkerneltype) | Dilate kernel type                               |
 
 - **Example:**
   ```json
@@ -517,12 +517,10 @@
 ### Filter
 - **Type:** Object
 
-  | Property   | Type                                        | Description           |
-  |------------|---------------------------------------------|-----------------------|
-  | type       | `"blur"` \| `"chromakey"` \| `"difference"` | Filter type           |
-  | blur       | `Blur`                                      | Blur properties       |
-  | chroma     | `Chroma`                                    | Chroma properties     |
-  | difference | `Difference`                                | Difference properties |
+  | Property                                | Type                                                                  | Description |
+  |-----------------------------------------|-----------------------------------------------------------------------|-------------|
+  | type                                    | `"blur"` \| `"chromakey"` \| `"difference"`                           | Filter type |
+  | `{ ...blur, ...chroma, ...difference }` | [`Blur`](#blur) \| [`Chroma`](#chroma) \| [`Difference`](#difference) | Properties  |
 
 - **Example:**
   ```json
@@ -660,10 +658,10 @@
 ### PoseModel
 - **Type:** Object
 
-  | Property | Type            | Description              |
-  |----------|-----------------|--------------------------|
-  | detector | `ModelDetector` | BlazePose detector model |
-  | body     | `ModelBody`     | BlazePose body model     |
+  | Property | Type                              | Description              |
+  |----------|-----------------------------------|--------------------------|
+  | detector | [`ModelDetector`](#modeldetector) | BlazePose detector model |
+  | body     | [`ModelBody`](#modelbody)         | BlazePose body model     |
 
 - **Example:**
   ```json
@@ -700,14 +698,14 @@
 ### PoseDevice
 - **Type:** Object
 
-  | Property   | Type             | Description                                       |
-  |------------|------------------|---------------------------------------------------|
-  | intrinsics | `string`         | Name of the file with device intrinsic parameters |
-  | threshold  | `PoseThresholds` | Pose thresholds                                   |
-  | undistort  | `PoseUndistort`  | Pose undistort properties                         |
-  | filter     | `PoseFilter`     | Pose filter properties                            |
-  | model      | `PoseModel`      | Pose model properties                             |
-  | roi        | `PoseRoi`        | Pose ROI properties                               |
+  | Property   | Type                                | Description                                       |
+  |------------|-------------------------------------|---------------------------------------------------|
+  | intrinsics | `string`                            | Name of the file with device intrinsic parameters |
+  | threshold  | [`PoseThresholds`](#posethresholds) | Pose thresholds                                   |
+  | undistort  | [`PoseUndistort`](#poseundistort)   | Pose undistort properties                         |
+  | filter     | [`PoseFilter`](#posefilter)         | Pose filter properties                            |
+  | model      | [`PoseModel`](#posemodel)           | Pose model properties                             |
+  | roi        | [`PoseRoi`](#poseroi)               | Pose ROI properties                               |
 
 - **Example:**
   ```json
@@ -751,14 +749,13 @@
 ### Pose
 - **Type:** Object
 
-  | Property      | Type               | Description                                |
-  |---------------|--------------------|--------------------------------------------|
-  | devices       | `PoseDevice[]`     | Array of capture devices                   |
-  | chain         | `ChainCalibration` | Chain calibration config                   |
-  | cross         | `CrossCalibration` | Cross calibration config                   |
-  | show_epilines | `boolean`          | Show epipolar lines (debug)                |
-  | segmentation  | `boolean`          | Perform segmentation                       |
-  | threads       | `integer`          | Number of dedicated CPU threads (optional) |
+  | Property      | Type                                    | Description                                |
+  |---------------|-----------------------------------------|--------------------------------------------|
+  | devices       | [`PoseDevice[]`](#posedevice)           | Array of capture devices                   |
+  | chain         | [`ChainCalibration`](#chaincalibration) | Chain calibration config                   |
+  | show_epilines | `boolean`                               | Show epipolar lines (debug)                |
+  | segmentation  | `boolean`                               | Perform segmentation                       |
+  | threads       | `integer`                               | Number of dedicated CPU threads (optional) |
 
 - **Example:**
   ```json
@@ -817,19 +814,19 @@
 ### Capture
 - **Type:** Object
 
-  | Property | Type       | Description                                                      |
-  |----------|------------|------------------------------------------------------------------|
-  | id       | `string`   | Capture device id  `"/dev/video1"` or `"usb-0000:02:00.0-2"` etc |
-  | name     | `string`   | Capture device name (arbitrary)                                  |
-  | codec    | `string`   | Capture codec. i.e: `"MJPG"` \| `"YUYV"` \| `"H264"` \| `"BGR3"` |
-  | width    | `integer`  | Captured frame width                                             |
-  | height   | `integer`  | Captured frame height                                            |
-  | buffer   | `integer`  | Capture buffer size. May introduce lag, smoothes fps.            |
-  | fps      | `integer`  | Capture FPS                                                      |
-  | rotate   | `boolean`  | Frame rotation (optional). Applied after `flip`                  |
-  | flip     | `Flip`     | Frame flip (optional). Applied after `region`                    |
-  | region   | `Region`   | Frame subregion (optional)                                       |
-  | filters  | `Filter[]` | Array of filters (optional)                                      |
+  | Property | Type                  | Description                                                      |
+  |----------|-----------------------|------------------------------------------------------------------|
+  | id       | `string`              | Capture device id  `"/dev/video1"` or `"usb-0000:02:00.0-2"` etc |
+  | name     | `string`              | Capture device name (arbitrary)                                  |
+  | codec    | `string`              | Capture codec. i.e: `"MJPG"` \| `"YUYV"` \| `"H264"` \| `"BGR3"` |
+  | width    | `integer`             | Captured frame width                                             |
+  | height   | `integer`             | Captured frame height                                            |
+  | buffer   | `integer`             | Capture buffer size. May introduce lag, smoothes fps.            |
+  | fps      | `integer`             | Capture FPS                                                      |
+  | rotate   | `boolean`             | Frame rotation (optional). Applied after `flip`                  |
+  | flip     | [`Flip`](#flip)       | Frame flip (optional). Applied after `region`                    |
+  | region   | [`Region`](#region)   | Frame subregion (optional)                                       |
+  | filters  | [`Filter[]`](#filter) | Array of filters (optional)                                      |
 
 - **Example:**
   ```json
@@ -898,15 +895,15 @@
 ### JsonConfig
 - **Type:** Object
 
-  | Property    | Type          | Description                       |
-  |-------------|---------------|-----------------------------------|
-  | type        | `ConfigType`  | Configuration type                |
-  | misc        | `Misc`        | Miscellaneous configuration       |
-  | gui         | `Gui`         | Gui configuration                 |
-  | pose        | `Pose`        | Motion capture configuration      |
-  | captures    | `Capture[]`   | Array of capturing devices        |
-  | calibration | `Calibration` | Calibration configuration         |
-  | compose     | `Compose`     | Calibration compose configuration |
+  | Property    | Type                            | Description                       |
+  |-------------|---------------------------------|-----------------------------------|
+  | type        | [`ConfigType`](#configtype)     | Configuration type                |
+  | misc        | [`Misc`](#misc)                 | Miscellaneous configuration       |
+  | gui         | [`Gui`](#gui)                   | Gui configuration                 |
+  | pose        | [`Pose`](#pose)                 | Motion capture configuration      |
+  | captures    | [`Capture[]`](#capture)         | Array of capturing devices        |
+  | calibration | [`Calibration`](#calibration-1) | Calibration configuration         |
+  | compose     | [`Compose`](#compose)           | Calibration compose configuration |
 
 - **Example:**
   ```json

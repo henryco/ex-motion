@@ -1,5 +1,7 @@
 # Work in progress...
 
+### [JSON Config Documentation (link)](doc/fs_conf.md)
+
 ### How to clone properly
 ```shell
 git clone \

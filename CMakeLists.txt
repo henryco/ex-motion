@@ -106,7 +106,6 @@ set(HEADER_FILES
         xmotion/fbgtk/data/json_ocv.h
         xmotion/core/algo/chain.h
         xmotion/core/utils/epi_util.h
-        xmotion/core/algo/compose.h
         xmotion/core/filter/i_filter.h
         xmotion/core/filter/chroma_key.h
         xmotion/core/ocl/kernel.h

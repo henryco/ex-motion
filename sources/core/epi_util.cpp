@@ -117,6 +117,63 @@ namespace xm::util::epi {
         return epipolar_matrix_size == 0 || epipolar_matrix == nullptr;
     }
 
+    cv::Mat chain_merge(const std::vector<cv::Mat> &Rt_chain) {
+        return chain_to_origin(Rt_chain).back().inv();
+    }
+
+    std::vector<cv::Mat> chain_to_origin(const std::vector<cv::Mat> &chain, bool closed) {
+        const int size = (int) chain.size() - (closed ? 1 : 0);
+
+        // pairs (from, to): RT_from -> to
+        // open:   [(0,1), (1,2), (2,3)]         | 3
+        // closed: [(0,1), (1,2), (2,3), (3,0)]  | 4
+        const auto &pairs = chain;
+
+        // pairs (from, origin): RT_from -> origin
+        // [(0,0), (1,0), (2,0), (3,0)]
+        std::vector<cv::Mat> relative;
+        relative.reserve(size + 1);
+
+        // real first pair, just identity matrix, (0,0): 0 -> 0
+        relative.push_back(cv::Mat::eye(4, 4, CV_64F));
+
+        // prepare RT relative to first device
+        // ->       [ |(0,1), (1,2), (2,3)|, <3,0>]  | pairs
+        // <- [<0,0>, |(1,0), (2,0), (3,0)| ]        | relative
+        for (int i = 0; i < size; i++) {
+
+            if (i == 0) {
+                // first pair, swap (0,1) -> (1,0)
+                relative.push_back(pairs.front().clone().inv());
+                continue;
+            }
+
+            if (closed && i == size - 1) {
+                // last element within closed chain (loop)
+                // <3,0> -> (3,0)
+                // [..., (3,0)]
+                relative.push_back(pairs.back().clone());
+                break;
+            }
+
+            // within chain: RT_J0 = RT_10 * RT_21 * RT_32 * ... * RT_JI
+            // 0: J -> I -> ... -> 3 -> 2 -> 1 -> 0
+
+            // current RT matrix, swap (1,2) -> (2,1)
+            const cv::Mat RT_i = pairs.at(i).clone().inv();
+
+            // previous RT matrix (1,0)
+            const cv::Mat RT_p = relative.back().clone();
+
+            // (2,0): (2,1) -> (1,0)
+            // RT_20 = RT_10 * RT_21
+            const cv::Mat RT = RT_p * RT_i;
+            relative.push_back(RT);
+        }
+
+        return relative;
+    }
+
     std::vector<CalibPair> chain_to_origin(const std::vector<CalibPair> &chain, bool closed) {
         const int size = (int) chain.size() - (closed ? 1 : 0);
 

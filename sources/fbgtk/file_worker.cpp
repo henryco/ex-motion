@@ -91,9 +91,58 @@ namespace xm {
             return;
         }
 
+        if (config.type == data::COMPOSE) {
+            opt_compose();
+        }
+
         throw std::runtime_error("Invalid config type");
     }
 
+    void FileWorker::opt_compose() {
+        const auto out_name = config.compose.name;
+
+        std::vector<cv::Mat> rt_pairs;
+        rt_pairs.reserve(config.compose.chain.size());
+        for (const auto &pair_name: config.compose.chain) {
+            const std::filesystem::path root = project_file;
+            const std::filesystem::path name = pair_name;
+            const std::filesystem::path path = (name.is_absolute() ? name : (root.parent_path() / name));
+
+            auto files = xm::data::list_files(path);
+            std::sort(files.begin(), files.end(), xm::data::numeric_comparator_asc);
+
+            log->info("Reading chain-calibration file: {}, {}", pair_name, path.string());
+            for (const auto &file: files) {
+                log->info("Reading chain-calibration file: {}, {}", pair_name, file);
+                rt_pairs.push_back(xm::data::ocv::read_chain_calibration(file).RT);
+            }
+        }
+
+        if (rt_pairs.size() > 1)
+            throw std::invalid_argument("rt_pairs.size() <= 1");
+
+
+        // actual logic
+        const auto origin_rt = xm::util::epi::chain_merge(rt_pairs);
+        // actual logic
+
+
+        std::filesystem::path root = project_file;
+        root = root.parent_path();
+        const std::filesystem::path name = out_name.ends_with(".json") ? out_name : (out_name + ".json");
+        const std::string file = (root / name).string();
+
+        log->info("Saving chain composition results");
+        xm::data::ocv::write_chain_calibration(file, {
+                .name = out_name,
+                .R = origin_rt(cv::Rect(0, 0, 3, 3)),
+                .T = origin_rt(cv::Rect(3, 0, 1, 3)),
+                .RT = origin_rt
+        });
+        log->info("Saved: {}", file);
+
+        std::exit(0);
+    }
 
     void FileWorker::opt_single_calibration() {
         logic = std::make_unique<xm::Calibration>();
@@ -181,32 +230,31 @@ namespace xm {
             const auto rotate = config.captures[i].rotate;
             const auto width = config.captures[i].region.w;
             const auto height = config.captures[i].region.h;
-            vec.push_back(
-                    {
-                            .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),
-                            .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(device.model.body)),
-                            .roi_rollback_window = device.roi.rollback_window,
-                            .roi_center_window = device.roi.center_window,
-                            .roi_clamp_window = device.roi.clamp_window,
-                            .roi_margin = device.roi.margin,
-                            .roi_scale = device.roi.scale,
-                            .roi_padding_x = device.roi.padding_x,
-                            .roi_padding_y = device.roi.padding_y,
-                            .threshold_detector = device.threshold.detector,
-                            .threshold_marks = device.threshold.marks,
-                            .threshold_pose = device.threshold.pose,
-                            .threshold_roi = device.threshold.roi,
-                            .filter_velocity_factor = device.filter.velocity,
-                            .filter_windows_size = device.filter.window,
-                            .filter_target_fps = device.filter.fps,
-                            .undistort_source = device.undistort.source,
-                            .undistort_points = device.undistort.points,
-                            .undistort_alpha = device.undistort.alpha,
-                            .width = rotate ? height : width,
-                            .height = rotate ? width : height,
-                            .K = calibration.K,
-                            .D = calibration.D
-                    });
+            vec.push_back({
+                .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),
+                .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(device.model.body)),
+                .roi_rollback_window = device.roi.rollback_window,
+                .roi_center_window = device.roi.center_window,
+                .roi_clamp_window = device.roi.clamp_window,
+                .roi_margin = device.roi.margin,
+                .roi_scale = device.roi.scale,
+                .roi_padding_x = device.roi.padding_x,
+                .roi_padding_y = device.roi.padding_y,
+                .threshold_detector = device.threshold.detector,
+                .threshold_marks = device.threshold.marks,
+                .threshold_pose = device.threshold.pose,
+                .threshold_roi = device.threshold.roi,
+                .filter_velocity_factor = device.filter.velocity,
+                .filter_windows_size = device.filter.window,
+                .filter_target_fps = device.filter.fps,
+                .undistort_source = device.undistort.source,
+                .undistort_points = device.undistort.points,
+                .undistort_alpha = device.undistort.alpha,
+                .width = rotate ? height : width,
+                .height = rotate ? width : height,
+                .K = calibration.K,
+                .D = calibration.D
+            });
             i++;
         }
 
@@ -229,12 +277,12 @@ namespace xm {
                     log->info("Reading chain-calibration file[{}]: {}, {}", k, pair_name, file);
                     const auto chain_calibration = xm::data::ocv::read_chain_calibration(file);
                     pairs.push_back({
-                                            .K1 = vec.at(k).K.clone(),
-                                            .K2 = vec.at(k + 1).K.clone(),
-                                            .RT = chain_calibration.RT,
-                                            .E = chain_calibration.E,
-                                            .F = chain_calibration.F,
-                                    });
+                        .K1 = vec.at(k).K.clone(),
+                        .K2 = vec.at(k + 1).K.clone(),
+                        .RT = chain_calibration.RT,
+                        .E = chain_calibration.E,
+                        .F = chain_calibration.F
+                    });
 
                     k++;
                     if (k >= config.pose.devices.size())
@@ -312,7 +360,7 @@ namespace xm {
             const std::filesystem::path name = (total == 1 ? config.calibration.name : std::to_string(i)) + ".json";
             const std::string file = (root / name).string();
 
-            log->info("Saving cross calibration results: [{}]", i);
+            log->info("Saving chain calibration results: [{}]", i);
             const auto pair = results.calibrated.at(i);
             xm::data::ocv::write_chain_calibration(file, {
                     .name = config.calibration.name + (total == 1 ? "" : ("_" + std::to_string(i))),

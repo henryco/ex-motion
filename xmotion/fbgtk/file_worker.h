@@ -79,6 +79,8 @@ namespace xm {
 
         void opt_pose_estimation();
 
+        void opt_compose();
+
         void on_single_results();
 
         void on_chain_results();

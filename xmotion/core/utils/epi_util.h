@@ -113,6 +113,23 @@ namespace xm::util::epi {
     std::vector<CalibPair> chain_to_origin(const std::vector<CalibPair> &chain, bool closed = false);
 
     /**
+     * @param Rt_chain calibration chain [(0,1), (1,2), ..., (N,0)]
+     * @param closed whether chain contains last pair (N,0)
+     * @return chain oriented to origin: [(0,0), (1,0), (2,0), ... (N,0)]
+     */
+    std::vector<cv::Mat> chain_to_origin(const std::vector<cv::Mat> &Rt_chain, bool closed = false);
+
+    /**
+     * \code
+     *   ( (0,1), (1,2), (2,3), ..., (N,0) ) -> (0,N)
+     * \endcode
+     *
+     * @param Rt_chain calibration chain: [(0,1), (1,2), (2,3), ..., (N,0)]
+     * @return Chain merged into one Rt pair: (0,N)
+     */
+    cv::Mat chain_merge(const std::vector<cv::Mat> &Rt_chain);
+
+    /**
      * NxN matrix of stereo pairs (K1, K2, F, E and RT) \n
      * Pairs (f,t): (from -> to)
      *

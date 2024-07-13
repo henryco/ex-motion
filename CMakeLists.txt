@@ -178,6 +178,9 @@ set(SOURCE_FILES
         sources/core/xm_data.cpp
         sources/core/bg_subtract.cpp
         sources/core/blur.cpp
+        sources/fbgtk/file_worker_pose.cpp
+        sources/fbgtk/file_worker_calib.cpp
+        sources/fbgtk/file_worker_compose.cpp
 )
 
 if (UNIX AND NOT APPLE)

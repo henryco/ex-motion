@@ -78,12 +78,13 @@ namespace eox::xgtk {
 
     void GLImage::setFrames(const std::vector<xm::ocl::Image2D> &_frames) {
         frames.clear();
-        for (const auto &item: _frames) {
-            cv::Mat temp;
-            xm::ocl::iop::to_cv_mat(item, temp, (cl_command_queue) cv::ocl::Queue::getDefault().ptr());
-            temp = fitSize(temp);
-            frames.push_back(temp);
-        }
+        auto queue = (cl_command_queue) cv::ocl::Queue::getDefault().ptr();
+        std::vector<xm::ocl::iop::CLPromise<cv::Mat>> promises;
+        promises.reserve(_frames.size());
+        for (const auto &item: _frames)
+            promises.push_back(xm::ocl::iop::to_cv_mat(item, queue));
+        for (auto &p: promises)
+            frames.push_back(p.waitFor().get());
     }
 
 

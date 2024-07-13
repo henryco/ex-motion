@@ -1,0 +1,754 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+
+  "definitions": {
+
+    "intrinsic": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X-coordinate (px)"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y-coordinate (px)"
+        },
+        "fix": {
+          "type": "boolean",
+          "description": "Fix camera device intrinsics (Don't try to optimise it during calibration)"
+        }
+      },
+      "required": ["x", "y"]
+    },
+
+    "flip": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "boolean",
+          "description": "Horizontal flip"
+        },
+        "y": {
+          "type": "boolean",
+          "description": "Vertical flip"
+        }
+      }
+    },
+
+    "region": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "integer",
+          "description": "X-coordinate"
+        },
+        "y": {
+          "type": "integer",
+          "description": "Y-coordinate"
+        },
+        "w": {
+          "type": "integer",
+          "description": "Width"
+        },
+        "h": {
+          "type": "integer",
+          "description": "Height"
+        }
+      }
+    },
+
+    "hsl": {
+      "type": "object",
+      "properties": {
+        "h": {
+          "type": "number",
+          "description": "Hue. Range [0..1]"
+        },
+        "s": {
+          "type": "number",
+          "description": "Saturation. Range [0..1]"
+        },
+        "l": {
+          "type": "number",
+          "description": "Lightness. Range [0..1]"
+        }
+      }
+    },
+
+    "bgr": {
+      "type": "object",
+      "properties": {
+        "b": {
+          "type": "number",
+          "description": "Blue. Range [0..1]"
+        },
+        "g": {
+          "type": "number",
+          "description": "Green. Range [0..1]"
+        },
+        "r": {
+          "type": "number",
+          "description": "Red. Range [0..1]"
+        }
+      }
+    },
+
+    "conv_kernel": {
+      "type": "integer",
+      "enum": [1, 2, 3, 4],
+      "description": "1: CROSS_4, 2: SQUARE_8, 3: RUBY_12, 4: DIAMOND_16"
+    },
+
+    "filter": {
+      "type": "object",
+      "properties": {
+
+        "type": {
+          "type": "string",
+          "enum": ["blur", "chromakey", "difference"],
+          "description": "Filter type"
+        },
+
+        "blur": {
+          "type": "integer",
+          "description": "Property for calculating blur kernel size (CxC): C = (blur * 2) + 1"
+        },
+
+        "key": {
+          "type": "string",
+          "description": "Chromakey key color (hex). i.e.: #ffffff"
+        },
+
+        "replace": {
+          "type": "string",
+          "description": "Chromakey replacement color (hex). i.e.: #ffffff"
+        },
+
+        "range": {
+          "description": "HSL range (similarity threshold)",
+          "$ref": "#/definitions/hsl"
+        },
+
+        "power": {
+          "type": "integer",
+          "description": "Mask size (multiple of 256) (TxT): T = (1 + power) * 256"
+        },
+
+        "fine": {
+          "type": "integer",
+          "description": "Mask refinement kernel"
+        },
+
+        "refine": {
+          "type": "integer",
+          "description": "Mask refinement iterations"
+        },
+
+        "linear": {
+          "type": "boolean",
+          "description": "Use linear interpolation"
+        },
+
+        "BASE_RESOLUTION": {
+          "type": "integer",
+          "description": "Segmentation mask base resolution (px)"
+        },
+
+        "color": {
+          "type": "string",
+          "description": "New background color (hex), ie: \"#ffffff\""
+        },
+
+        "debug_on": {
+          "type": "boolean",
+          "description": "Enable debug functions"
+        },
+
+        "adapt_on": {
+          "type": "boolean",
+          "description": "Enable updates of background model"
+        },
+
+        "ghost_on": {
+          "type": "boolean",
+          "description": "Enable \"ghost\" detection"
+        },
+
+        "lbsp_on": {
+          "type": "boolean",
+          "description": "Use LBSP for spatial comparison"
+        },
+
+        "norm_l2": {
+          "type": "boolean",
+          "description": "Use L2 distance for color comparison"
+        },
+
+        "color_0": {
+          "type": "number",
+          "description": "Threshold for color comparison"
+        },
+
+        "lbsp_0": {
+          "type": "number",
+          "description": "Threshold for LBSP comparison"
+        },
+
+        "lbsp_d": {
+          "type": "number",
+          "description": "Threshold for LBSP calculation"
+        },
+
+        "n_matches": {
+          "type": "integer",
+          "description": "Number of intersections for background detection"
+        },
+
+        "t_upper": {
+          "type": "integer",
+          "description": "Maximal value of T(x)"
+        },
+
+        "t_lower": {
+          "type": "integer",
+          "description": "Minimal value of T(x)"
+        },
+
+        "model_size": {
+          "type": "integer",
+          "description": "Number of frames in background model"
+        },
+
+        "ghost_l": {
+          "type": "integer",
+          "description": "Temporary new T(x) value for \"ghost\" pixels"
+        },
+
+        "ghost_n": {
+          "type": "integer",
+          "description": "Number of frames for ghost classification"
+        },
+
+        "ghost_n_inc": {
+          "type": "integer",
+          "description": "Increment value for ghost_n"
+        },
+
+        "ghost_n_dec": {
+          "type": "integer",
+          "description": "Decrement value for ghost_n"
+        },
+
+        "alpha_d_min": {
+          "type": "number",
+          "description": "Constant learning rate for D_min(x)"
+        },
+
+        "alpha_norm": {
+          "type": "number",
+          "description": "Mixing alpha for dt(x) calculation"
+        },
+
+        "ghost_t": {
+          "type": "number",
+          "description": "Ghost threshold for local variations"
+        },
+
+        "r_scale": {
+          "type": "number",
+          "description": "Scale for R(x) feedback change"
+        },
+
+        "r_cap": {
+          "type": "number",
+          "description": "Max value for R(x)"
+        },
+
+        "t_scale_inc": {
+          "type": "number",
+          "description": "Scale for T(x) feedback increment"
+        },
+
+        "t_scale_dec": {
+          "type": "number",
+          "description": "Scale for T(x) feedback decrement"
+        },
+
+        "v_flicker_inc": {
+          "type": "number",
+          "description": "Increment v(x) value for flickering pixels"
+        },
+
+        "v_flicker_dec": {
+          "type": "number",
+          "description": "Decrement v(x) value for flickering pixels"
+        },
+
+        "v_flicker_cap": {
+          "type": "number",
+          "description": "Max value for v(x)"
+        },
+
+        "refine_gate": {
+          "type": "integer",
+          "description": "Number of gate operations"
+        },
+
+        "refine_erode": {
+          "type": "integer",
+          "description": "Number of erosion operations"
+        },
+        "refine_dilate": {
+          "type": "integer",
+          "description": "Number of dilation operations"
+        },
+
+        "gate_threshold": {
+          "type": "number",
+          "description": "Gate operation threshold"
+        },
+
+        "kernel": {
+          "description": "Background kernel type",
+          "$ref": "#/definitions/conv_kernel"
+        },
+
+        "gate_kernel": {
+          "description": "Gate kernel type",
+          "$ref": "#/definitions/conv_kernel"
+        },
+
+        "erode_kernel": {
+          "description": "Erode kernel type",
+          "$ref": "#/definitions/conv_kernel"
+        },
+
+        "dilate_kernel": {
+          "description": "Dilate kernel type",
+          "$ref": "#/definitions/conv_kernel"
+        }
+
+      },
+      "required": ["type"]
+    }
+
+  },
+
+  "title": "ExMoFSConfig",
+
+  "type": "object",
+
+  "properties": {
+
+    "type": {
+      "type": "string",
+      "enum": ["calibration", "chain_calibration", "cross_calibration", "compose", "pose"],
+      "description": "Configuration type"
+    },
+
+    "misc": {
+      "type": "object",
+      "description": "Miscellaneous configuration",
+      "properties": {
+        "capture_dummy": {
+          "type": "boolean",
+          "description": "Use dummy source of frames"
+        },
+        "capture_fast": {
+          "type": "boolean",
+          "description": "Use faster method of frames retrieval",
+          "deprecationMessage": "Deprecated, avoid to use"
+        },
+        "debug": {
+          "type": "boolean",
+          "description": "Debug mode"
+        },
+        "cpu": {
+          "type": "boolean",
+          "description": "Default number of CPU cores available"
+        }
+      }
+    },
+
+    "gui": {
+      "type": "object",
+      "description": "Gui configuration",
+      "properties": {
+
+        "layout": {
+          "type": "array",
+          "description": "2x2 Layout of gui grid. [Cols, Rows]",
+          "items": {
+            "type": "integer",
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+
+        "frame": {
+          "type": "object",
+          "description": "Gui frame properties",
+          "properties": {
+            "w": {
+              "type": "integer",
+              "description": "Width"
+            },
+            "h": {
+              "type": "integer",
+              "description": "Height"
+            }
+          }
+        },
+
+        "vertical": {
+          "description": "Force vertical layout (optional)",
+          "type": "boolean"
+        },
+
+        "scale": {
+          "description": "Gui window scaling",
+          "type": "number"
+        },
+
+        "fps": {
+          "description": "Gui render FPS limit",
+          "type": "integer"
+        }
+      }
+    },
+
+    "calibration": {
+      "type": "object",
+      "description": "Calibration configuration",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Calibration session name"
+        },
+
+        "intrinsics": {
+          "type": "object",
+          "description": "Calibration intrinsic properties",
+          "properties": {
+            "f": {
+              "description": "Camera focal length values",
+              "$ref": "#/definitions/intrinsic"
+            },
+            "c": {
+              "description": "Camera center position",
+              "$ref": "#/definitions/intrinsic"
+            }
+          }
+        },
+
+        "pattern": {
+          "type": "object",
+          "description": "Calibration pattern properties",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["radon", "chessboard", "plain"],
+              "description": "Calibration pattern"
+            },
+            "columns": {
+              "type": "integer",
+              "description": "Number of columns in calibration pattern"
+            },
+            "rows": {
+              "type": "integer",
+              "description": "Number of rows in calibration pattern"
+            },
+            "size": {
+              "type": "number",
+              "description": "Size of the calibration pattern square"
+            }
+          }
+        },
+
+        "chain": {
+          "type": "object",
+          "description": "Calibration chain properties",
+          "properties": {
+            "intrinsics": {
+              "type": "array",
+              "description": "List of file names with devices' intrinsic properties",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
+            "closed": {
+              "type": "boolean",
+              "description": "Whether calibration chain is closed"
+            }
+          }
+        },
+
+        "total": {
+          "type": "integer",
+          "description": "Total frames used in calibration process"
+        },
+
+        "delay": {
+          "type": "integer",
+          "description": "Delay between consecutive frame shots in calibration process (in ms)"
+        }
+      },
+      "required": ["name"]
+    },
+
+    "compose": {
+      "type": "object",
+      "description": "Calibration compose configuration",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Calibration compose output name"
+        },
+        "chain": {
+          "type": "array",
+          "description": "Chain calibration config (files, ie: [\"conf1.json\", \"conf2.json\"])",
+          "items": {
+            "type": "string",
+            "minItems": 1
+          }
+        }
+      },
+      "required": ["name", "chain"]
+    },
+
+    "pose": {
+      "type": "object",
+      "description": "Motion capture configuration",
+      "properties": {
+        "devices": {
+          "type": "array",
+          "description": "Array of capture devices",
+          "items": {
+            "type": "object",
+            "properties": {
+
+              "intrinsics": {
+                "type": "string",
+                "description": "Name of the file with device intrinsic parameters"
+              },
+
+              "threshold": {
+                "type": "object",
+                "description": "Pose thresholds",
+                "properties": {
+                  "detector": {
+                    "type": "number",
+                    "description": "Threshold score for detector ROI presence. Range: [0.0 ... 1.0]"
+                  },
+                  "marks": {
+                    "type": "number",
+                    "description": "Threshold score for landmarks presence. Range: [0.0 ... 1.0]"
+                  },
+                  "pose": {
+                    "type": "number",
+                    "description": "Threshold score for pose presence. Range: [0.0 ... 1.0]"
+                  },
+                  "roi": {
+                    "type": "number",
+                    "description": "Threshold score for detector ROI distance to body marks. Range: [0.0 ... 1.0]"
+                  }
+                }
+              },
+
+              "undistort": {
+                "type": "object",
+                "description": "Pose undistort properties",
+                "properties": {
+                  "source": {
+                    "type": "boolean",
+                    "description": "Undistort input image"
+                  },
+                  "points": {
+                    "type": "boolean",
+                    "description": "Undistort position of detected points"
+                  },
+                  "alpha": {
+                    "type": "number",
+                    "description": "Free scaling parameter. Range: [0.0 ... 1.0]"
+                  }
+                }
+              },
+
+              "filter": {
+                "type": "object",
+                "description": "Pose filter properties",
+                "properties": {
+                  "velocity": {
+                    "type": "number",
+                    "description": "Low-pass filter velocity scale"
+                  },
+                  "window": {
+                    "type": "integer",
+                    "description": "Low-pass filter window size"
+                  },
+                  "fps": {
+                    "type": "integer",
+                    "description": "Low-pass filter target FPS"
+                  }
+                }
+              },
+
+              "model": {
+                "type": "object",
+                "description": "Pose model properties",
+                "properties": {
+                  "detector": {
+                    "type": "string",
+                    "enum": ["origin", "f_16", "f_32"],
+                    "description": "BlazePose detector model"
+                  },
+                  "body": {
+                    "type": "string",
+                    "enum": ["heavy", "heavy_f16", "heavy_f32", "full", "full_f16", "full_f32", "lite", "lite_f16", "lite_f32"],
+                    "description": "BlazePose body model"
+                  }
+                }
+              },
+
+              "roi": {
+                "type": "object",
+                "description": "Pose ROI properties",
+                "properties": {
+                  "rollback_window": {
+                    "type": "number",
+                    "description": "Distance between detectors and actual ROI middle point. Range: [0.0 ... 1.0]"
+                  },
+                  "center_window": {
+                    "type": "number",
+                    "description": "Distance between actual and predicted ROI middle point. Range: [0.0 ... 1.0]"
+                  },
+                  "clamp_window": {
+                    "type": "number",
+                    "description": "Acceptable ratio of clamped to original ROI size. Range: [0.0 ... 1.0]"
+                  },
+                  "scale": {
+                    "type": "number",
+                    "description": "Scaling factor for ROI"
+                  },
+                  "margin": {
+                    "type": "number",
+                    "description": "Margins added to ROI"
+                  },
+                  "padding_x": {
+                    "type": "number",
+                    "description": "Horizontal paddings added to ROI"
+                  },
+                  "padding_y": {
+                    "type": "number",
+                    "description": "Vertical paddings added to ROI"
+                  }
+                }
+              }
+
+            },
+            "required": ["intrinsics"]
+          }
+        },
+
+        "chain": {
+          "type": "object",
+          "description": "Chain calibration config",
+          "properties": {
+            "files": {
+              "type": "array",
+              "description": "List of file names with devices' intrinsic properties. I.e.: [\"calib_1.json\", \"calib_2.json\"]",
+              "items": {
+                "type": "string",
+                "minItems": 1
+              }
+            },
+            "closed": {
+              "type": "boolean",
+              "description": "Whether calibration chain is closed"
+            }
+          }
+        },
+
+        "show_epilines": {
+          "type": "boolean",
+          "description": "Show epipolar lines (debug)"
+        },
+
+        "segmentation": {
+          "type": "boolean",
+          "description": "Perform segmentation"
+        },
+
+        "threads": {
+          "type": "integer",
+          "description": "Number of dedicated CPU threads (optional)"
+        }
+      },
+      "required": ["devices", "chain"]
+    },
+
+    "captures": {
+      "type": "array",
+      "description": "Array of capturing devices",
+      "items": {
+        "type": "object",
+        "minItems": 1,
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Capture device id. i.e: \"/dev/video1\" or \"usb-0000:02:00.0-2\" etc"
+          },
+          "name": {
+            "type": "string",
+            "description": "Capture device name (arbitrary)"
+          },
+          "codec": {
+            "type": "string",
+            "description": "Capture codec. i.e: \"MJPG\" | \"YUYV\" | \"H264\" | \"BGR3\""
+          },
+          "width": {
+            "type": "integer",
+            "description": "Captured frame width"
+          },
+          "height": {
+            "type": "integer",
+            "description": "Captured frame height"
+          },
+          "buffer": {
+            "type": "integer",
+            "description": "Capture buffer size. May introduce lag, but smoothes fps."
+          },
+          "fps": {
+            "type": "integer",
+            "description": "Capture FPS"
+          },
+          "rotate": {
+            "type": "boolean",
+            "description": "Frame rotation (optional). !!! Applied after flip !!!"
+          },
+          "flip": {
+            "description": "Frame flip (optional). !!! Applied after region !!!",
+            "$ref": "#/definitions/flip"
+          },
+          "region": {
+            "description": "Frame subregion (optional)",
+            "$ref": "#/definitions/region"
+          },
+          "filters": {
+            "type": "array",
+            "description": "Array of filters (optional)",
+            "items": {
+              "$ref": "#/definitions/filter"
+            }
+          }
+        },
+        "required": ["id", "name", "codec", "width", "height", "fps"]
+      }
+    }
+
+  },
+
+  "required": ["type", "captures"]
+}

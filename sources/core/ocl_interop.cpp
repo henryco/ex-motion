@@ -424,4 +424,54 @@ namespace xm::ocl::iop {
 
         delete[] list;
     }
+
+    void ClImagePromise::finalizeAll(ClImagePromise *promises, size_t size, bool force) {
+        int n = 0;
+        auto list = new cl_command_queue[size];
+
+        for (int g = 0; g < size; g++) {
+            auto &p = promises[g];
+
+            if (p.completed && !force)
+                continue;
+
+            p.completed = true;
+
+            bool found = false;
+            for (int i = 0; i < n; i++) {
+                if (list[i] != p.ocl_queue) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                list[n++] = p.ocl_queue;
+                goto waiting_room;
+            }
+
+            if (p.cleanup_container) {
+                (*p.cleanup_container)();
+                p.cleanup_container = nullptr;
+            }
+
+            continue;
+
+            waiting_room:
+            {
+                cl_int err;
+                err = clFinish(p.ocl_queue);
+                if (err != CL_SUCCESS) {
+                    delete[] list;
+                    throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
+                }
+                if (p.cleanup_container) {
+                    (*p.cleanup_container)();
+                    p.cleanup_container = nullptr;
+                }
+            }
+        }
+
+        delete[] list;
+    }
 }

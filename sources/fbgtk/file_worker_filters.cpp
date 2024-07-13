@@ -11,14 +11,15 @@
 namespace xm {
 
     void FileWorker::filter_frames(std::vector<xm::ocl::Image2D> &frames) {
-        const auto t0 = std::chrono::system_clock::now();
+//        const auto t0 = std::chrono::system_clock::now();
 
-        std::vector<xm::ocl::iop::ClImagePromise> frames_p_vec;
-        frames_p_vec.reserve(frames.size());
-        for (const auto &frame: frames)
-            frames_p_vec.push_back(frame);
+        const auto arr_size = frames.size();
+        auto frames_p_arr = new xm::ocl::iop::ClImagePromise[arr_size];
+        for (int i = 0; i < frames.size(); i++)
+            frames_p_arr[i] = frames[i];
 
-        int i = 0; for (auto &frame: frames_p_vec) {
+        for (int i = 0; i < arr_size; i++){
+            auto &frame = frames_p_arr[i];
 
             for (auto &filter: filters.at(i)) {
 
@@ -31,21 +32,20 @@ namespace xm {
 
                 frame = filter->filter(frame);
             }
-
-            i++;
         }
 
-        xm::ocl::iop::ClImagePromise::finalizeAll(frames_p_vec);
+        xm::ocl::iop::ClImagePromise::finalizeAll(frames_p_arr, arr_size);
         std::vector<xm::ocl::Image2D> out;
-        out.reserve(frames_p_vec.size());
-        for (auto &frame_p: frames_p_vec)
-            out.push_back(frame_p.getImage2D());
+        out.reserve(arr_size);
+        for (int i = 0; i < arr_size; i++)
+            out.push_back(frames_p_arr[i].getImage2D());
+        delete[] frames_p_arr;
 
         frames = out;
 
-        const auto t1 = std::chrono::system_clock::now();
-        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
-        log->info("time: {}", d);
+//        const auto t1 = std::chrono::system_clock::now();
+//        const auto d = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
+//        log->info("time: {}", d);
     }
 
     void FileWorker::prepare_filters() {

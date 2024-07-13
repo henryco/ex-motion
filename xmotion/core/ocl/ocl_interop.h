@@ -99,6 +99,14 @@ namespace xm::ocl::iop {
          * @param force wait for completed promises too
          */
         static void finalizeAll(std::vector<ClImagePromise> &promises, bool force = false);
+
+        /**
+         * BLOCKING OPERATION, waits for result and cleanup resources
+         * @param promises array of an unique promises
+         * @param n size of the array
+         * @param force wait for completed promises too
+         */
+        static void finalizeAll(ClImagePromise *promises, size_t n, bool force = false);
     };
 
     cv::AccessFlag access_to_cv(ACCESS access);

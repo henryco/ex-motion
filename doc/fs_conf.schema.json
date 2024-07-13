@@ -686,7 +686,7 @@
           "description": "Number of dedicated CPU threads (optional)"
         }
       },
-      "required": ["devices", "chain"]
+      "required": ["devices"]
     },
 
     "captures": {

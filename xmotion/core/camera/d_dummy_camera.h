@@ -11,7 +11,8 @@ namespace xm {
     class DummyCamera : public xm::StereoCamera {
 
     protected:
-        cv::UMat src;
+        cl_command_queue c_queue;
+        cv::Mat src;
 
     public:
         void release() override;

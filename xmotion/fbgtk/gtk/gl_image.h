@@ -27,8 +27,6 @@ private:
     std::vector<std::unique_ptr<Gtk::Widget>> widgets;
     std::vector<std::unique_ptr<xogl::Texture1>> textures;
     std::vector<std::unique_ptr<Gtk::GLArea>> glAreas;
-    std::vector<xm::ocl::Image2D> cl_frames;
-    std::vector<cv::UMat> u_frames;
     std::vector<cv::Mat> frames;
     std::vector<bool> initialized;
 
@@ -59,8 +57,6 @@ public:
     void init(size_t rows, size_t cols, size_t number, int width, int height, GLenum format = GL_RGB);
 
     void setFrames(const std::vector<cv::Mat>& _frames);
-
-    void setFrames(const std::vector<cv::UMat>& _frames);
 
     void setFrames(const std::vector<xm::ocl::Image2D>& _frames);
 

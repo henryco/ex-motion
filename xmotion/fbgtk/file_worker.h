@@ -30,6 +30,8 @@ namespace xm {
         xm::SimpleImageWindow *window;
         // ==== pointers managed externally ====
 
+        sigc::connection idle_connection;
+
         std::vector<std::vector<std::unique_ptr<xm::Filter>>> filters;
         std::unique_ptr<xm::StereoCamera> camera;
         std::unique_ptr<xm::Logic> logic;

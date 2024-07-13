@@ -5,8 +5,10 @@
 #include <opencv2/imgcodecs.hpp>
 #include <filesystem>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/core/ocl.hpp>
 #include "../../xmotion/core/camera/d_dummy_camera.h"
 #include "../../xmotion/core/ocl/ocl_interop.h"
+#include "../../xmotion/core/ocl/cl_kernel.h"
 
 void xm::DummyCamera::release() {
     StereoCamera::release();
@@ -16,18 +18,22 @@ void xm::DummyCamera::open(const xm::SCamProp &prop) {
     auto cpy = prop; // TODO: RECALL HOW COPY/REFERENCES work in c++
     properties.push_back(cpy);
 
-    cv::UMat image;
+    cv::Mat image;
     cv::imread(std::filesystem::path("../media/pose2.png").string()).copyTo(image);
     cv::resize(image, image, cv::Size(prop.width, prop.height));
     src = image;
+
+    auto device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
+    auto ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
+    c_queue = xm::ocl::create_queue_device(ocl_context, device_id, true, false);
 }
 
 std::map<std::string, xm::ocl::Image2D> xm::DummyCamera::captureWithName() {
     std::map<std::string, xm::ocl::Image2D> map;
     for (auto & prop : properties) {
-        cv::UMat cpy;
+        cv::Mat cpy;
         src.copyTo(cpy);
-        map[prop.name] = xm::ocl::iop::from_cv_umat(cpy);
+        map[prop.name] = xm::ocl::iop::from_cv_mat(cpy, c_queue).waitFor().getImage2D();
     }
     return map;
 }
@@ -36,9 +42,9 @@ std::vector<xm::ocl::Image2D> xm::DummyCamera::capture() {
     std::vector<xm::ocl::Image2D> images;
     images.reserve(properties.size());
     for (int i = 0; i < properties.size(); i++) {
-        cv::UMat cpy;
+        cv::Mat cpy;
         src.copyTo(cpy);
-        images.push_back(xm::ocl::iop::from_cv_umat(cpy));
+        images.push_back(xm::ocl::iop::from_cv_mat(cpy, c_queue).waitFor().getImage2D());
     }
     return images;
 }

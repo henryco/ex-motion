@@ -25,16 +25,16 @@
 
   "pose": {
     "segmentation": false,
-    "show_epilines": true,
+    "show_epilines": false,
     "devices": [
-      {"model": {"body": "heavy_f32", "detector": "f_32"}},
-      {"model": {"body": "heavy_f32", "detector": "f_32"}},
-      {"model": {"body": "heavy_f32", "detector": "f_32"}},
-      {"model": {"body": "heavy_f32", "detector": "f_32"}},
-      {"model": {"body": "heavy_f32", "detector": "f_32"}},
-      {"model": {"body": "heavy_f32", "detector": "f_32"}},
-      {"model": {"body": "heavy_f32", "detector": "f_32"}},
-      {"model": {"body": "heavy_f32", "detector": "f_32"}}
+      {"model": {"body": "heavy_f32", "detector": "f_32"}, "intrinsics": ""},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}, "intrinsics": ""},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}, "intrinsics": ""},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}, "intrinsics": ""},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}, "intrinsics": ""},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}, "intrinsics": ""},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}, "intrinsics": ""},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}, "intrinsics": ""}
     ]
   }
 }

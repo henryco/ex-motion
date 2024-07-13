@@ -18,7 +18,6 @@ namespace eox::xgtk {
     GLImage::~GLImage() {
         textures.clear();
         glAreas.clear();
-        u_frames.clear();
         frames.clear();
     }
 
@@ -36,7 +35,7 @@ namespace eox::xgtk {
                 return false;
             }
 
-            if (frames.empty() && u_frames.empty() && cl_frames.empty()) {
+            if (frames.empty()) {
                 return true;
             }
 
@@ -46,26 +45,6 @@ namespace eox::xgtk {
             if (!frames.empty()) {
                 cv::Mat frame = fitSize(frames[num]);
                 texture->setImage(xogl::Image(frame.data, width, height, format));
-                texture->render();
-            }
-
-            else if (!u_frames.empty()) {
-
-                // TODO FIXME: TEMPORARY SOLUTION BECAUSE OpenCL <-> OpenGL interop on linux nvidia devices is GARBAGE!
-
-                cv::Mat temp;
-                fitSize(u_frames[num]).copyTo(temp);
-                texture->setImage(xogl::Image(temp.data, width, height, format));
-
-                // TODO FIXME: TEMPORARY SOLUTION BECAUSE OpenCL <-> OpenGL interop on linux nvidia devices is GARBAGE!
-
-                texture->render();
-
-            } else if (!cl_frames.empty()) {
-                cv::Mat temp;
-                xm::ocl::iop::to_cv_mat(cl_frames[num], temp, (cl_command_queue) cv::ocl::Queue::getDefault().ptr());
-                temp = fitSize(temp);
-                texture->setImage(xogl::Image(temp.data, width, height, format));
                 texture->render();
             }
 
@@ -92,28 +71,18 @@ namespace eox::xgtk {
 
     void GLImage::setFrames(const std::vector<cv::Mat>& _frames) {
         frames.clear();
-        u_frames.clear();
-        cl_frames.clear();
         for (const auto& item: _frames) {
             frames.push_back(item);
         }
     }
 
-    void GLImage::setFrames(const std::vector<cv::UMat> &_frames) {
-        frames.clear();
-        u_frames.clear();
-        cl_frames.clear();
-        for (const auto& item: _frames) {
-            u_frames.push_back(item);
-        }
-    }
-
     void GLImage::setFrames(const std::vector<xm::ocl::Image2D> &_frames) {
         frames.clear();
-        u_frames.clear();
-        cl_frames.clear();
         for (const auto &item: _frames) {
-            cl_frames.push_back(item);
+            cv::Mat temp;
+            xm::ocl::iop::to_cv_mat(item, temp, (cl_command_queue) cv::ocl::Queue::getDefault().ptr());
+            temp = fitSize(temp);
+            frames.push_back(temp);
         }
     }
 
@@ -151,12 +120,6 @@ namespace eox::xgtk {
 
         frames.clear();
         frames.reserve(_number);
-
-        u_frames.clear();
-        u_frames.reserve(_number);
-
-        cl_frames.clear();
-        cl_frames.reserve(_number);
 
         widgets.clear();
         for (const auto &item: this->get_children()) {

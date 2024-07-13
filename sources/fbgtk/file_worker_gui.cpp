@@ -7,13 +7,16 @@
 
 namespace xm {
 
-    void FileWorker::update_gui(float fps) {
-        Glib::signal_idle().connect([this, fps]() -> bool {
+    void FileWorker::update_gui(float fps) { // FIXME
+        if (idle_connection.connected())
+            idle_connection.disconnect();
+
+        idle_connection = Glib::signal_idle().connect([this, fps, frames = logic->frames()]() -> bool {
             if (window == nullptr)
                 return false;
             window->setFps((int) fps);
             if (!bypass)
-                window->refresh(logic->frames());
+                window->refresh(frames);
             return false;
         });
     }

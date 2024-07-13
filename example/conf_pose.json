@@ -1,4 +1,5 @@
 {
+  "$schema": "../doc/fs_conf.schema.json",
   "type": "pose",
 
   "gui": {
@@ -12,18 +13,28 @@
   },
 
   "captures": [
-    {"id": "1", "name": "1", "width": 640, "height": 480},
-    {"id": "2", "name": "2", "width": 640, "height": 480},
-    {"id": "3", "name": "3", "width": 640, "height": 480},
-    {"id": "4", "name": "4", "width": 640, "height": 480},
-    {"id": "5", "name": "5", "width": 640, "height": 480},
-    {"id": "6", "name": "6", "width": 640, "height": 480},
-    {"id": "7", "name": "7", "width": 640, "height": 480},
-    {"id": "8", "name": "8", "width": 640, "height": 480}
+    {"id": "1", "name": "1", "width": 640, "height": 480, "codec": "MJPG", "fps": 30},
+    {"id": "2", "name": "2", "width": 640, "height": 480, "codec": "MJPG", "fps": 30},
+    {"id": "3", "name": "3", "width": 640, "height": 480, "codec": "MJPG", "fps": 30},
+    {"id": "4", "name": "4", "width": 640, "height": 480, "codec": "MJPG", "fps": 30},
+    {"id": "5", "name": "5", "width": 640, "height": 480, "codec": "MJPG", "fps": 30},
+    {"id": "6", "name": "6", "width": 640, "height": 480, "codec": "MJPG", "fps": 30},
+    {"id": "7", "name": "7", "width": 640, "height": 480, "codec": "MJPG", "fps": 30},
+    {"id": "8", "name": "8", "width": 640, "height": 480, "codec": "MJPG", "fps": 30}
   ],
 
   "pose": {
-    "show_epilines": true
-
+    "segmentation": false,
+    "show_epilines": true,
+    "devices": [
+      {"model": {"body": "heavy_f32", "detector": "f_32"}},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}},
+      {"model": {"body": "heavy_f32", "detector": "f_32"}}
+    ]
   }
 }

@@ -392,11 +392,11 @@
           "properties": {
             "w": {
               "type": "integer",
-              "description": "Width"
+              "description": "Frame width"
             },
             "h": {
               "type": "integer",
-              "description": "Height"
+              "description": "Frame height"
             }
           }
         },

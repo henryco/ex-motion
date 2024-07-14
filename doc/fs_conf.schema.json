@@ -378,7 +378,7 @@
 
         "layout": {
           "type": "array",
-          "description": "2x2 Layout of gui grid. [Cols, Rows]",
+          "description": "2x2 Layout of gui grid. [Rows, Cols]",
           "items": {
             "type": "integer",
             "minItems": 2,

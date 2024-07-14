@@ -24,8 +24,9 @@ namespace xm {
             const std::filesystem::path name = device.intrinsics;
             const std::string file = (name.is_absolute() ? name : (root.parent_path() / name)).string();
 
-            log->info("Reading calibration file: {}, {}", device.intrinsics, file);
-            const auto calibration = xm::data::ocv::read_calibration(file);
+// TODO UNCOMMENT
+//            log->info("Reading calibration file: {}, {}", device.intrinsics, file);
+//            const auto calibration = xm::data::ocv::read_calibration(file);
             const auto rotate = config.captures[i].rotate;
             const auto width = config.captures[i].region.w;
             const auto height = config.captures[i].region.h;
@@ -51,8 +52,9 @@ namespace xm {
                                   .undistort_alpha = device.undistort.alpha,
                                   .width = rotate ? height : width,
                                   .height = rotate ? width : height,
-                                  .K = calibration.K,
-                                  .D = calibration.D
+// TODO UNCOMMENT
+//                                  .K = calibration.K,
+//                                  .D = calibration.D
                           });
             i++;
         }

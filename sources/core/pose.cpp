@@ -15,19 +15,21 @@ void xm::Pose::init(const xm::nview::Initial &params) {
 }
 
 void xm::Pose::init_validate() {
-    if (config.epi_matrix.empty())
-        throw std::runtime_error("Epipolar matrix cannot be empty");
+//    if (config.epi_matrix.empty())
+//        throw std::runtime_error("Epipolar matrix cannot be empty");
     if (config.devices.empty())
         throw std::runtime_error("Devices vector cannot be empty");
-    for (const auto &device: config.devices)
-        if (device.K.empty())
-            throw std::runtime_error("Calibration matrix K for device cannot be empty");
+//    for (const auto &device: config.devices)
+//        if (device.K.empty())
+//            throw std::runtime_error("Calibration matrix K for device cannot be empty");
 }
 
 void xm::Pose::init_undistort_maps() {
     remap_maps.clear();
     remap_maps.reserve(config.devices.size());
     for (const auto &device: config.devices) {
+        if (!device.undistort_source)
+            continue;
         auto im_size = cv::Size(device.width, device.height);
         auto new_mat = cv::getOptimalNewCameraMatrix(
                 device.K,
@@ -62,11 +64,8 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<xm::ocl::Image2D> &_f
             return *this;
         }
 
-        for (int i = 0; i < _frames.size(); i++) {
-            cv::UMat frame;
-            xm::ocl::iop::to_cv_umat(_frames.at(i), frame);
-            images.push_back(xm::ocl::iop::from_cv_umat(undistorted(frame, i)));
-        }
+        for (auto &img: _frames)
+            images.push_back(img);
         return *this;
     }
 
@@ -96,53 +95,36 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<xm::ocl::Image2D> &_f
         return *this;
     }
 
-    // TODO: PROCESS RESULTS ===========================================================================================
 
+// TODO UNCOMMENT
+//    for (int i = 0; i < output_frames.size(); i++) {
+//        std::vector<std::vector<cv::Vec4f>> epi_vec;
+//        const auto pose_output = outputs.at(i);
+//        if (!pose_output.present)
+//            continue;
+//        const auto points = undistorted(pose_output.landmarks, 39, i);
+//        const auto mid = points.at(eox::dnn::LM::R_MID);
+//        const auto end = points.at(eox::dnn::LM::R_END);
+//        for (int j = 0; j < output_frames.size(); j++) {
+//            if (i == j)
+//                // pointless, so skip
+//                continue;
+//            const auto mid_line = epi_line_from_point(mid, i, j);
+//            const auto end_line = epi_line_from_point(end, i, j);
+//            cv::Point2i mp1, mp2, ep1, ep2;
+//            points_from_epi_line(output_frames.at(j), mid_line, mp1, mp2);
+//            points_from_epi_line(output_frames.at(j), end_line, ep1, ep2);
+//            if (DEBUG && config.show_epilines) {
+//                const auto color = xm::ocv::distinct_color(i, (int) output_frames.size());
+//                cv::line(output_frames.at(j), mp1, mp2, color, 3);
+//                cv::line(output_frames.at(j), ep1, ep2, color, 3);
+//            }
+//        }
+//        if (epi_vec.empty())
+//            continue;
+//    }
 
-
-
-
-
-    for (int i = 0; i < output_frames.size(); i++) {
-        std::vector<std::vector<cv::Vec4f>> epi_vec;
-
-        const auto pose_output = outputs.at(i);
-        if (!pose_output.present)
-            continue;
-
-        const auto points = undistorted(pose_output.landmarks, 39, i);
-        const auto mid = points.at(eox::dnn::LM::R_MID);
-        const auto end = points.at(eox::dnn::LM::R_END);
-
-        for (int j = 0; j < output_frames.size(); j++) {
-            if (i == j)
-                // pointless, so skip
-                continue;
-
-            const auto mid_line = epi_line_from_point(mid, i, j);
-            const auto end_line = epi_line_from_point(end, i, j);
-
-            cv::Point2i mp1, mp2, ep1, ep2;
-            points_from_epi_line(output_frames.at(j), mid_line, mp1, mp2);
-            points_from_epi_line(output_frames.at(j), end_line, ep1, ep2);
-
-            if (DEBUG && config.show_epilines) {
-                const auto color = xm::ocv::distinct_color(i, (int) output_frames.size());
-                cv::line(output_frames.at(j), mp1, mp2, color, 3);
-                cv::line(output_frames.at(j), ep1, ep2, color, 3);
-            }
-        }
-
-        if (epi_vec.empty())
-            continue;
-    }
-
-
-
-
-
-
-    // TODO: PROCESS RESULTS ===========================================================================================
+// TODO: PROCESS RESULTS ===========================================================================================
 
     images.clear();
     for (const auto &frame: output_frames) {

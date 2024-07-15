@@ -10,13 +10,18 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include "net/dnn_common.h"
+#include "../ocl/ocl_interop.h"
 
 namespace eox::dnn::pose {
 
-    using PoseTimePoint = std::chrono::time_point<std::chrono::system_clock, std::chrono::nanoseconds>;
+    using PoseDebug = struct {
+        // TODO
+    };
 
     using PoseResult = struct {
         PoseOutput output;
+        PoseDebug debug;
+        long duration;
         bool present;
     };
 
@@ -133,6 +138,9 @@ namespace eox::dnn::pose {
 
     public:
         void init(PoseInput config);
+
+        PoseResult pass(const xm::ocl::iop::ClImagePromise &input);
+
         // TODO
 
     protected:

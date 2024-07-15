@@ -14,6 +14,27 @@ namespace eox::dnn::pose {
     void eox::dnn::pose::PoseAgnostic::init(eox::dnn::pose::PoseInput _config) {
         config = _config;
         // TODO
+
+        initialized = true;
+        prediction = false;
+    }
+
+    PoseResult PoseAgnostic::pass(const xm::ocl::iop::ClImagePromise &input) {
+        const auto t0 = std::chrono::system_clock::now();
+
+        const bool first_run = !initialized;
+
+        if (!initialized) {
+            init(config);
+        }
+
+        PoseResult output;
+
+
+        const auto t1 = std::chrono::system_clock::now();
+
+        output.duration = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+        return output;
     }
 
 }

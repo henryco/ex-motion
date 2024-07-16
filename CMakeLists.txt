@@ -77,7 +77,6 @@ set(HEADER_FILES
         xmotion/core/dnn/net/dnn_common.h
         xmotion/core/dnn/net/ssd_anchors.h
         xmotion/core/dnn/net/pose_roi.h
-        xmotion/core/dnn/net/roi_predictor.h
         xmotion/core/dnn/pose_pipeline.h
         xmotion/core/utils/thread_pool.h
         xmotion/core/utils/timer.h
@@ -126,6 +125,7 @@ set(HEADER_FILES
         xmotion/fbgtk/data/json_config_gui.h
         xmotion/core/filter/blur.h
         xmotion/core/pose/pose_agnostic.h
+        xmotion/core/pose/roi/roi_body_heuristics.h
 )
 
 set(SOURCE_FILES
@@ -183,6 +183,7 @@ set(SOURCE_FILES
         sources/fbgtk/file_worker_calib.cpp
         sources/fbgtk/file_worker_compose.cpp
         sources/core/pose_agnostic.cpp
+        sources/core/roi_body_heuristics.cpp
 )
 
 if (UNIX AND NOT APPLE)

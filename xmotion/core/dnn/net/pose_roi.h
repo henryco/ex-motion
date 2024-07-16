@@ -5,10 +5,10 @@
 #ifndef STEREOX_POSE_ROI_H
 #define STEREOX_POSE_ROI_H
 
-#include "roi_predictor.h"
 
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include "dnn_common.h"
 
 namespace eox::dnn {
 
@@ -24,7 +24,7 @@ namespace eox::dnn {
 
     PoseRoiInput roiFromPoints(const float mid[2], const float end[2]);
 
-    class PoseRoi : eox::dnn::RoiPredictor {
+    class PoseRoi {
 
         static inline const auto log =
                 spdlog::stdout_color_mt("pose_roi_predictor");
@@ -37,7 +37,7 @@ namespace eox::dnn {
         float margin = 0;
 
     public:
-        RoI forward(void *data) override;
+        RoI forward(void *data);
 
         [[nodiscard]] RoI forward(const PoseRoiInput &data) const;
 

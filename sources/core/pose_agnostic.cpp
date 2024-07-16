@@ -2,7 +2,7 @@
 // Created by henryco on 14/07/24.
 //
 
-#include "../../xmotion/core/dnn/pose_agnostic.h"
+#include "../../xmotion/core/pose/pose_agnostic.h"
 
 namespace eox::dnn::pose {
 
@@ -19,22 +19,8 @@ namespace eox::dnn::pose {
         prediction = false;
     }
 
-    PoseResult PoseAgnostic::pass(const xm::ocl::iop::ClImagePromise &input) {
-        const auto t0 = std::chrono::system_clock::now();
+    void PoseAgnostic::pass(int n, xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug) {
 
-        const bool first_run = !initialized;
-
-        if (!initialized) {
-            init(config);
-        }
-
-        PoseResult output;
-
-
-        const auto t1 = std::chrono::system_clock::now();
-
-        output.duration = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
-        return output;
     }
 
 }

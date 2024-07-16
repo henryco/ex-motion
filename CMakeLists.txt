@@ -125,7 +125,7 @@ set(HEADER_FILES
         xmotion/fbgtk/data/json_config_calibration.h
         xmotion/fbgtk/data/json_config_gui.h
         xmotion/core/filter/blur.h
-        xmotion/core/dnn/pose_agnostic.h
+        xmotion/core/pose/pose_agnostic.h
 )
 
 set(SOURCE_FILES

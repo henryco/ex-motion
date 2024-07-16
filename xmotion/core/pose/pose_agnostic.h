@@ -9,7 +9,7 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-#include "net/dnn_common.h"
+#include "../dnn/net/dnn_common.h"
 #include "../ocl/ocl_interop.h"
 
 namespace eox::dnn::pose {
@@ -29,7 +29,7 @@ namespace eox::dnn::pose {
         /**
          * Region of Interest
          */
-        eox::dnn::RoI roi;
+        eox::dnn::RoI roi{};
 
         /**
          * Margins added to ROI
@@ -139,9 +139,8 @@ namespace eox::dnn::pose {
     public:
         void init(PoseInput config);
 
-        PoseResult pass(const xm::ocl::iop::ClImagePromise &input);
+        void pass(int n, xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug);
 
-        // TODO
 
     protected:
         [[nodiscard]] std::chrono::nanoseconds timestamp() const;

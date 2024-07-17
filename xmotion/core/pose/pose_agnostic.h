@@ -13,6 +13,7 @@
 #include "../ocl/ocl_interop.h"
 #include "roi/roi_body_heuristics.h"
 #include "../utils/velocity_filter.h"
+#include "../filter/bg_subtract.h"
 
 namespace eox::dnn::pose {
 
@@ -121,6 +122,16 @@ namespace eox::dnn::pose {
          * Important to properly calculate points movement speed.
          */
         int f_fps = 30;
+
+        /**
+         * Whether to perform segmentation and bg subtraction
+         */
+        bool bgs_enable = false;
+
+        /**
+         * Background subtraction config
+         */
+        xm::filters::bgs::Conf bgs_config{};
     };
 
     class PoseAgnostic {
@@ -131,6 +142,7 @@ namespace eox::dnn::pose {
         bool prediction = false;
         bool initialized = false;
 
+        xm::filters::BgSubtract *bg_filters = nullptr;
         xm::pose::roi::RoiBodyHeuristics *roi_body_heuristics = nullptr;
         eox::sig::VelocityFilter (*velocity_filters)[FILTERS_DIM_SIZE] = nullptr;
         PoseInput *configs = nullptr;

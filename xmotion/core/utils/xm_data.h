@@ -28,6 +28,16 @@ namespace xm::ds {
         Color4u &operator=(const Color4u &other);
         Color4u &operator=(Color4u &&other) noexcept;
 
+        Color4u(const Color4u &other);
+        Color4u(Color4u &&other) noexcept;
+
+        Color4u() = default;
+
+        Color4u(unsigned char b,
+                unsigned char g,
+                unsigned char r,
+                unsigned char a);
+
     } Color4u;
 }
 

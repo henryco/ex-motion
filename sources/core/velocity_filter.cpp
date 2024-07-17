@@ -70,11 +70,10 @@ namespace eox::sig {
         reset();
     }
 
-    VelocityFilter &VelocityFilter::with(int _window_size, float _velocity_scale, int fps) {
+    void VelocityFilter::init(int _window_size, float _velocity_scale, int fps) {
         setVelocityScale(_velocity_scale);
         setWindowSize(_window_size);
         setTargetFps(fps);
-        return *this;
     }
 
 } // eox

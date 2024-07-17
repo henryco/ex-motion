@@ -39,10 +39,10 @@ namespace xm::ds {
 
     Color4u Color4u::bgr(int b, int g, int r, int a) {
         return {
-                .b = (unsigned char) b,
-                .g = (unsigned char) g,
-                .r = (unsigned char) r,
-                .a = (unsigned char) a
+            (unsigned char) b,
+            (unsigned char) g,
+            (unsigned char) r,
+            (unsigned char) a
         };
     }
 
@@ -65,5 +65,22 @@ namespace xm::ds {
         a = other.a;
         return *this;
     }
+
+    Color4u::Color4u(const Color4u &other) {
+        b = other.b;
+        g = other.g;
+        r = other.r;
+        a = other.a;
+    }
+
+    Color4u::Color4u(Color4u &&other) noexcept {
+        b = other.b;
+        g = other.g;
+        r = other.r;
+        a = other.a;
+    }
+
+    Color4u::Color4u(unsigned char b, unsigned char g, unsigned char r, unsigned char a)
+    : b(b), g(g), r(r), a(a) {}
 
 }

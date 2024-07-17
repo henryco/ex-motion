@@ -42,7 +42,7 @@ namespace eox::sig {
 
         VelocityFilter() = default;
 
-        VelocityFilter &with(int window_size, float velocity_scale, int target_fps = 30);
+        void init(int window_size, float velocity_scale, int target_fps = 30);
 
         float filter(std::chrono::nanoseconds timestamp, float value, float scale = 1.0);
 

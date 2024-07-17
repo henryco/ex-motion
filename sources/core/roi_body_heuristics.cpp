@@ -29,7 +29,7 @@ namespace xm::pose::roi {
         float roi_score = 0;
 
         // ROI threshold check when its reasonable
-        if (threshold_roi > 0 && threshold_roi < 1) {
+        if (threshold > 0 && threshold < 1) {
             // points of interest for ROI threshold check
             constexpr int POI[] = {
                     eox::dnn::LM::NOSE,
@@ -60,7 +60,7 @@ namespace xm::pose::roi {
                 roi_score = roi_score > 0 ? std::min(distance, roi_score) : distance;
 
                 // too close to the ROI borders
-                if (distance < threshold_roi)
+                if (distance < threshold)
                     return -roi_score;
             }
         }
@@ -87,7 +87,7 @@ namespace xm::pose::roi {
         roi = _roi;
 
         // detector run due to roi being discarded previously
-        if (!prediction && !first_run && roi_rollback_window > 0) {
+        if (!prediction && !first_run && rollback_window > 0) {
 
             // MID point extracted from landmarks
             const auto found_mid = landmarks[eox::dnn::LM::R_MID];
@@ -109,11 +109,11 @@ namespace xm::pose::roi {
             const auto norm_dist = dist / roi_radius;
 
             // if far enough from expected mid, rolling back to pre-discarded roi
-            roi = (norm_dist < roi_rollback_window)
+            roi = (norm_dist < rollback_window)
                   ? roi
                   : previous_roi;
 
-            rollback_roi = norm_dist >= roi_rollback_window;
+            rollback_roi = norm_dist >= rollback_window;
         }
 
         // saving old roi just in case
@@ -123,7 +123,7 @@ namespace xm::pose::roi {
         roi = to_roi(landmarks);
 
         // checking if we really need to use new roi
-        if (prediction && roi_center_window > 0) {
+        if (prediction && center_window > 0) {
 
             // Euclidean distance between mid-points of new and old roi
             const float c_dist = std::sqrt(
@@ -138,11 +138,11 @@ namespace xm::pose::roi {
             // normalized distance
             const float norm_dist = c_dist / radius;
 
-            roi = (norm_dist >= roi_center_window)
+            roi = (norm_dist >= center_window)
                   ? roi
                   : roi_old;
 
-            preserved_roi = norm_dist < roi_center_window;
+            preserved_roi = norm_dist < center_window;
         }
 
         // clamping roi to prevent index out of range error
@@ -154,7 +154,7 @@ namespace xm::pose::roi {
         roi = clamped_roi;
 
         // checking if clamped roi big enough
-        if (ratio_roi_w > roi_clamp_window && ratio_roi_h > roi_clamp_window) {
+        if (ratio_roi_w > clamp_window && ratio_roi_h > clamp_window) {
             // it is, we can use it
             discarded_roi = false;
             prediction = true;
@@ -182,20 +182,20 @@ namespace xm::pose::roi {
         const float y2 = end.y;
 
         const float dist = std::sqrt(std::pow(x2 - x1, 2.f) + std::pow(y2 - y1, 2.f));
-        const float radius = dist + roi_margin;
+        const float radius = dist + margin;
 
-        const float w = radius * 2.f * roi_scale; // scale x
-        const float h = radius * 2.f * roi_scale; // scale y
+        const float w = radius * 2.f * scale; // scale x
+        const float h = radius * 2.f * scale; // scale y
 
         const float x0 = x1 - (w / 2.f);
         const float y0 = y1 - (h / 2.f);
 
-        const float ex = x1 + (((x2 - x1) / dist) * radius * roi_scale); // scale x
-        const float ey = y1 + (((y2 - y1) / dist) * radius * roi_scale); // scale y
+        const float ex = x1 + (((x2 - x1) / dist) * radius * scale); // scale x
+        const float ey = y1 + (((y2 - y1) / dist) * radius * scale); // scale y
 
         return {
-                .x = std::max(0.f, x0 + roi_padding_x),
-                .y = std::max(0.f, y0 + roi_padding_y),
+                .x = std::max(0.f, x0 + padding_x),
+                .y = std::max(0.f, y0 + padding_y),
                 .w = std::max(0.f, w),
                 .h = std::max(0.f, h),
                 .c = eox::dnn::Point(x1, y1),

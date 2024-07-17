@@ -40,6 +40,10 @@ namespace eox::sig {
     public:
         VelocityFilter(int window_size, float velocity_scale, int target_fps = 30);
 
+        VelocityFilter() = default;
+
+        VelocityFilter &with(int window_size, float velocity_scale, int target_fps = 30);
+
         float filter(std::chrono::nanoseconds timestamp, float value, float scale = 1.0);
 
         void setVelocityScale(float scale);

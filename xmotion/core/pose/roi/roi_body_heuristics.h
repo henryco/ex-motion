@@ -35,22 +35,22 @@ namespace xm::pose::roi {
         /**
          * Margins added to ROI
          */
-        float roi_margin = 0.f;
+        float margin = 0.f;
 
         /**
          * Horizontal paddings added to ROI
          */
-        float roi_padding_x = 0.f;
+        float padding_x = 0.f;
 
         /**
          * Vertical paddings added to ROI
          */
-        float roi_padding_y = 0.f;
+        float padding_y = 0.f;
 
         /**
          * Scaling factor for ROI (multiplication)
          */
-        float roi_scale = 1.2f;
+        float scale = 1.2f;
 
         /**
          * Distance between detectors and actual ROI mid point
@@ -58,7 +58,7 @@ namespace xm::pose::roi {
          *
          * [0.0 ... 1.0]
          */
-        float roi_rollback_window = 0.f;
+        float rollback_window = 0.f;
 
         /**
          * Distance between actual and predicted ROI mid point
@@ -66,7 +66,7 @@ namespace xm::pose::roi {
          *
          * [0.0 ... 1.0]
          */
-        float roi_center_window = 0.f;
+        float center_window = 0.f;
 
         /**
          * Acceptable ratio of clamped to original ROI size. \n
@@ -75,28 +75,7 @@ namespace xm::pose::roi {
          *
          * [0.0 ... 1.0]
          */
-        float roi_clamp_window = 0.f;
-
-        /**
-         * Threshold score for landmarks presence
-         *
-         * [0.0 ... 1.0]
-         */
-        float threshold_marks = 0.5;
-
-        /**
-         * Threshold score for detector ROI presence
-         *
-         * [0.0 ... 1.0]
-         */
-        float threshold_detector = 0.5;
-
-        /**
-         * Threshold score for body presence
-         *
-         * [0.0 ... 1.0]
-         */
-        float threshold_pose = 0.5;
+        float clamp_window = 0.f;
 
         /**
          * Threshold score for detector ROI distance to body marks. \n
@@ -105,7 +84,7 @@ namespace xm::pose::roi {
          *
          * [0.0 ... 1.0]
          */
-        float threshold_roi = 0.f;
+        float threshold = 0.f;
 
     public:
 

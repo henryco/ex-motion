@@ -11,8 +11,12 @@
 
 #include "../dnn/net/dnn_common.h"
 #include "../ocl/ocl_interop.h"
+#include "roi/roi_body_heuristics.h"
+#include "../utils/velocity_filter.h"
 
 namespace eox::dnn::pose {
+
+#define FILTERS_DIM_SIZE 117
 
     using PoseDebug = struct {
         // TODO
@@ -26,10 +30,6 @@ namespace eox::dnn::pose {
     };
 
     using PoseInput = struct PoseInput {
-        /**
-         * Region of Interest
-         */
-        eox::dnn::RoI roi{};
 
         /**
          * Margins added to ROI
@@ -128,22 +128,25 @@ namespace eox::dnn::pose {
                 spdlog::stdout_color_mt("pose_agnostic");
 
     private:
-        bool preserved_roi = false;
-        bool discarded_roi = false;
-        bool rollback_roi = false;
         bool prediction = false;
         bool initialized = false;
 
-        PoseInput config;
+        xm::pose::roi::RoiBodyHeuristics *roi_body_heuristics = nullptr;
+        eox::sig::VelocityFilter (*velocity_filters)[FILTERS_DIM_SIZE] = nullptr;
+        PoseInput *configs = nullptr;
+
 
     public:
-        void init(PoseInput config);
+        void init(int n, const PoseInput *config);
 
         void pass(int n, xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug);
 
+        ~PoseAgnostic();
 
     protected:
         [[nodiscard]] std::chrono::nanoseconds timestamp() const;
+
+        void reset();
     };
 
 }

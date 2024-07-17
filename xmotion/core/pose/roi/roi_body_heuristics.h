@@ -9,7 +9,6 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include "../../dnn/net/dnn_common.h"
 #include "../../ocl/ocl_data.h"
-#include "../../dnn/net/pose_roi.h"
 
 namespace xm::pose::roi {
 
@@ -29,7 +28,6 @@ namespace xm::pose::roi {
         bool initialized = false;
         bool prediction = false;
 
-        eox::dnn::PoseRoi predictor;
         eox::dnn::RoI roi{};
 
     public:
@@ -122,6 +120,7 @@ namespace xm::pose::roi {
         void reset();
 
         /**
+         * @param roi tested region of interest
          * @param landmarks detected body landmarks
          * @param auto_reset reset when roi is disqualified
          * @return roi presence score, negative when roi is disqualified
@@ -129,7 +128,15 @@ namespace xm::pose::roi {
         float presence(
                 const eox::dnn::RoI &roi,
                 const eox::dnn::Landmark landmarks[39],
-                bool auto_reset = false);
+                bool auto_reset);
+
+        /**
+         * @param roi tested region of interest
+         * @param landmarks detected body landmarks
+         * @return roi presence score, negative when roi is disqualified
+         */
+        float presence(const eox::dnn::RoI &roi,
+                       const eox::dnn::Landmark landmarks[39]) const;
 
         /**
          * Predict new roi, based on some heuristics
@@ -143,6 +150,12 @@ namespace xm::pose::roi {
                 const eox::dnn::Landmark landmarks[39],
                 int width,
                 int height);
+
+        /**
+         * @param landmarks detected body landmarks
+         * @return new roi extracted from landmarks
+         */
+        eox::dnn::RoI to_roi(const eox::dnn::Landmark landmarks[39]) const;
     };
 }
 

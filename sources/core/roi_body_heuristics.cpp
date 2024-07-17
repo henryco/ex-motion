@@ -19,12 +19,19 @@ namespace xm::pose::roi {
     }
 
     float RoiBodyHeuristics::presence(const eox::dnn::RoI &_roi, const eox::dnn::Landmark *landmarks, bool auto_reset) {
+        const auto score = presence(_roi, landmarks);
+        if (score < 0 && auto_reset)
+            reset();
+        return score;
+    }
+
+    float RoiBodyHeuristics::presence(const eox::dnn::RoI &_roi, const eox::dnn::Landmark *landmarks) const {
         float roi_score = 0;
 
         // ROI threshold check when its reasonable
         if (threshold_roi > 0 && threshold_roi < 1) {
             // points of interest for ROI threshold check
-            const int POI[] = {
+            constexpr int POI[] = {
                     eox::dnn::LM::NOSE,
                     eox::dnn::LM::R_MID,
                     eox::dnn::LM::HIP_L,
@@ -53,11 +60,8 @@ namespace xm::pose::roi {
                 roi_score = roi_score > 0 ? std::min(distance, roi_score) : distance;
 
                 // too close to the ROI borders
-                if (distance < threshold_roi) {
-                    if (auto_reset)
-                        reset();
+                if (distance < threshold_roi)
                     return -roi_score;
-                }
             }
         }
 
@@ -86,8 +90,7 @@ namespace xm::pose::roi {
         if (!prediction && !first_run && roi_rollback_window > 0) {
 
             // MID point extracted from landmarks
-            const auto found_origins = eox::dnn::roiFromPoseLandmarks39(landmarks);
-            const auto found_mid = eox::dnn::mid(found_origins);
+            const auto found_mid = landmarks[eox::dnn::LM::R_MID];
 
             // MID point extracted from detector
             const auto expected_mid = roi.c;
@@ -117,12 +120,7 @@ namespace xm::pose::roi {
         const auto roi_old = roi;
 
         // predict new roi
-        roi = predictor
-                .setMargin(roi_margin)
-                .setFixX(roi_padding_x)
-                .setFixY(roi_padding_y)
-                .setScale(roi_scale)
-                .forward(eox::dnn::roiFromPoseLandmarks39(landmarks));
+        roi = to_roi(landmarks);
 
         // checking if we really need to use new roi
         if (prediction && roi_center_window > 0) {
@@ -171,6 +169,37 @@ namespace xm::pose::roi {
                 .preserved = preserved_roi,
                 .discarded = discarded_roi,
                 .rollback = rollback_roi
+        };
+    }
+
+    eox::dnn::RoI RoiBodyHeuristics::to_roi(const eox::dnn::Landmark *landmarks) const {
+        const auto &center = landmarks[eox::dnn::LM::R_MID];
+        const auto &end = landmarks[eox::dnn::LM::R_END];
+
+        const float x1 = center.x;
+        const float y1 = center.y;
+        const float x2 = end.x;
+        const float y2 = end.y;
+
+        const float dist = std::sqrt(std::pow(x2 - x1, 2.f) + std::pow(y2 - y1, 2.f));
+        const float radius = dist + roi_margin;
+
+        const float w = radius * 2.f * roi_scale; // scale x
+        const float h = radius * 2.f * roi_scale; // scale y
+
+        const float x0 = x1 - (w / 2.f);
+        const float y0 = y1 - (h / 2.f);
+
+        const float ex = x1 + (((x2 - x1) / dist) * radius * roi_scale); // scale x
+        const float ey = y1 + (((y2 - y1) / dist) * radius * roi_scale); // scale y
+
+        return {
+                .x = std::max(0.f, x0 + roi_padding_x),
+                .y = std::max(0.f, y0 + roi_padding_y),
+                .w = std::max(0.f, w),
+                .h = std::max(0.f, h),
+                .c = eox::dnn::Point(x1, y1),
+                .e = eox::dnn::Point(ex, ey)
         };
     }
 

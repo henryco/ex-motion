@@ -2,7 +2,9 @@
 // Created by henryco on 14/07/24.
 //
 
+#include <opencv2/core/ocl.hpp>
 #include "../../xmotion/core/pose/pose_agnostic.h"
+#include "../../xmotion/core/ocl/cl_kernel.h"
 
 namespace eox::dnn::pose {
 
@@ -15,22 +17,43 @@ namespace eox::dnn::pose {
             delete[] velocity_filters;
         if (configs != nullptr)
             delete[] configs;
+        if (sources != nullptr)
+            delete[] sources;
+        if (rois != nullptr)
+            delete[] rois;
+
+        if (ocl_command_queue != nullptr)
+            clReleaseCommandQueue(ocl_command_queue);
+        if (ocl_context != nullptr)
+            clReleaseContext(ocl_context);
+        if (device_id != nullptr)
+            clReleaseDevice(device_id);
     }
 
     PoseAgnostic::~PoseAgnostic() {
         reset();
     }
 
-    std::chrono::nanoseconds eox::dnn::pose::PoseAgnostic::timestamp() const {
+    std::chrono::nanoseconds eox::dnn::pose::PoseAgnostic::timestamp() {
         return std::chrono::duration_cast<std::chrono::nanoseconds>(
                 std::chrono::high_resolution_clock::now().time_since_epoch());
     }
 
-    void eox::dnn::pose::PoseAgnostic::init(int n, const PoseInput *_configs) {
+    void eox::dnn::pose::PoseAgnostic::init(const int n, const PoseInput *_configs) {
         reset();
 
-        configs = new PoseInput[n];
+        device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
+        ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
+        ocl_command_queue = xm::ocl::create_queue_device(
+                ocl_context,
+                device_id,
+                true,
+                false);
+
+        rois = new eox::dnn::RoI[n];
+        configs = new eox::dnn::pose::PoseInput[n];
         bg_filters = new xm::filters::BgSubtract[n];
+        sources = new xm::ocl::iop::ClImagePromise[n];
         velocity_filters = new eox::sig::VelocityFilter[n][FILTERS_DIM_SIZE];
         roi_body_heuristics = new xm::pose::roi::RoiBodyHeuristics[n];
 
@@ -64,13 +87,31 @@ namespace eox::dnn::pose {
             }
         }
 
-        // TODO
+        detector.init(xm::dnn::run::F_32);
 
         initialized = true;
         prediction = false;
     }
 
-    void PoseAgnostic::pass(int n, xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug) {
+    void PoseAgnostic::pass(const int n, const xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug) {
+
+        for (int i = 0; i < n; i++) {
+            auto &roi_body_heuristic = roi_body_heuristics[i];
+            auto &frame = frames[i];
+            const auto &roi = rois[i];
+
+            if (roi_body_heuristic.get_prediction()) {
+                sources[i] = xm::ocl::iop::copy_ocl(
+                        frame, ocl_command_queue,
+                        (int) roi.x, (int) roi.y,
+                        (int) roi.w, (int) roi.h);
+            } else {
+                // TODO detector aggregate
+            }
+
+        }
+
+        xm::ocl::iop::ClImagePromise::finalizeAll(sources, n, true);
 
     }
 

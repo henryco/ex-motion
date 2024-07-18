@@ -9,11 +9,13 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
-#include "../dnn/net/dnn_common.h"
-#include "../ocl/ocl_interop.h"
 #include "roi/roi_body_heuristics.h"
-#include "../utils/velocity_filter.h"
+
+#include "../dnn/net/dnn_common.h"
 #include "../filter/bg_subtract.h"
+#include "../ocl/ocl_interop.h"
+#include "../utils/velocity_filter.h"
+#include "detector/body_detector.h"
 
 namespace eox::dnn::pose {
 
@@ -142,21 +144,31 @@ namespace eox::dnn::pose {
         bool prediction = false;
         bool initialized = false;
 
+        cl_command_queue ocl_command_queue = nullptr;
+        cl_device_id device_id = nullptr;
+        cl_context ocl_context = nullptr;
+
+        xm::dnn::run::BodyDetector detector;
+
+        // ARRAYS
         xm::filters::BgSubtract *bg_filters = nullptr;
         xm::pose::roi::RoiBodyHeuristics *roi_body_heuristics = nullptr;
         eox::sig::VelocityFilter (*velocity_filters)[FILTERS_DIM_SIZE] = nullptr;
+        xm::ocl::iop::ClImagePromise *sources = nullptr;
+        eox::dnn::RoI *rois = nullptr;
         PoseInput *configs = nullptr;
+        // ARRAYS
 
 
     public:
         void init(int n, const PoseInput *config);
 
-        void pass(int n, xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug);
+        void pass(int n, const xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug);
 
         ~PoseAgnostic();
 
     protected:
-        [[nodiscard]] std::chrono::nanoseconds timestamp() const;
+        [[nodiscard]] static std::chrono::nanoseconds timestamp();
 
         void reset();
     };

@@ -203,6 +203,11 @@ namespace xm::ocl::iop {
         return CLPromise<cv::Mat>(dst, queue);
     }
 
+    CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &promise, int cv_type) {
+        const auto image = promise.getImage2D();
+        return to_cv_mat(image, promise.queue(), cv_type);
+    }
+
     ClImagePromise::ClImagePromise(const Image2D &out,
                                    cl_command_queue _queue,
                                    cl_event _event):

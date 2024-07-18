@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.27)
 project(xmotion VERSION 0.2 LANGUAGES CXX)
 
+option(WITH_NVIDIA "Build for NVidia gpu" OFF)
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 
@@ -126,6 +128,9 @@ set(HEADER_FILES
         xmotion/core/filter/blur.h
         xmotion/core/pose/pose_agnostic.h
         xmotion/core/pose/roi/roi_body_heuristics.h
+        xmotion/core/pose/detector/body_detector.h
+        platforms/agnostic_dnn.h
+        platforms/agnostic_detector.h
 )
 
 set(SOURCE_FILES
@@ -184,6 +189,7 @@ set(SOURCE_FILES
         sources/fbgtk/file_worker_compose.cpp
         sources/core/pose_agnostic.cpp
         sources/core/roi_body_heuristics.cpp
+        sources/core/body_detector.cpp
 )
 
 if (UNIX AND NOT APPLE)
@@ -198,6 +204,15 @@ elseif (WIN32)
     list(APPEND SOURCE_FILES platforms/win32/direct_show/windows_video.h)
     list(APPEND SOURCE_FILES platforms/win32/direct_show/windows_video.cpp)
 
+endif ()
+
+if (WITH_NVIDIA)
+    list(APPEND SOURCE_FILES platforms/nvidia/agnostic_dnn_nvidia.h)
+    list(APPEND SOURCE_FILES platforms/nvidia/agnostic_dnn_nvidia.cpp)
+else ()
+    list(APPEND SOURCE_FILES platforms/tflite/agnostic_dnn_tflite.h)
+    list(APPEND SOURCE_FILES platforms/tflite/agnostic_dnn_tflite.cpp)
+    list(APPEND SOURCE_FILES platforms/tflite/agnostic_detector_tflite.cpp)
 endif ()
 
 # =================== OpenCL kernels generation =====================

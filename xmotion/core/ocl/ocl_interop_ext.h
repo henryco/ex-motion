@@ -55,18 +55,18 @@ namespace xm::ocl::iop {
         }
 
         CLPromise<T> &operator=(CLPromise<T> &&other) noexcept {
-            if (this == &other)
-                *this;
-            if (ocl_event != nullptr)
-                clReleaseEvent(ocl_event);
-            cleanup_container = std::move(other.cleanup_container);
-            completed = other.completed;
-            ocl_queue = other.ocl_queue;
-            ocl_event = other.ocl_event;
-            data = std::move(other.data);
-            other.ocl_event = nullptr;
-            other.ocl_queue = nullptr;
-            other.completed = true;
+            if (this != &other) {
+                if (ocl_event != nullptr)
+                    clReleaseEvent(ocl_event);
+                cleanup_container = std::move(other.cleanup_container);
+                completed = other.completed;
+                ocl_queue = other.ocl_queue;
+                ocl_event = other.ocl_event;
+                data = std::move(other.data);
+                other.ocl_event = nullptr;
+                other.ocl_queue = nullptr;
+                other.completed = true;
+            }
             return *this;
         }
 
@@ -124,6 +124,64 @@ namespace xm::ocl::iop {
             // this would be much faster then proper nlog(n) map/set due to much smaller overhead,
             // which is exactly the case here
             for (auto &p: promises) {
+                if (p.completed && !force)
+                    continue;
+
+                p.completed = true;
+
+                bool found = false;
+                for (int i = 0; i < n; i++) {
+                    if (list[i] != p.ocl_queue) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    list[n++] = p.ocl_queue;
+                    goto waiting_room;
+                }
+
+                if (p.cleanup_container) {
+                    (*p.cleanup_container)();
+                    p.cleanup_container = nullptr;
+                }
+
+                continue;
+
+                waiting_room:
+                {
+                    cl_int err;
+                    err = clFinish(p.ocl_queue);
+                    if (err != CL_SUCCESS) {
+                        delete[] list;
+                        throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
+                    }
+                    if (p.cleanup_container) {
+                        (*p.cleanup_container)();
+                        p.cleanup_container = nullptr;
+                    }
+                }
+            }
+
+            delete[] list;
+        }
+
+        /**
+         * BLOCKING OPERATION, waits for result and cleanup resources
+         * @param promises array of unique promises
+         * @param size size of the array
+         * @param force wait for completed promises too
+         */
+        static void finalizeAll(CLPromise<T> *promises, size_t size, bool force = false) {
+            int n = 0;
+            auto list = new cl_command_queue[size];
+            // this is narrow/naive map implementation, but for reasonably small input size
+            // this would be much faster then proper nlog(n) map/set due to much smaller overhead,
+            // which is exactly the case here
+            for (int g = 0; g < size; g++) {
+                auto &p = promises[g];
+
                 if (p.completed && !force)
                     continue;
 

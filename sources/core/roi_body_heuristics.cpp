@@ -173,34 +173,18 @@ namespace xm::pose::roi {
     }
 
     eox::dnn::RoI RoiBodyHeuristics::to_roi(const eox::dnn::Landmark *landmarks) const {
-        const auto &center = landmarks[eox::dnn::LM::R_MID];
-        const auto &end = landmarks[eox::dnn::LM::R_END];
+        return eox::dnn::to_roi(
+                landmarks[eox::dnn::LM::R_MID],
+                landmarks[eox::dnn::LM::R_END],
+                margin,
+                scale,
+                padding_x,
+                padding_y
+        );
+    }
 
-        const float x1 = center.x;
-        const float y1 = center.y;
-        const float x2 = end.x;
-        const float y2 = end.y;
-
-        const float dist = std::sqrt(std::pow(x2 - x1, 2.f) + std::pow(y2 - y1, 2.f));
-        const float radius = dist + margin;
-
-        const float w = radius * 2.f * scale; // scale x
-        const float h = radius * 2.f * scale; // scale y
-
-        const float x0 = x1 - (w / 2.f);
-        const float y0 = y1 - (h / 2.f);
-
-        const float ex = x1 + (((x2 - x1) / dist) * radius * scale); // scale x
-        const float ey = y1 + (((y2 - y1) / dist) * radius * scale); // scale y
-
-        return {
-                .x = std::max(0.f, x0 + padding_x),
-                .y = std::max(0.f, y0 + padding_y),
-                .w = std::max(0.f, w),
-                .h = std::max(0.f, h),
-                .c = eox::dnn::Point(x1, y1),
-                .e = eox::dnn::Point(ex, ey)
-        };
+    const bool RoiBodyHeuristics::get_prediction() const {
+        return prediction;
     }
 
 }

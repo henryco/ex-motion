@@ -89,6 +89,11 @@ namespace xm::pose::roi {
     public:
 
         /**
+         * @return whether the prediction from the last pass was successful
+         */
+        const bool get_prediction() const;
+
+        /**
          * Wipes completely internal state to its initial values.
          */
         void init();

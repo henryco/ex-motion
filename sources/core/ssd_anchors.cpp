@@ -17,13 +17,13 @@ namespace eox::dnn::ssd {
     }
 
     /**
-     * I will not even pretend that I have more than just vague idea of whats going on here
+     * I will not even pretend that I have more than just vague conceptual idea of whats going on here
      * https://github.com/google/mediapipe/blob/master/mediapipe/calculators/tflite/ssd_anchors_calculator.cc
      */
     std::vector<std::array<float, 4>> generate_anchors(const SSDAnchorOptions &options) {
         std::vector<std::array<float, 4>> anchors;
         int layer_id = 0;
-        int n_strides = options.strides.size();
+        int n_strides = (int) options.strides.size();
 
         while (layer_id < n_strides) {
             std::vector<float> anchor_height;
@@ -47,7 +47,7 @@ namespace eox::dnn::ssd {
                     if (options.interpolated_scale_aspect_ratio > 0) {
                         float scale_next =
                                 last_same_stride_layer == n_strides - 1 ?
-                                1.0 : calculate_scale(options.min_scale,
+                                1.0f : calculate_scale(options.min_scale,
                                                       options.max_scale,
                                                       last_same_stride_layer +
                                                       1, n_strides);
@@ -103,7 +103,7 @@ namespace eox::dnn::ssd {
         // Sigmoid and thresholding
         std::vector<float> sigmoid_scores(scores.size());
         for (size_t i = 0; i < scores.size(); ++i) {
-            sigmoid_scores[i] = eox::dnn::sigmoid(scores[i]);
+            sigmoid_scores[i] = (float) eox::dnn::sigmoid(scores[i]);
         }
 
         std::vector<size_t> valid_indices;

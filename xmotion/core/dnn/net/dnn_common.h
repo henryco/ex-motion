@@ -84,6 +84,7 @@ namespace eox::dnn {
         float p;
     };
 
+ // DEPRECATED TODO REMOVE
     using PoseOutput = struct {
 
         /**
@@ -107,6 +108,7 @@ namespace eox::dnn {
         float score;
     };
 
+ // DEPRECATED TODO REMOVE
     using DetectedRegion = struct {
 
         /**
@@ -179,19 +181,18 @@ namespace eox::dnn {
     };
 
     namespace LM {
-        const int NOSE = 0;
+        constexpr int NOSE = 0;
+        constexpr int SHOULDER = 11;
+        constexpr int SHOULDER_L = SHOULDER + 0;
+        constexpr int SHOULDER_R = SHOULDER + 1;
 
-        const int SHOULDER = 11;
-        const int SHOULDER_L = SHOULDER + 0;
-        const int SHOULDER_R = SHOULDER + 1;
+        constexpr int HIP = 23;
+        constexpr int HIP_L = HIP + 0;
+        constexpr int HIP_R = HIP + 1;
 
-        const int HIP = 23;
-        const int HIP_L = HIP + 0;
-        const int HIP_R = HIP + 1;
-
-        const int R = 33;
-        const int R_MID = R + 0;
-        const int R_END = R + 1;
+        constexpr int R = 33;
+        constexpr int R_MID = R + 0;
+        constexpr int R_END = R + 1;
     }
 
     double sigmoid(double x);
@@ -210,6 +211,11 @@ namespace eox::dnn {
     cv::UMat remove_paddings(const cv::UMat &in, int width, int height);
 
     RoI clamp_roi(const eox::dnn::RoI &roi, int width, int height);
+
+    RoI to_roi(const Landmark &center, const Landmark &end, float margin, float scale, float padding_x, float padding_y);
+    RoI to_roi(const Landmark landmarks[39], float margin, float scale, float padding_x, float padding_y);
+
+    Landmark from_array_xy(const float arr[2]);
 
     double normalize_radians(double angle);
 }

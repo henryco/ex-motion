@@ -65,17 +65,17 @@ namespace platform::dnn {
 
         size_t get_in_h() const;
 
-        size_t get_out_w() const;
-
-        size_t get_out_h() const;
-
         size_t get_n_lm3d() const;
 
         size_t get_n_lmwd() const;
 
-        size_t get_n_heatmap() const;
+        size_t get_n_heatmap_w() const;
 
-        size_t get_n_segmentation() const;
+        size_t get_n_heatmap_h() const;
+
+        size_t get_n_segmentation_w() const;
+
+        size_t get_n_segmentation_h() const;
 
         /**
          * @param in_batch_ptr 2D array

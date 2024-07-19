@@ -91,14 +91,6 @@ namespace platform::dnn {
         return body::mappings[model].i_h;
     }
 
-    size_t AgnosticBody::get_out_w() const {
-        return body::mappings[model].o_w;
-    }
-
-    size_t AgnosticBody::get_out_h() const {
-        return body::mappings[model].o_h;
-    }
-
     size_t AgnosticBody::get_n_lm3d() const {
         return 195;
     }
@@ -107,12 +99,20 @@ namespace platform::dnn {
         return 117;
     }
 
-    size_t AgnosticBody::get_n_heatmap() const {
-        return 64 * 64;
+    size_t AgnosticBody::get_n_segmentation_w() const {
+        return body::mappings[model].o_w;
     }
 
-    size_t AgnosticBody::get_n_segmentation() const {
-        return 256 * 256;
+    size_t AgnosticBody::get_n_segmentation_h() const {
+        return body::mappings[model].o_h;
+    }
+
+    size_t AgnosticBody::get_n_heatmap_w() const {
+        return 64;
+    }
+
+    size_t AgnosticBody::get_n_heatmap_h() const {
+        return 64;
     }
 
     void AgnosticBody::inference(const size_t batch_size, const size_t input_size, const float * const *in_batch_ptr) {
@@ -148,8 +148,8 @@ namespace platform::dnn {
                 delete[] heatmaps;
             }
 
-            const auto n_seg     = get_n_segmentation();
-            const auto n_heatmap = get_n_heatmap();
+            const auto n_heatmap = get_n_heatmap_w() * get_n_heatmap_h();
+            const auto n_seg     = get_n_segmentation_w() * get_n_segmentation_h();
             const auto n_lm3d    = get_n_lm3d();
             const auto n_lmwd    = get_n_lmwd();
 
@@ -207,8 +207,8 @@ namespace platform::dnn {
                 delete[] heatmaps;
             }
 
-            const auto n_seg     = get_n_segmentation();
-            const auto n_heatmap = get_n_heatmap();
+            const auto n_heatmap = get_n_heatmap_w() * get_n_heatmap_h();
+            const auto n_seg     = get_n_segmentation_w() * get_n_segmentation_h();
             const auto n_lm3d    = get_n_lm3d();
             const auto n_lmwd    = get_n_lmwd();
 

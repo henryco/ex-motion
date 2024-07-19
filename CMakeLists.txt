@@ -132,6 +132,7 @@ set(HEADER_FILES
         platforms/agnostic_dnn.h
         platforms/agnostic_detector.h
         platforms/agnostic_body.h
+        xmotion/core/pose/body/body_marker.h
 )
 
 set(SOURCE_FILES
@@ -191,6 +192,7 @@ set(SOURCE_FILES
         sources/core/pose_agnostic.cpp
         sources/core/roi_body_heuristics.cpp
         sources/core/body_detector.cpp
+        sources/core/body_marker.cpp
 )
 
 if (UNIX AND NOT APPLE)
@@ -227,7 +229,7 @@ endif ()
 add_executable(convert_to_c_array scripts/embed_file.cxx)
 set(GENERATED_CL_SOURCES)
 
-foreach(input_file IN LISTS KERNEL_FILES)
+foreach (input_file IN LISTS KERNEL_FILES)
     get_filename_component(output_path ${input_file} DIRECTORY)
     get_filename_component(output_name ${input_file} NAME_WE)
     set(kernel_name "${PROJECT_SOURCE_DIR}/${output_path}/cl/${output_name}.cl")
@@ -239,7 +241,7 @@ foreach(input_file IN LISTS KERNEL_FILES)
             COMMENT "Converting: ${input_file} -> ${output_name}"
             VERBATIM)
     list(APPEND GENERATED_CL_SOURCES ${output_name})
-endforeach()
+endforeach ()
 
 add_custom_target(generate_cl_sources
         ALL DEPENDS ${GENERATED_CL_SOURCES})

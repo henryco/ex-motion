@@ -36,6 +36,19 @@ namespace xm::dnn::pose {
         void init(ModelPose model);
 
         void inference(int n, const xm::ocl::iop::ClImagePromise *frames, eox::dnn::PoseOutput *poses, bool segmenation = false);
+
+    protected:
+        eox::dnn::PoseOutput decode(
+            const float *landmarks_3d,
+            const float *landmarks_wd,
+            const float *seg_mask,
+            float        pose_flag,
+            int          view_w,
+            int          view_h,
+            bool         segmentation
+        );
+
+
     };
 
 }

@@ -37,16 +37,15 @@ namespace xm::dnn::run {
 
         auto *mat_promises = new ocl::iop::CLPromise<cv::Mat>[n];
 
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++)
             mat_promises[i] = xm::ocl::iop::to_cv_mat(promises[i]);
-        }
 
         xm::ocl::iop::CLPromise<cv::Mat>::finalizeAll(mat_promises, n);
 
         const auto m_dim = detector->get_in_w() * detector->get_in_h() * 3;
-        const auto m_size = m_dim * sizeof(float);
+        const auto m_size = m_dim * sizeof(float) * 3;
 
-        auto batch_data = new float[n * m_dim];
+        auto batch_data = new float[n * m_dim * 3];
 
         for (int i = 0; i < n; i++) {
             // TODO: not very efficient, replace with ocl kernel on previous step
@@ -56,7 +55,7 @@ namespace xm::dnn::run {
                     (int) detector->get_in_h(),
                     true);
 
-            std::memcpy(batch_data + (i * n), mat.data, m_size);
+            std::memcpy(batch_data + (i * n * 3), mat.data, m_size);
         }
 
         detector->inference(n, m_dim, batch_data);

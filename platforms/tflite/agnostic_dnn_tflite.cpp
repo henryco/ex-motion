@@ -3,6 +3,7 @@
 //
 
 #include "agnostic_dnn_tflite.h"
+#include <tensorflow/lite/delegates/gpu/delegate.h>
 
 namespace platform::dnn {
 

@@ -5,7 +5,6 @@
 #include "../agnostic_detector.h"
 #include <filesystem>
 #include <fstream>
-#include <vector>
 
 namespace platform::dnn {
 

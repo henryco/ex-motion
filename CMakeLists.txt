@@ -131,6 +131,7 @@ set(HEADER_FILES
         xmotion/core/pose/detector/body_detector.h
         platforms/agnostic_dnn.h
         platforms/agnostic_detector.h
+        platforms/agnostic_body.h
 )
 
 set(SOURCE_FILES
@@ -207,12 +208,19 @@ elseif (WIN32)
 endif ()
 
 if (WITH_NVIDIA)
+
     list(APPEND SOURCE_FILES platforms/nvidia/agnostic_dnn_nvidia.h)
     list(APPEND SOURCE_FILES platforms/nvidia/agnostic_dnn_nvidia.cpp)
+    list(APPEND SOURCE_FILES platforms/nvidia/agnostic_detector_nvidia.cpp)
+    list(APPEND SOURCE_FILES platforms/nvidia/agnostic_body_nvidia.cpp)
+
 else ()
+
     list(APPEND SOURCE_FILES platforms/tflite/agnostic_dnn_tflite.h)
     list(APPEND SOURCE_FILES platforms/tflite/agnostic_dnn_tflite.cpp)
     list(APPEND SOURCE_FILES platforms/tflite/agnostic_detector_tflite.cpp)
+    list(APPEND SOURCE_FILES platforms/tflite/agnostic_body_tflite.cpp)
+
 endif ()
 
 # =================== OpenCL kernels generation =====================

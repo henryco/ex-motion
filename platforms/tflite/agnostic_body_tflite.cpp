@@ -112,7 +112,7 @@ namespace platform::dnn {
     }
 
     size_t AgnosticBody::get_n_segmentation() const {
-        return 128;
+        return 256;
     }
 
     void AgnosticBody::inference(const size_t batch_size, const size_t input_size, const float * const *in_batch_ptr) {

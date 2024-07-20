@@ -79,42 +79,6 @@ namespace platform::dnn {
             delete[] heatmaps;
     }
 
-    body::Model AgnosticBody::get_model() const {
-        return model;
-    }
-
-    size_t AgnosticBody::get_in_w() const {
-        return body::mappings[model].i_w;
-    }
-
-    size_t AgnosticBody::get_in_h() const {
-        return body::mappings[model].i_h;
-    }
-
-    size_t AgnosticBody::get_n_lm3d() const {
-        return 195;
-    }
-
-    size_t AgnosticBody::get_n_lmwd() const {
-        return 117;
-    }
-
-    size_t AgnosticBody::get_n_segmentation_w() const {
-        return body::mappings[model].o_w;
-    }
-
-    size_t AgnosticBody::get_n_segmentation_h() const {
-        return body::mappings[model].o_h;
-    }
-
-    size_t AgnosticBody::get_n_heatmap_w() const {
-        return 64;
-    }
-
-    size_t AgnosticBody::get_n_heatmap_h() const {
-        return 64;
-    }
-
     void AgnosticBody::inference(const size_t batch_size, const size_t input_size, const float * const *in_batch_ptr) {
         if (batch_size != batch) {
 
@@ -253,5 +217,40 @@ namespace platform::dnn {
         return heatmaps;
     }
 
+    body::Model AgnosticBody::get_model() const {
+        return model;
+    }
+
+    size_t AgnosticBody::get_in_w() const {
+        return body::mappings[model].i_w;
+    }
+
+    size_t AgnosticBody::get_in_h() const {
+        return body::mappings[model].i_h;
+    }
+
+    size_t AgnosticBody::get_n_lm3d() const {
+        return 195;
+    }
+
+    size_t AgnosticBody::get_n_lmwd() const {
+        return 117;
+    }
+
+    size_t AgnosticBody::get_n_segmentation_w() const {
+        return body::mappings[model].o_w;
+    }
+
+    size_t AgnosticBody::get_n_segmentation_h() const {
+        return body::mappings[model].o_h;
+    }
+
+    size_t AgnosticBody::get_n_heatmap_w() const {
+        return 64;
+    }
+
+    size_t AgnosticBody::get_n_heatmap_h() const {
+        return 64;
+    }
 
 }

@@ -199,7 +199,7 @@ namespace eox::dnn {
 
     Paddings get_letterbox_paddings(int width, int height, int size);
 
-    Paddings get_letterbox_paddings(int width, int height, int bow_w, int box_h);
+    Paddings get_letterbox_paddings(int width, int height, int box_w, int box_h);
 
     cv::Mat convert_to_squared_blob(const cv::Mat &in, int size, bool keep_aspect_ratio = false);
     cv::UMat convert_to_squared_blob(const cv::UMat &in, int size, bool keep_aspect_ratio = false);

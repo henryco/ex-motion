@@ -107,38 +107,45 @@ namespace xm::dnn::pose {
         if (!segmentation)
             return output;
 
-        const int seg_dim = (int) (inferencer->get_n_segmentation_w() * inferencer->get_n_segmentation_h());
-        const int img_dim = (int) (in_w * in_h);
+        // There is a very important assumption that segmenation mask is always smaller or at least is the same as the original image
 
-        if (seg_dim == img_dim) {
-            for (int i = 0; i < seg_dim; i++)
-                output.segmentation[i] = (float) eox::dnn::sigmoid(seg_mask[i]);
+        const auto seg_w = (int) inferencer->get_n_segmentation_w();
+        const auto seg_h = (int) inferencer->get_n_segmentation_h();
 
-        } else if (seg_dim < img_dim) {
-            // There is a very important assumption that segmenation mask is always smaller than the original image
-            const auto scale_x = (float) in_w / (float) inferencer->get_n_segmentation_w();
-            const auto scale_y = (float) in_h / (float) inferencer->get_n_segmentation_h();
-            const auto ceil_x  = (int) std::ceil(scale_x);
-            const auto ceil_y  = (int) std::ceil(scale_y);
+        const auto seg_p_w = (int) (((float) in_w - (float) n_w) / (float) in_w * (float) seg_w) / 2; // padding x
+        const auto seg_p_h = (int) (((float) in_h - (float) n_h) / (float) in_h * (float) seg_h) / 2; // padding y
 
-            const auto width   = (float) inferencer->get_n_segmentation_w();
+        const auto seg_t_w = seg_w - 2 * seg_p_w; // true segmentation width
+        const auto seg_t_h = seg_h - 2 * seg_p_h;// true segmentation height
 
-            // Nearest neighbor upscaling
-            for (int i = 0; i < seg_dim; i++) {
-                const float frac = (float) i / width;
-                const int y = (int) frac;
-                const int x = (int) ((frac - (float) y) * width);
+        const auto scale_x = (float) in_w / (float) seg_t_w;
+        const auto scale_y = (float) in_h / (float) seg_t_h;
+        const auto ceil_x  = (int) std::ceil(scale_x);
+        const auto ceil_y  = (int) std::ceil(scale_y);
 
-                const int oy = (int) ((float) y * scale_y);
-                const int ox = (int) ((float) x * scale_x);
+        const int seg_dim = seg_w * seg_h;
 
-                for (int ky = 0; ky < ceil_y; ky++) {
-                    for (int kx = 0; kx < ceil_x; kx++) {
-                        const int ix = std::clamp(ox + kx, 0, (int) in_w - 1);
-                        const int iy = std::clamp(oy + ky, 0, (int) in_h - 1);
-                        const int odx = (iy * (int) in_w) + ix;
-                        output.segmentation[odx] = (float) eox::dnn::sigmoid(seg_mask[i]);
-                    }
+        for (int i = 0; i < seg_dim; i++) {
+            const float frac_g = (float) i / (float) seg_w;
+            const int   g_y    = (int) frac_g;
+            const int   g_x    = (int) ((frac_g - (float) g_y) * (float) seg_w);
+
+            if (g_x < seg_p_w || g_x >= seg_w - seg_p_w || g_y < seg_p_h || g_y >= seg_h - seg_p_h)
+                continue; // filtering paddings
+
+            const int x  = g_x - seg_p_w;
+            const int y  = g_y - seg_p_h;
+            const int ox = (int) ((float) x * scale_x);
+            const int oy = (int) ((float) y * scale_y);
+
+            const float sigmoid = (float) eox::dnn::sigmoid(seg_mask[i]);
+
+            for (int ky = 0; ky < ceil_y; ky++) {
+                for (int kx = 0; kx < ceil_x; kx++) {
+                    const int ix = std::clamp(ox + kx, 0, (int) in_w - 1);
+                    const int iy = std::clamp(oy + ky, 0, (int) in_h - 1);
+                    const int odx = (iy * (int) in_w) + ix;
+                    output.segmentation[odx] = sigmoid;
                 }
             }
         }

@@ -22,6 +22,17 @@ namespace eox::dnn::pose {
         if (rois != nullptr)
             delete[] rois;
 
+        if (_detected_bodies != nullptr)
+            delete[] _detected_bodies;
+        if (_detector_conf != nullptr)
+            delete[] _detector_conf;
+        if (_detector_queue != nullptr)
+            delete[] _detector_queue;
+        if (_work_frames != nullptr)
+            delete[] _work_frames;
+        if (_debug_infos != nullptr)
+            delete[] _debug_infos;
+
         if (ocl_command_queue != nullptr)
             clReleaseCommandQueue(ocl_command_queue);
         if (ocl_context != nullptr)
@@ -42,20 +53,26 @@ namespace eox::dnn::pose {
     void eox::dnn::pose::PoseAgnostic::init(const int n, const PoseInput *_configs) {
         reset();
 
-        device_id = (cl_device_id) cv::ocl::Device::getDefault().ptr();
-        ocl_context = (cl_context) cv::ocl::Context::getDefault().ptr();
+        device_id         = (cl_device_id) cv::ocl::Device::getDefault().ptr();
+        ocl_context       = (cl_context) cv::ocl::Context::getDefault().ptr();
         ocl_command_queue = xm::ocl::create_queue_device(
-                ocl_context,
-                device_id,
-                true,
-                false);
+                                                         ocl_context,
+                                                         device_id,
+                                                         true,
+                                                         false);
 
-        rois = new eox::dnn::RoI[n];
-        configs = new eox::dnn::pose::PoseInput[n];
-        bg_filters = new xm::filters::BgSubtract[n];
-        sources = new xm::ocl::iop::ClImagePromise[n];
-        velocity_filters = new eox::sig::VelocityFilter[n][FILTERS_DIM_SIZE];
+        rois                = new eox::dnn::RoI[n];
+        configs             = new eox::dnn::pose::PoseInput[n];
+        bg_filters          = new xm::filters::BgSubtract[n];
+        sources             = new xm::ocl::iop::ClImagePromise[n];
+        velocity_filters    = new eox::sig::VelocityFilter[n][FILTERS_DIM_SIZE];
         roi_body_heuristics = new xm::pose::roi::RoiBodyHeuristics[n];
+
+        _work_frames        = new xm::ocl::iop::ClImagePromise[n];
+        _detector_conf      = new xm::dnn::run::DetectorRoiConf[n];
+        _detected_bodies    = new xm::dnn::run::DetectedBody[n];
+        _debug_infos        = new PoseDebug[n];
+        _detector_queue     = new int[n];
 
         for (int i = 0; i < n; i++) {
             const auto &config = _configs[i];
@@ -79,10 +96,11 @@ namespace eox::dnn::pose {
             }
 
             if (config.bgs_enable) {
-                auto bgs_config = config.bgs_config;
+
+                auto bgs_config           = config.bgs_config;
                 bgs_config.color_channels = 3;
-                bgs_config.debug_on = false;
-                bgs_config.mask_xc = true;
+                bgs_config.debug_on       = false;
+                bgs_config.mask_xc        = true;
                 bg_filters[i].init(bgs_config);
             }
         }
@@ -91,12 +109,15 @@ namespace eox::dnn::pose {
         marker.init(xm::dnn::run::ModelPose::HEAVY_F32);
 
         initialized = true;
-        prediction = false;
+        prediction  = false;
+        n_size      = n;
     }
 
-    void PoseAgnostic::pass(const int n, const xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug) {
+    void PoseAgnostic::pass(const xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug) {
+        const int &n                 = n_size;
+        int        _detector_queue_n = 0;
 
-        for (int i = 0; i < n; i++) {
+        for (int i = 0, q = 0; i < n; i++) {
             auto &roi_body_heuristic = roi_body_heuristics[i];
             auto &frame = frames[i];
             const auto &roi = rois[i];
@@ -107,13 +128,61 @@ namespace eox::dnn::pose {
                         (int) roi.x, (int) roi.y,
                         (int) roi.w, (int) roi.h);
             } else {
-                // TODO detector aggregate
+                _detector_queue_n++;
+                _detector_queue[q++] = i;
+                _work_frames[q]      = {frame, ocl_command_queue};
+                _detector_conf[q]    = {
+                    .margin = configs[i].roi_margin,
+                    .padding_x = configs[i].roi_padding_x,
+                    .padding_y = configs[i].roi_padding_y,
+                    .scale = configs[i].roi_scale
+                };
             }
-
         }
 
-        xm::ocl::iop::ClImagePromise::finalizeAll(sources, n, true);
+        if (_detector_queue_n <= 0)
+            goto roi_complete;
 
+        detector.detect(_detector_queue_n, _work_frames, _detector_conf, _detected_bodies);
+
+        for (int q = 0; q < _detector_queue_n; q++) {
+            const int i = _detector_queue[q];
+            const auto &detections = _detected_bodies[q];
+
+            if (debug != nullptr) {
+                _debug_infos[i].detector_score = detections.score;
+            }
+
+            if (detections.score < configs[i].threshold_detector) {
+                PoseResult pose_result;
+                pose_result.present = false;
+                pose_result.output.score = 0;
+                result[i] = pose_result;
+                continue;
+            }
+
+            auto &frame = frames[i];
+            auto &roi = rois[i];
+            roi = detections.roi;
+            sources[i] = xm::ocl::iop::copy_ocl(
+                        frame, ocl_command_queue,
+                        (int) roi.x, (int) roi.y,
+                        (int) roi.w, (int) roi.h);
+        }
+
+
+        roi_complete:
+        xm::ocl::iop::ClImagePromise::finalizeAll(sources, n);
+
+
+        // TODO
+
+        if (!debug)
+            return;
+
+        for (int i = 0; i < n; i++) {
+            debug[i] = _debug_infos[i];
+        }
     }
 
 }

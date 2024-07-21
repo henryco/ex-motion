@@ -144,8 +144,8 @@ namespace xm::ocl::iop {
                             ACCESS access) {
         cl_int err;
         const size_t c_size = image.channels * image.channel_size;
-        const size_t size = (size_t) width * (size_t) height * c_size;
-        cl_mem buffer = clCreateBuffer(image.context, access_to_cl(access), size,
+        const size_t size   = (size_t) width * (size_t) height * c_size;
+        cl_mem       buffer = clCreateBuffer(image.context, access_to_cl(access), size,
                                        nullptr, &err);
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot create cl buffer: " + std::to_string(err));
@@ -153,7 +153,7 @@ namespace xm::ocl::iop {
         for (size_t row = 0; row < height; row++) {
             const size_t src_offset = ((yo + row) * image.cols + xo) * c_size;
             const size_t dst_offset = row * width * c_size;
-            const size_t row_size = width * c_size;
+            const size_t row_size   = width * c_size;
 
             err = clEnqueueCopyBuffer(queue,
                                       image.handle,
@@ -171,14 +171,14 @@ namespace xm::ocl::iop {
         }
 
         return ClImagePromise(xm::ocl::Image2D(
-                width,
-                height,
-                image.channels,
-                image.channel_size,
-                buffer,
-                image.context,
-                image.device,
-                access),queue);
+                                               width,
+                                               height,
+                                               image.channels,
+                                               image.channel_size,
+                                               buffer,
+                                               image.context,
+                                               image.device,
+                                               access), queue);
     }
 
     void to_cv_mat(const Image2D &image, cv::Mat &out, cl_command_queue queue, int cv_type) {
@@ -186,24 +186,25 @@ namespace xm::ocl::iop {
     }
 
     CLPromise<cv::Mat> to_cv_mat(const Image2D &image, cl_command_queue queue, int cv_type) {
-        cl_int err;
         cv::Mat dst((int) image.rows, (int) image.cols, (cv_type < 0 ? (CV_8UC((int) image.channels)) : cv_type));
-        err = clEnqueueReadBuffer(queue,
-                                  image.handle,
-                                  CL_FALSE,
-                                  0,
-                                  image.size(),
-                                  dst.data,
-                                  0,
-                                  NULL,
-                                  NULL);
+        cl_int  err = clEnqueueReadBuffer(queue,
+                                          image.handle,
+                                          CL_FALSE,
+                                          0,
+                                          image.size(),
+                                          dst.data,
+                                          0,
+                                         nullptr,
+                                         nullptr);
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot enqueue read buffer: " + std::to_string(err));
 
-        return CLPromise<cv::Mat>(dst, queue);
+        return CLPromise(dst, queue);
     }
 
     CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &promise, int cv_type) {
+        if (promise.queue() == nullptr)
+            throw std::invalid_argument("CLPromise cl_command_queue is NULL");
         const auto image = promise.getImage2D();
         return to_cv_mat(image, promise.queue(), cv_type);
     }
@@ -211,16 +212,16 @@ namespace xm::ocl::iop {
     ClImagePromise::ClImagePromise(const Image2D &out,
                                    cl_command_queue _queue,
                                    cl_event _event):
-            image(out),
             ocl_queue(_queue),
             ocl_event(_event),
+            image(out),
             completed(false) {}
 
     ClImagePromise::ClImagePromise(const Image2D &out,
                                    cl_event ocl_event):
-            image(out),
             ocl_queue(nullptr),
             ocl_event(ocl_event),
+            image(out),
             completed(true) {}
 
     ClImagePromise::~ClImagePromise() {
@@ -262,8 +263,7 @@ namespace xm::ocl::iop {
         if (completed)
             return *this;
         {
-            cl_int err;
-            err = clFinish(ocl_queue);
+            cl_int err = clFinish(ocl_queue);
             if (err != CL_SUCCESS)
                 throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));
             completed = true;

@@ -23,14 +23,14 @@ namespace eox::dnn::pose {
 #define FILTERS_DIM_SIZE 117
 
     using PoseDebug = struct {
-        // TODO
+        float detector_score;
+        float pose_score;
+        long duration;
     };
 
     using PoseResult = struct {
         PoseOutput output;
-        PoseDebug debug;
-        long duration;
-        bool present;
+        bool       present;
     };
 
     using PoseInput = struct PoseInput {
@@ -142,30 +142,39 @@ namespace eox::dnn::pose {
                 spdlog::stdout_color_mt("pose_agnostic");
 
     private:
-        bool prediction = false;
+        bool prediction  = false;
         bool initialized = false;
 
         cl_command_queue ocl_command_queue = nullptr;
-        cl_device_id device_id = nullptr;
-        cl_context ocl_context = nullptr;
+        cl_device_id     device_id         = nullptr;
+        cl_context       ocl_context       = nullptr;
 
         xm::dnn::run::BodyDetector detector;
-        xm::dnn::run::BodyMarker marker;
+        xm::dnn::run::BodyMarker   marker;
 
         // ARRAYS
-        xm::filters::BgSubtract *bg_filters = nullptr;
-        xm::pose::roi::RoiBodyHeuristics *roi_body_heuristics = nullptr;
-        eox::sig::VelocityFilter (*velocity_filters)[FILTERS_DIM_SIZE] = nullptr;
-        xm::ocl::iop::ClImagePromise *sources = nullptr;
-        eox::dnn::RoI *rois = nullptr;
-        PoseInput *configs = nullptr;
+        xm::filters::BgSubtract *         bg_filters                          = nullptr;
+        xm::pose::roi::RoiBodyHeuristics *roi_body_heuristics                 = nullptr;
+        eox::sig::VelocityFilter (*       velocity_filters)[FILTERS_DIM_SIZE] = nullptr;
+        xm::ocl::iop::ClImagePromise *    sources                             = nullptr;
+        eox::dnn::RoI *                   rois                                = nullptr;
+        PoseInput *                       configs                             = nullptr;
         // ARRAYS
 
+        // WORK ARRAYS
+        xm::dnn::run::DetectorRoiConf *_detector_conf   = nullptr;
+        xm::dnn::run::DetectedBody *   _detected_bodies = nullptr;
+        xm::ocl::iop::ClImagePromise * _work_frames     = nullptr;
+        PoseDebug *                    _debug_infos     = nullptr;
+        int *                          _detector_queue  = nullptr;
+        // WORK ARRAYS
+
+        int n_size = 0;
 
     public:
         void init(int n, const PoseInput *config);
 
-        void pass(int n, const xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug);
+        void pass(const xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug);
 
         ~PoseAgnostic();
 

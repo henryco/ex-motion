@@ -225,14 +225,15 @@ namespace eox::dnn::pose {
         const int  height,
         const bool debug
     ) {
+        PoseResult &output = _pose_results[i];
+
+        const auto  now        = timestamp();
+        const auto &config     = configs[i];
 
         auto &      roi        = rois[i];
         auto &      work_meta  = _work_metadata[i];
+        auto &      result     = _pose_outputs[i];
         auto &      heuristics = roi_body_heuristics[i];
-        auto        result     = _pose_outputs[i];
-        const auto &config     = configs[i];
-        const auto  now        = timestamp();
-        PoseResult &output     = _pose_results[i];
 
         if (debug) {
             _debug_infos[i].pose_score = result.score;

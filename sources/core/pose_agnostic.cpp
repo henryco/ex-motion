@@ -159,10 +159,14 @@ namespace eox::dnn::pose {
             }
 
             if (detections.score < configs[i].threshold_detector) {
+                // nothing detected or results is just not satisfying
+
                 PoseResult pose_result;
                 pose_result.present = false;
                 pose_result.score = 0;
                 results[i] = pose_result;
+
+                // TODO EXCLUDE from pose inference
                 continue;
             }
 

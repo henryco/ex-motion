@@ -9,35 +9,39 @@
 namespace eox::dnn::pose {
 
     void PoseAgnostic::reset() {
-        if (roi_body_heuristics != nullptr)
+        if (roi_body_heuristics)
             delete[] roi_body_heuristics;
-        if (bg_filters != nullptr)
+        if (bg_filters)
             delete[] bg_filters;
-        if (velocity_filters != nullptr)
+        if (velocity_filters)
             delete[] velocity_filters;
-        if (configs != nullptr)
+        if (configs)
             delete[] configs;
-        if (sources != nullptr)
+        if (sources)
             delete[] sources;
-        if (rois != nullptr)
+        if (rois)
             delete[] rois;
 
-        if (_detected_bodies != nullptr)
+        if (_detected_bodies)
             delete[] _detected_bodies;
-        if (_detector_conf != nullptr)
+        if (_detector_conf)
             delete[] _detector_conf;
-        if (_detector_queue != nullptr)
+        if (_detector_queue)
             delete[] _detector_queue;
-        if (_work_frames != nullptr)
+        if (_work_frames)
             delete[] _work_frames;
-        if (_debug_infos != nullptr)
+        if (_debug_infos)
             delete[] _debug_infos;
+        if (_work_metadata)
+            delete[] _work_metadata;
+        if (_pose_outputs)
+            delete[] _pose_outputs;
 
-        if (ocl_command_queue != nullptr)
+        if (ocl_command_queue)
             clReleaseCommandQueue(ocl_command_queue);
-        if (ocl_context != nullptr)
+        if (ocl_context)
             clReleaseContext(ocl_context);
-        if (device_id != nullptr)
+        if (device_id)
             clReleaseDevice(device_id);
     }
 
@@ -67,10 +71,11 @@ namespace eox::dnn::pose {
         sources             = new xm::ocl::iop::ClImagePromise[n];
         velocity_filters    = new eox::sig::VelocityFilter[n][FILTERS_DIM_SIZE];
         roi_body_heuristics = new xm::pose::roi::RoiBodyHeuristics[n];
-
         _work_frames        = new xm::ocl::iop::ClImagePromise[n];
         _detector_conf      = new xm::dnn::run::DetectorRoiConf[n];
         _detected_bodies    = new xm::dnn::run::DetectedBody[n];
+        _pose_outputs       = new eox::dnn::PoseOutput[n];
+        _work_metadata      = new PoseWorking[n];
         _debug_infos        = new PoseDebug[n];
         _detector_queue     = new int[n];
 
@@ -113,7 +118,7 @@ namespace eox::dnn::pose {
         n_size      = n;
     }
 
-    void PoseAgnostic::pass(const xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug) {
+    void PoseAgnostic::pass(const xm::ocl::Image2D *frames, PoseResult *results, PoseDebug *debug) {
         const int &n                 = n_size;
         int        _detector_queue_n = 0;
 
@@ -156,31 +161,135 @@ namespace eox::dnn::pose {
             if (detections.score < configs[i].threshold_detector) {
                 PoseResult pose_result;
                 pose_result.present = false;
-                pose_result.output.score = 0;
-                result[i] = pose_result;
+                pose_result.score = 0;
+                results[i] = pose_result;
                 continue;
             }
 
-            auto &frame = frames[i];
+            const auto &frame = frames[i];
             auto &roi = rois[i];
+
             roi = detections.roi;
             sources[i] = xm::ocl::iop::copy_ocl(
                         frame, ocl_command_queue,
                         (int) roi.x, (int) roi.y,
                         (int) roi.w, (int) roi.h);
-        }
 
+            if (!_work_metadata[i].discarded_roi) {
+                // Reset filters ONLY IF this is clear detector run (no points found previously)
+                for (int h = 0; h < FILTERS_DIM_SIZE; h++)
+                    velocity_filters[i][h].reset();
+            }
+        }
 
         roi_complete:
         xm::ocl::iop::ClImagePromise::finalizeAll(sources, n);
 
+        marker.inference(n, sources, _pose_outputs, false);
 
-        // TODO
+        for (int i = 0; i < n; i++) {
+            auto &      roi    = rois[i];
+            auto &      work_meta  = _work_metadata[i];
+            auto &      heuristics = roi_body_heuristics[i];
+            auto        result     = _pose_outputs[i];
+            const auto &config = configs[i];
+            const auto  now    = timestamp();
+
+            PoseResult output;
+
+            if (debug) {
+                _debug_infos[i].pose_score = result.score;
+            }
+
+            if (result.score <= configs[i].threshold_pose && work_meta.prediction) {
+                // Nothing found, retry but without prediction (clear detector run)
+                work_meta.prediction    = false;
+                work_meta.rollback_roi  = false;
+                work_meta.discarded_roi = false;
+                work_meta.preserved_roi = false;
+                continue; // TODO restart
+            }
+
+            work_meta.discarded_roi = false;
+            work_meta.preserved_roi = false;
+            work_meta.rollback_roi  = false;
+
+            eox::dnn::Landmark landmarks[39];
+
+            // decode landmarks and turn it back into image coordinate space (denormalize)
+            for (int t = 0; t < 39; t++) {
+                landmarks[t] = {
+                    // turning x,y into common (global) coordinates
+                    .x = (result.landmarks_norm[t].x * roi.w) + roi.x,
+                    .y = (result.landmarks_norm[t].y * roi.h) + roi.y,
+
+                    // z is still normalized (in range of 0 and 1)
+                    .z = result.landmarks_norm[t].z,
+
+                    .v = result.landmarks_norm[t].v,
+                    .p = result.landmarks_norm[t].p,
+                };
+            }
+
+            // temporal filtering (low pass based on velocity (literally))
+            for (int t = 0; t < 39; t++) {
+                const auto idx = t * 3;
+
+                auto fx = velocity_filters[i][idx + 0].filter(now, landmarks[t].x);
+                auto fy = velocity_filters[i][idx + 1].filter(now, landmarks[t].y);
+                auto fz = velocity_filters[i][idx + 2].filter(now, landmarks[t].z);
+
+                landmarks[t].x = fx;
+                landmarks[t].y = fy;
+                landmarks[t].z = fz;
+            }
+
+            if (config.threshold_roi > 0 && config.threshold_roi < 1) {
+                const auto roi_presence_score = heuristics.presence(roi, landmarks, true);
+                _debug_infos[i].roi_score     = roi_presence_score;
+
+                if (roi_presence_score <= 0) {
+
+                    output.present = false;
+                    output.score = 0;
+                    results[i] = output;
+
+                    work_meta.prediction = false;
+                    // There is simply nothig, gg go next
+                    continue;
+                }
+            }
+
+            const auto prediction = heuristics.predict(
+                                                       roi,
+                                                       landmarks,
+                                                       (int) frames[i].cols,
+                                                       (int) frames[i].rows);
+
+            work_meta.preserved_roi = prediction.preserved;
+            work_meta.discarded_roi = prediction.discarded;
+            work_meta.rollback_roi  = prediction.rollback;
+            work_meta.prediction    = prediction.prediction;
+            roi                     = prediction.roi;
+            output.score            = result.score;
+            output.present          = true;
+
+            memcpy(output.ws_landmarks, result.landmarks_3d, (size_t) 39 * sizeof(eox::dnn::Coord3d));
+            memcpy(output.segmentation, result.segmentation, (size_t) 256 * 256 * sizeof(float));
+            memcpy(output.landmarks, landmarks, (size_t) 39 * sizeof(eox::dnn::Landmark));
+
+            results[i] = output;
+        }
 
         if (!debug)
             return;
 
         for (int i = 0; i < n; i++) {
+            _debug_infos[i].preserved_roi = _work_metadata[i].preserved_roi;
+            _debug_infos[i].discarded_roi = _work_metadata[i].discarded_roi;
+            _debug_infos[i].rollback_roi  = _work_metadata[i].rollback_roi;
+            _debug_infos[i].prediction    = _work_metadata[i].prediction;
+
             debug[i] = _debug_infos[i];
         }
     }

@@ -14,6 +14,7 @@ namespace xm::pose::roi {
 
     typedef struct {
         eox::dnn::RoI roi;
+        bool prediction;
         bool preserved;
         bool discarded;
         bool rollback;

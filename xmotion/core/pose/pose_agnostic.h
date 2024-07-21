@@ -25,12 +25,42 @@ namespace eox::dnn::pose {
     using PoseDebug = struct {
         float detector_score;
         float pose_score;
-        long duration;
+        float roi_score;
+
+        long  duration;
+
+        bool preserved_roi;
+        bool discarded_roi;
+        bool rollback_roi;
+        bool prediction;
     };
 
     using PoseResult = struct {
-        PoseOutput output;
-        bool       present;
+
+        /**
+         * pose landmarks in frame's coordinate system
+         */
+        eox::dnn::Landmark landmarks[39];
+
+        /**
+         * pose landmarks in world space
+         */
+        eox::dnn::Coord3d ws_landmarks[39];
+
+        /**
+         * segmentation array
+         */
+        float segmentation[256 * 256];
+
+        /**
+         * presence flag
+         */
+        bool present;
+
+        /**
+         * presence score
+         */
+        float score;
     };
 
     using PoseInput = struct PoseInput {
@@ -137,6 +167,13 @@ namespace eox::dnn::pose {
         xm::filters::bgs::Conf bgs_config{};
     };
 
+    using PoseWorking = struct PoseWorking {
+        bool preserved_roi = false;
+        bool discarded_roi = false;
+        bool rollback_roi  = false;
+        bool prediction    = false;
+    };
+
     class PoseAgnostic {
         static inline const auto log =
                 spdlog::stdout_color_mt("pose_agnostic");
@@ -165,6 +202,8 @@ namespace eox::dnn::pose {
         xm::dnn::run::DetectorRoiConf *_detector_conf   = nullptr;
         xm::dnn::run::DetectedBody *   _detected_bodies = nullptr;
         xm::ocl::iop::ClImagePromise * _work_frames     = nullptr;
+        eox::dnn::PoseOutput *         _pose_outputs    = nullptr;
+        PoseWorking *                  _work_metadata   = nullptr;
         PoseDebug *                    _debug_infos     = nullptr;
         int *                          _detector_queue  = nullptr;
         // WORK ARRAYS

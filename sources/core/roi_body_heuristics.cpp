@@ -75,8 +75,8 @@ namespace xm::pose::roi {
             int height) {
         const bool first_run = !initialized;
 
-        bool preserved_roi = false;
         bool discarded_roi = false;
+        bool preserved_roi = false;
         bool rollback_roi = false;
 
         if (!initialized) {
@@ -165,10 +165,11 @@ namespace xm::pose::roi {
         }
 
         return {
-                .roi = roi,
-                .preserved = preserved_roi,
-                .discarded = discarded_roi,
-                .rollback = rollback_roi
+            .roi = roi,
+            .prediction = prediction,
+            .preserved = preserved_roi,
+            .discarded = discarded_roi,
+            .rollback = rollback_roi
         };
     }
 

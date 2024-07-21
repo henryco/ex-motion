@@ -15,7 +15,7 @@ namespace xm::ocl {
 
     void Image2D::release() {
         if (handle != nullptr && !is_detached)
-            clReleaseMemObject(handle);
+            clReleaseMemObject(handle); // TODO FIXME 4
         reset_state(*this);
     }
 
@@ -120,7 +120,7 @@ namespace xm::ocl {
     Image2D &Image2D::operator=(Image2D &&other) noexcept {
         if (this == &other)
             return *this;
-        release();
+        release(); // TODO FIXME 3
         copy_from(other);
         reset_state(other);
         return *this;
@@ -157,7 +157,7 @@ namespace xm::ocl {
         else throw std::invalid_argument("Invalid access modifier: " + std::to_string((int) access));
 
         cl_int err;
-        cl_mem buffer = clCreateBuffer(context, flags, cols * rows * channels * channel_size, NULL, &err);
+        cl_mem buffer = clCreateBuffer(context, flags, cols * rows * channels * channel_size, nullptr, &err);
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot create cl buffer: " + std::to_string(err));
         return Image2D(cols, rows, channels, channel_size, buffer, context, device, access);

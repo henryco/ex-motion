@@ -174,7 +174,7 @@ namespace eox::dnn::pose {
             else {
                 detector_queue_n++;
                 _detector_queue[q++] = i;
-                _work_frames[q]      = { frame, ocl_command_queue, true };
+                _work_frames[q]      = { frame, ocl_command_queue, true }; // TODO FIXME ERROR 1
                 _detector_conf[q]    = {
                     .margin = configs[i].roi_margin,
                     .padding_x = configs[i].roi_padding_x,

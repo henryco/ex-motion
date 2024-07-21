@@ -27,8 +27,6 @@ namespace eox::dnn::pose {
         float pose_score;
         float roi_score;
 
-        long  duration;
-
         bool preserved_roi;
         bool discarded_roi;
         bool rollback_roi;
@@ -213,9 +211,18 @@ namespace eox::dnn::pose {
         int n_size = 0;
 
     public:
-        void init(int n, const PoseInput *config);
 
-        void pass(const xm::ocl::Image2D *frames, PoseResult *result, PoseDebug *debug);
+        void init(
+            int              n,
+            const PoseInput *config
+        );
+
+        void pass(
+            const xm::ocl::Image2D *frames,
+            PoseResult *            result,
+            PoseDebug *             debug,
+            long &                  duration
+        );
 
         ~PoseAgnostic();
 

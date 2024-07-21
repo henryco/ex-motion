@@ -123,7 +123,7 @@ namespace eox::dnn::pose {
         n_size      = n;
     }
 
-    void PoseAgnostic::pass(const xm::ocl::Image2D *frames, PoseResult *results, PoseDebug *debug) {
+    void PoseAgnostic::pass(const xm::ocl::Image2D *frames, PoseResult *results, PoseDebug *debug, long &duration) {
         const int &n                 = n_size;
         int        _detector_queue_n = 0;
         int        _pose_queue_n     = 0;
@@ -136,13 +136,18 @@ namespace eox::dnn::pose {
             _work_frames[i] = sources[_pose_queue[i]];
         }
 
+        // TODO: bg removal and segmentation
+
+        const auto t0 = std::chrono::system_clock::now();
         marker.inference(_pose_queue_n, _work_frames, _pose_outputs, false);
+        const auto t1 = std::chrono::system_clock::now();
 
         for (int y = 0; y < _pose_queue_n; y++) {
             const auto i = _pose_queue[y];
             pose_process(i, (int) frames[i].cols, (int) frames[i].rows, debug);
         }
 
+        duration = duration_cast<std::chrono::nanoseconds>((t1 - t0)).count();
         prepare_results(results, debug);
     }
 

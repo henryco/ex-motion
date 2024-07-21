@@ -9,8 +9,14 @@
 namespace xm {
 
     void FileWorker::on_pose_results() {
+        const auto results = (static_cast<xm::Pose *>(logic.get()))->result();
+        if (!results.ready)
+            return;
+
+        log->info("duration: {}", results.duration);
         // TODO
     }
+
 
     void FileWorker::opt_pose_estimation() {
         logic = std::make_unique<xm::Pose>();

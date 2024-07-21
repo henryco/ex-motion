@@ -2,11 +2,11 @@
 //
 // Created by henryco on 4/22/24.
 //
+#ifndef POSE_H
+#define POSE_H
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "modernize-use-nodiscard"
-
-#ifndef XMOTION_TRIANGULATION_H
-#define XMOTION_TRIANGULATION_H
 
 #include "i_logic.h"
 #include "../utils/thread_pool.h"
@@ -16,6 +16,7 @@
 #include <spdlog/logger.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include "../../xmotion/core/ocl/ocl_interop.h"
+#include "../pose/pose_agnostic.h"
 
 namespace xm::nview {
 
@@ -232,7 +233,9 @@ namespace xm::nview {
     } ReMaps;
 
     typedef struct Result {
+        bool ready;
         bool error;
+        long duration;
         std::string err_msg;
     } Result;
 }
@@ -244,13 +247,15 @@ namespace xm {
                 spdlog::stdout_color_mt("pose_estimation");
 
     private:
+        eox::dnn::pose::PoseAgnostic pose_agnostic;
+
         std::vector<xm::nview::ReMaps> remap_maps{};
         std::vector<xm::ocl::Image2D> images{};
         xm::nview::Result results{};
         xm::nview::Initial config{};
 
-        std::vector<std::unique_ptr<eox::util::ThreadPool>> workers;
-        std::vector<std::unique_ptr<eox::dnn::PosePipeline>> poses;
+        // std::vector<std::unique_ptr<eox::util::ThreadPool>> workers;
+        // std::vector<std::unique_ptr<eox::dnn::PosePipeline>> poses;
 
         bool active = false;
         bool DEBUG = false;
@@ -306,6 +311,5 @@ namespace xm {
 
 } // xm
 
-#endif //XMOTION_TRIANGULATION_H
-
 #pragma clang diagnostic pop
+#endif //POSE_H

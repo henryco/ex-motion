@@ -10,6 +10,35 @@ void xm::Pose::init(const xm::nview::Initial &params) {
     results.error = false;
     config = params;
 
+    const auto size     = params.devices.size();
+    auto       conf_arr = new eox::dnn::pose::PoseInput[size];
+
+    for (int i = 0; i < size; i++) {
+        const auto &dev = params.devices[i];
+        conf_arr[i]     = {
+            .roi_margin = dev.roi_margin,
+            .roi_padding_x = dev.roi_padding_x,
+            .roi_padding_y = dev.roi_padding_y,
+            .roi_scale = dev.roi_scale,
+            .roi_rollback_window = dev.roi_rollback_window,
+            .roi_center_window = dev.roi_center_window,
+            .roi_clamp_window = dev.roi_clamp_window,
+            .threshold_marks = dev.threshold_marks,
+            .threshold_detector = dev.threshold_detector,
+            .threshold_pose = dev.threshold_pose,
+            .threshold_roi = dev.threshold_roi,
+            .f_v_scale = dev.filter_velocity_factor,
+            .f_win_size = dev.filter_windows_size,
+            .f_fps = dev.filter_target_fps,
+            .bgs_enable = false,
+            .bgs_config = {}
+        };
+    }
+
+    pose_agnostic.init((int) size, conf_arr);
+
+    delete[] conf_arr;
+
     init_validate();
     init_undistort_maps();
 }
@@ -58,6 +87,8 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<xm::ocl::Image2D> &_f
         images.clear();
         images.reserve(_frames.size());
 
+        results.ready = false;
+
         if (_frames.size() != config.devices.size()) {
             results.err_msg = "Number of devices != number of frames";
             results.error = true;
@@ -69,34 +100,15 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<xm::ocl::Image2D> &_f
         return *this;
     }
 
-    std::vector<cv::UMat> input_frames;
-    input_frames.reserve(_frames.size());
-    for (int i = 0; i < _frames.size(); i++) {
-        cv::UMat frame;
-        xm::ocl::iop::to_cv_umat(_frames.at(i), frame);
-        input_frames.push_back(undistorted(frame, i));
-    }
+    const auto n            = _frames.size();
+    auto       pose_results = new eox::dnn::pose::PoseResult[n];
+    auto       pose_debugs  = new eox::dnn::pose::PoseDebug[n];
+    long       duration     = 0;
 
-    std::vector<cv::UMat> output_frames;
-    std::vector<std::future<eox::dnn::PosePipelineOutput>> features;
-    enqueue_inference(features, input_frames, output_frames);
+    pose_agnostic.pass(_frames.data(), pose_results, pose_debugs, duration);
 
-    std::vector<eox::dnn::PosePipelineOutput> outputs;
-    if (!resolve_inference(features, outputs)) {
-        stop();
-        results.err_msg = "DNN inference error";
-        results.error = true;
-        return *this;
-    }
+    // TODO
 
-    if (outputs.size() != _frames.size() || output_frames.size() != _frames.size()) {
-        results.err_msg = "Number of outputs != input frames";
-        results.error = true;
-        return *this;
-    }
-
-
-// TODO UNCOMMENT
 //    for (int i = 0; i < output_frames.size(); i++) {
 //        std::vector<std::vector<cv::Vec4f>> epi_vec;
 //        const auto pose_output = outputs.at(i);
@@ -127,11 +139,13 @@ xm::Pose &xm::Pose::proceed(float delta, const std::vector<xm::ocl::Image2D> &_f
 // TODO: PROCESS RESULTS ===========================================================================================
 
     images.clear();
-    for (const auto &frame: output_frames) {
-        images.push_back(xm::ocl::iop::from_cv_umat(frame));
-    }
+    for (auto &img: _frames)
+        images.push_back(img);
 
-    results.error = false;
+    results.ready    = true;
+    results.error    = false;
+    results.duration = duration;
+
     return *this;
 }
 

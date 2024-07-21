@@ -9,38 +9,38 @@
 void xm::Pose::enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &io_features,
                                  const std::vector<cv::UMat> &in_frames,
                                  std::vector<cv::UMat> &out_frames) {
-    io_features.reserve(config.devices.size());
-    out_frames.reserve(config.devices.size());
-
-    int i = 0, j = 0;
-    while (i < config.devices.size()) {
-        if (j >= workers.size())
-            j = 0;
-
-        const auto &frame = in_frames.at(i);
-        const auto &pose = poses.at(i);
-
-        if (DEBUG) {
-            out_frames.emplace_back();
-            io_features.push_back(
-                    workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
-                            [i, frame, &pose, &out_frames]() -> eox::dnn::PosePipelineOutput {
-                                cv::UMat segmented;
-                                return pose->pass(frame, segmented, out_frames.at(i));
-                            }));
-        } else {
-            out_frames.push_back(frame);
-            io_features.push_back(
-                    workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
-                            [i, frame, &pose]() -> eox::dnn::PosePipelineOutput {
-                                cv::UMat segmented;
-                                return pose->pass(frame, segmented);
-                            }));
-        }
-
-        i++;
-        j++;
-    }
+    // io_features.reserve(config.devices.size());
+    // out_frames.reserve(config.devices.size());
+    //
+    // int i = 0, j = 0;
+    // while (i < config.devices.size()) {
+    //     if (j >= workers.size())
+    //         j = 0;
+    //
+    //     const auto &frame = in_frames.at(i);
+    //     const auto &pose = poses.at(i);
+    //
+    //     if (DEBUG) {
+    //         out_frames.emplace_back();
+    //         io_features.push_back(
+    //                 workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
+    //                         [i, frame, &pose, &out_frames]() -> eox::dnn::PosePipelineOutput {
+    //                             cv::UMat segmented;
+    //                             return pose->pass(frame, segmented, out_frames.at(i));
+    //                         }));
+    //     } else {
+    //         out_frames.push_back(frame);
+    //         io_features.push_back(
+    //                 workers.at(j)->execute<eox::dnn::PosePipelineOutput>(
+    //                         [i, frame, &pose]() -> eox::dnn::PosePipelineOutput {
+    //                             cv::UMat segmented;
+    //                             return pose->pass(frame, segmented);
+    //                         }));
+    //     }
+    //
+    //     i++;
+    //     j++;
+    // }
 }
 
 bool xm::Pose::resolve_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &in_futures,
@@ -80,13 +80,13 @@ void xm::Pose::start() {
         p->setRoiMargin(device.roi_margin);
         p->setRoiPaddingX(device.roi_padding_x);
         p->setRoiPaddingY(device.roi_padding_y);
-        poses.push_back(std::move(p));
+        // poses.push_back(std::move(p));
     }
 
     for (int i = 0; i < config.threads; ++i) {
         auto p = std::make_unique<eox::util::ThreadPool>();
         p->start(1);
-        workers.push_back(std::move(p));
+        // workers.push_back(std::move(p));
     }
 
     results.error = false;
@@ -99,10 +99,6 @@ void xm::Pose::stop() {
 }
 
 void xm::Pose::release() {
-    for (auto &worker: workers)
-        worker->shutdown();
-    workers.clear();
-    poses.clear();
 }
 
 bool xm::Pose::is_active() const {

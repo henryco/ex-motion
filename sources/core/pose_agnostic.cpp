@@ -86,7 +86,7 @@ namespace eox::dnn::pose {
         _pose_queue         = new int[n];
 
         for (int i = 0; i < n; i++) {
-            const auto &config = _configs[i];
+            const auto config = _configs[i];
             configs[i] = config;
 
             roi_body_heuristics[i].margin = config.roi_margin;

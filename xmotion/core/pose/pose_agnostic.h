@@ -15,6 +15,7 @@
 #include "../filter/bg_subtract.h"
 #include "../ocl/ocl_interop.h"
 #include "../utils/velocity_filter.h"
+#include "body/body_marker.h"
 #include "detector/body_detector.h"
 
 namespace eox::dnn::pose {
@@ -149,6 +150,7 @@ namespace eox::dnn::pose {
         cl_context ocl_context = nullptr;
 
         xm::dnn::run::BodyDetector detector;
+        xm::dnn::run::BodyMarker marker;
 
         // ARRAYS
         xm::filters::BgSubtract *bg_filters = nullptr;

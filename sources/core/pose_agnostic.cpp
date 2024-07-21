@@ -87,7 +87,8 @@ namespace eox::dnn::pose {
             }
         }
 
-        detector.init(xm::dnn::run::F_32);
+        detector.init(xm::dnn::run::ModelDetector::F_32);
+        marker.init(xm::dnn::run::ModelPose::HEAVY_F32);
 
         initialized = true;
         prediction = false;

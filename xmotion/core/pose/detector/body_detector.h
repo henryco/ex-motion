@@ -30,14 +30,7 @@ namespace xm::dnn::run {
         float score;
     };
 
-
-    class BodyDetector {
-
-    private:
-        platform::dnn::AgnosticDetector *detector = nullptr;
-        std::vector<std::array<float, 4>> anchors_vec;
-
-    public:
+    using DetectorRoiConf = struct DetectorRoiConf {
         /**
          * Margins added to ROI
          */
@@ -57,6 +50,13 @@ namespace xm::dnn::run {
          * Scaling factor for ROI (multiplication)
          */
         float scale = 1.2f;
+    };
+
+    class BodyDetector {
+
+    private:
+        platform::dnn::AgnosticDetector *detector = nullptr;
+        std::vector<std::array<float, 4>> anchors_vec;
 
     public:
         BodyDetector() = default;
@@ -67,8 +67,10 @@ namespace xm::dnn::run {
 
         void detect(int n, const xm::ocl::iop::ClImagePromise *frames, DetectedBody *detection);
 
+        void detect(int n, const xm::ocl::iop::ClImagePromise *frames, const DetectorRoiConf *conf, DetectedBody *detection);
+
     protected:
-        DetectedBody decode(const float *bboxes, const float *scores, int view_w, int view_h) const;
+        DetectedBody decode(const float *bboxes, const float *scores, int view_w, int view_h, const DetectorRoiConf &conf) const;
     };
 
 }

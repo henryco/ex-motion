@@ -4,7 +4,7 @@
 
 #include "../../xmotion/core/pose/body/body_marker.h"
 
-namespace xm::dnn::pose {
+namespace xm::dnn::run {
 
     BodyMarker::~BodyMarker() {
         if (inferencer)

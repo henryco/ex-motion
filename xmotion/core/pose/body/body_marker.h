@@ -8,7 +8,7 @@
 #include "../../dnn/net/dnn_common.h"
 #include "../../ocl/ocl_filters.h"
 
-namespace xm::dnn::pose {
+namespace xm::dnn::run {
 
     enum ModelPose {
         HEAVY_ORIGIN = 0,

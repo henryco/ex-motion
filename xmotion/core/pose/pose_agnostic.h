@@ -204,6 +204,7 @@ namespace eox::dnn::pose {
         xm::ocl::iop::ClImagePromise * _work_frames     = nullptr;
         eox::dnn::PoseOutput *         _pose_outputs    = nullptr;
         PoseWorking *                  _work_metadata   = nullptr;
+        PoseResult *                   _pose_results    = nullptr;
         PoseDebug *                    _debug_infos     = nullptr;
         int *                          _detector_queue  = nullptr;
         // WORK ARRAYS

@@ -36,6 +36,8 @@ namespace eox::dnn::pose {
             delete[] _work_metadata;
         if (_pose_outputs)
             delete[] _pose_outputs;
+        if (_pose_results)
+            delete[] _pose_results;
 
         if (ocl_command_queue)
             clReleaseCommandQueue(ocl_command_queue);
@@ -75,6 +77,7 @@ namespace eox::dnn::pose {
         _detector_conf      = new xm::dnn::run::DetectorRoiConf[n];
         _detected_bodies    = new xm::dnn::run::DetectedBody[n];
         _pose_outputs       = new eox::dnn::PoseOutput[n];
+        _pose_results       = new PoseResult[n];
         _work_metadata      = new PoseWorking[n];
         _debug_infos        = new PoseDebug[n];
         _detector_queue     = new int[n];
@@ -161,10 +164,8 @@ namespace eox::dnn::pose {
             if (detections.score < configs[i].threshold_detector) {
                 // nothing detected or results is just not satisfying
 
-                PoseResult pose_result;
-                pose_result.present = false;
-                pose_result.score = 0;
-                results[i] = pose_result;
+                _pose_results[i].present = false;
+                _pose_results[i].score   = 0;
 
                 // TODO EXCLUDE from pose inference
                 continue;
@@ -192,14 +193,14 @@ namespace eox::dnn::pose {
         marker.inference(n, sources, _pose_outputs, false);
 
         for (int i = 0; i < n; i++) {
-            auto &      roi    = rois[i];
+            auto &      roi        = rois[i];
             auto &      work_meta  = _work_metadata[i];
             auto &      heuristics = roi_body_heuristics[i];
             auto        result     = _pose_outputs[i];
-            const auto &config = configs[i];
-            const auto  now    = timestamp();
+            const auto &config     = configs[i];
+            const auto  now        = timestamp();
+            PoseResult &output     = _pose_results[i];
 
-            PoseResult output;
 
             if (debug) {
                 _debug_infos[i].pose_score = result.score;
@@ -254,9 +255,8 @@ namespace eox::dnn::pose {
 
                 if (roi_presence_score <= 0) {
 
-                    output.present = false;
-                    output.score = 0;
-                    results[i] = output;
+                    output.present   = false;
+                    output.score     = 0;
 
                     work_meta.prediction = false;
                     // There is simply nothig, gg go next
@@ -281,8 +281,10 @@ namespace eox::dnn::pose {
             memcpy(output.ws_landmarks, result.landmarks_3d, (size_t) 39 * sizeof(eox::dnn::Coord3d));
             memcpy(output.segmentation, result.segmentation, (size_t) 256 * 256 * sizeof(float));
             memcpy(output.landmarks, landmarks, (size_t) 39 * sizeof(eox::dnn::Landmark));
+        }
 
-            results[i] = output;
+        for (int i = 0; i < n; i++) {
+            results[i] = _pose_results[i];
         }
 
         if (!debug)

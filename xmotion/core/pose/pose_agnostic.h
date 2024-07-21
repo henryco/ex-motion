@@ -199,14 +199,15 @@ namespace eox::dnn::pose {
         // ARRAYS
 
         // WORK ARRAYS
+        xm::ocl::iop::ClImagePromise * _work_frames     = nullptr;
         xm::dnn::run::DetectorRoiConf *_detector_conf   = nullptr;
         xm::dnn::run::DetectedBody *   _detected_bodies = nullptr;
-        xm::ocl::iop::ClImagePromise * _work_frames     = nullptr;
         eox::dnn::PoseOutput *         _pose_outputs    = nullptr;
         PoseWorking *                  _work_metadata   = nullptr;
         PoseResult *                   _pose_results    = nullptr;
         PoseDebug *                    _debug_infos     = nullptr;
         int *                          _detector_queue  = nullptr;
+        int *                          _pose_queue      = nullptr;
         // WORK ARRAYS
 
         int n_size = 0;

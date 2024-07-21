@@ -210,7 +210,10 @@ namespace xm::ocl::iop {
                 waiting_room:
                 {
                     cl_int err;
-                    err = clFinish(p.ocl_queue);
+
+                    if (p.ocl_queue) err = clFinish(p.ocl_queue);
+                    else err             = CL_SUCCESS;
+
                     if (err != CL_SUCCESS) {
                         delete[] list;
                         throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));

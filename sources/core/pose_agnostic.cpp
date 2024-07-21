@@ -38,6 +38,8 @@ namespace eox::dnn::pose {
             delete[] _pose_outputs;
         if (_pose_results)
             delete[] _pose_results;
+        if (_pose_queue)
+            delete[] _pose_queue;
 
         if (ocl_command_queue)
             clReleaseCommandQueue(ocl_command_queue);
@@ -81,6 +83,7 @@ namespace eox::dnn::pose {
         _work_metadata      = new PoseWorking[n];
         _debug_infos        = new PoseDebug[n];
         _detector_queue     = new int[n];
+        _pose_queue         = new int[n];
 
         for (int i = 0; i < n; i++) {
             const auto &config = _configs[i];
@@ -124,21 +127,23 @@ namespace eox::dnn::pose {
     void PoseAgnostic::pass(const xm::ocl::Image2D *frames, PoseResult *results, PoseDebug *debug) {
         const int &n                 = n_size;
         int        _detector_queue_n = 0;
+        int        _pose_queue_n     = 0;
 
         for (int i = 0, q = 0; i < n; i++) {
-            auto &roi_body_heuristic = roi_body_heuristics[i];
             auto &frame = frames[i];
             const auto &roi = rois[i];
 
-            if (roi_body_heuristic.get_prediction()) {
+            if (_work_metadata[i].prediction) {
                 sources[i] = xm::ocl::iop::copy_ocl(
                         frame, ocl_command_queue,
                         (int) roi.x, (int) roi.y,
                         (int) roi.w, (int) roi.h);
+
+                _pose_queue[_pose_queue_n++] = i;
             } else {
                 _detector_queue_n++;
                 _detector_queue[q++] = i;
-                _work_frames[q]      = {frame, ocl_command_queue};
+                _work_frames[q]      = {frame, ocl_command_queue, true};
                 _detector_conf[q]    = {
                     .margin = configs[i].roi_margin,
                     .padding_x = configs[i].roi_padding_x,
@@ -166,8 +171,6 @@ namespace eox::dnn::pose {
 
                 _pose_results[i].present = false;
                 _pose_results[i].score   = 0;
-
-                // TODO EXCLUDE from pose inference
                 continue;
             }
 
@@ -180,6 +183,8 @@ namespace eox::dnn::pose {
                         (int) roi.x, (int) roi.y,
                         (int) roi.w, (int) roi.h);
 
+            _pose_queue[_pose_queue_n++] = i;
+
             if (!_work_metadata[i].discarded_roi) {
                 // Reset filters ONLY IF this is clear detector run (no points found previously)
                 for (int h = 0; h < FILTERS_DIM_SIZE; h++)
@@ -190,9 +195,15 @@ namespace eox::dnn::pose {
         roi_complete:
         xm::ocl::iop::ClImagePromise::finalizeAll(sources, n);
 
-        marker.inference(n, sources, _pose_outputs, false);
+        for (int i = 0; i < _pose_queue_n; i++) {
+            _work_frames[i] = sources[_pose_queue[i]];
+        }
 
-        for (int i = 0; i < n; i++) {
+        marker.inference(_pose_queue_n, _work_frames, _pose_outputs, false);
+
+        for (int y = 0; y < _pose_queue_n; y++) {
+            const auto i = _pose_queue[y];
+
             auto &      roi        = rois[i];
             auto &      work_meta  = _work_metadata[i];
             auto &      heuristics = roi_body_heuristics[i];

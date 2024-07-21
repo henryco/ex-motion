@@ -29,6 +29,10 @@ namespace xm::ocl::iop {
     public:
         ClImagePromise(const xm::ocl::Image2D &out,
                        cl_command_queue ocl_queue,
+                       bool completed);
+
+        ClImagePromise(const xm::ocl::Image2D &out,
+                       cl_command_queue ocl_queue,
                        cl_event ocl_event = nullptr);
 
         ClImagePromise(const xm::ocl::Image2D &out, // NOLINT(*-explicit-constructor)

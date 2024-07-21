@@ -209,6 +209,15 @@ namespace xm::ocl::iop {
         return to_cv_mat(image, promise.queue(), cv_type);
     }
 
+    ClImagePromise::ClImagePromise(
+        const xm::ocl::Image2D &out,
+        cl_command_queue        _queue,
+        bool                    _completed
+    ): ocl_queue(_queue),
+       ocl_event(nullptr),
+       image(out),
+       completed(_completed) {}
+
     ClImagePromise::ClImagePromise(const Image2D &out,
                                    cl_command_queue _queue,
                                    cl_event _event):
@@ -465,7 +474,10 @@ namespace xm::ocl::iop {
             waiting_room:
             {
                 cl_int err;
-                err = clFinish(p.ocl_queue);
+
+                if (p.ocl_queue) err = clFinish(p.ocl_queue);
+                else err             = CL_SUCCESS;
+
                 if (err != CL_SUCCESS) {
                     delete[] list;
                     throw std::runtime_error("Cannot finish command queue: " + std::to_string(err));

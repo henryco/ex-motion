@@ -222,6 +222,25 @@ namespace eox::dnn::pose {
     protected:
         [[nodiscard]] static std::chrono::nanoseconds timestamp();
 
+        void pose_process(
+            int  index,
+            int  width,
+            int  height,
+            bool debug
+        );
+
+        void prepare_input(
+            const xm::ocl::Image2D *frames,
+            int &                   detector_queue_n,
+            int &                   pose_queue_n,
+            bool                    debug
+        );
+
+        void prepare_results(
+            PoseResult *results,
+            PoseDebug * debug
+        );
+
         void reset();
     };
 

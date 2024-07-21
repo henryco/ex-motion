@@ -99,7 +99,6 @@ namespace eox::dnn::pose {
             roi_body_heuristics[i].threshold = config.threshold_roi;
 
             for (int j = 0; j < FILTERS_DIM_SIZE; j++) {
-                log->info("init filter[{}][{}]", i, j);
                 velocity_filters[i][j].init(
                         config.f_win_size,
                         config.f_v_scale,
@@ -129,21 +128,48 @@ namespace eox::dnn::pose {
         int        _detector_queue_n = 0;
         int        _pose_queue_n     = 0;
 
+        prepare_input(frames, _detector_queue_n, _pose_queue_n, debug);
+
+        xm::ocl::iop::ClImagePromise::finalizeAll(sources, n);
+
+        for (int i = 0; i < _pose_queue_n; i++) {
+            _work_frames[i] = sources[_pose_queue[i]];
+        }
+
+        marker.inference(_pose_queue_n, _work_frames, _pose_outputs, false);
+
+        for (int y = 0; y < _pose_queue_n; y++) {
+            const auto i = _pose_queue[y];
+            pose_process(i, (int) frames[i].cols, (int) frames[i].rows, debug);
+        }
+
+        prepare_results(results, debug);
+    }
+
+    void PoseAgnostic::prepare_input(
+        const xm::ocl::Image2D *frames,
+        int &                   detector_queue_n,
+        int &                   pose_queue_n,
+        const bool              debug
+    ) {
+        const int &n = n_size;
+
         for (int i = 0, q = 0; i < n; i++) {
-            auto &frame = frames[i];
-            const auto &roi = rois[i];
+            auto &      frame = frames[i];
+            const auto &roi   = rois[i];
 
             if (_work_metadata[i].prediction) {
                 sources[i] = xm::ocl::iop::copy_ocl(
-                        frame, ocl_command_queue,
-                        (int) roi.x, (int) roi.y,
-                        (int) roi.w, (int) roi.h);
+                                                    frame, ocl_command_queue,
+                                                    (int) roi.x, (int) roi.y,
+                                                    (int) roi.w, (int) roi.h);
 
-                _pose_queue[_pose_queue_n++] = i;
-            } else {
-                _detector_queue_n++;
+                _pose_queue[pose_queue_n++] = i;
+            }
+            else {
+                detector_queue_n++;
                 _detector_queue[q++] = i;
-                _work_frames[q]      = {frame, ocl_command_queue, true};
+                _work_frames[q]      = { frame, ocl_command_queue, true };
                 _detector_conf[q]    = {
                     .margin = configs[i].roi_margin,
                     .padding_x = configs[i].roi_padding_x,
@@ -153,16 +179,16 @@ namespace eox::dnn::pose {
             }
         }
 
-        if (_detector_queue_n <= 0)
-            goto roi_complete;
+        if (detector_queue_n <= 0)
+            return;
 
-        detector.detect(_detector_queue_n, _work_frames, _detector_conf, _detected_bodies);
+        detector.detect(detector_queue_n, _work_frames, _detector_conf, _detected_bodies);
 
-        for (int q = 0; q < _detector_queue_n; q++) {
-            const int i = _detector_queue[q];
+        for (int q = 0; q < detector_queue_n; q++) {
+            const int   i          = _detector_queue[q];
             const auto &detections = _detected_bodies[q];
 
-            if (debug != nullptr) {
+            if (debug) {
                 _debug_infos[i].detector_score = detections.score;
             }
 
@@ -175,15 +201,15 @@ namespace eox::dnn::pose {
             }
 
             const auto &frame = frames[i];
-            auto &roi = rois[i];
+            auto &      roi   = rois[i];
 
-            roi = detections.roi;
+            roi        = detections.roi;
             sources[i] = xm::ocl::iop::copy_ocl(
-                        frame, ocl_command_queue,
-                        (int) roi.x, (int) roi.y,
-                        (int) roi.w, (int) roi.h);
+                                                frame, ocl_command_queue,
+                                                (int) roi.x, (int) roi.y,
+                                                (int) roi.w, (int) roi.h);
 
-            _pose_queue[_pose_queue_n++] = i;
+            _pose_queue[pose_queue_n++] = i;
 
             if (!_work_metadata[i].discarded_roi) {
                 // Reset filters ONLY IF this is clear detector run (no points found previously)
@@ -191,108 +217,106 @@ namespace eox::dnn::pose {
                     velocity_filters[i][h].reset();
             }
         }
+    }
 
-        roi_complete:
-        xm::ocl::iop::ClImagePromise::finalizeAll(sources, n);
+    void PoseAgnostic::pose_process(
+        const int  i,
+        const int  width,
+        const int  height,
+        const bool debug
+    ) {
 
-        for (int i = 0; i < _pose_queue_n; i++) {
-            _work_frames[i] = sources[_pose_queue[i]];
+        auto &      roi        = rois[i];
+        auto &      work_meta  = _work_metadata[i];
+        auto &      heuristics = roi_body_heuristics[i];
+        auto        result     = _pose_outputs[i];
+        const auto &config     = configs[i];
+        const auto  now        = timestamp();
+        PoseResult &output     = _pose_results[i];
+
+        if (debug) {
+            _debug_infos[i].pose_score = result.score;
         }
 
-        marker.inference(_pose_queue_n, _work_frames, _pose_outputs, false);
-
-        for (int y = 0; y < _pose_queue_n; y++) {
-            const auto i = _pose_queue[y];
-
-            auto &      roi        = rois[i];
-            auto &      work_meta  = _work_metadata[i];
-            auto &      heuristics = roi_body_heuristics[i];
-            auto        result     = _pose_outputs[i];
-            const auto &config     = configs[i];
-            const auto  now        = timestamp();
-            PoseResult &output     = _pose_results[i];
-
-
-            if (debug) {
-                _debug_infos[i].pose_score = result.score;
-            }
-
-            if (result.score <= configs[i].threshold_pose && work_meta.prediction) {
-                // Nothing found, retry but without prediction (clear detector run)
-                work_meta.prediction    = false;
-                work_meta.rollback_roi  = false;
-                work_meta.discarded_roi = false;
-                work_meta.preserved_roi = false;
-                continue; // TODO restart
-            }
-
+        if (result.score <= configs[i].threshold_pose && work_meta.prediction) {
+            // Nothing found, retry but without prediction (clear detector run)
+            work_meta.prediction    = false;
+            work_meta.rollback_roi  = false;
             work_meta.discarded_roi = false;
             work_meta.preserved_roi = false;
-            work_meta.rollback_roi  = false;
-
-            eox::dnn::Landmark landmarks[39];
-
-            // decode landmarks and turn it back into image coordinate space (denormalize)
-            for (int t = 0; t < 39; t++) {
-                landmarks[t] = {
-                    // turning x,y into common (global) coordinates
-                    .x = (result.landmarks_norm[t].x * roi.w) + roi.x,
-                    .y = (result.landmarks_norm[t].y * roi.h) + roi.y,
-
-                    // z is still normalized (in range of 0 and 1)
-                    .z = result.landmarks_norm[t].z,
-
-                    .v = result.landmarks_norm[t].v,
-                    .p = result.landmarks_norm[t].p,
-                };
-            }
-
-            // temporal filtering (low pass based on velocity (literally))
-            for (int t = 0; t < 39; t++) {
-                const auto idx = t * 3;
-
-                auto fx = velocity_filters[i][idx + 0].filter(now, landmarks[t].x);
-                auto fy = velocity_filters[i][idx + 1].filter(now, landmarks[t].y);
-                auto fz = velocity_filters[i][idx + 2].filter(now, landmarks[t].z);
-
-                landmarks[t].x = fx;
-                landmarks[t].y = fy;
-                landmarks[t].z = fz;
-            }
-
-            if (config.threshold_roi > 0 && config.threshold_roi < 1) {
-                const auto roi_presence_score = heuristics.presence(roi, landmarks, true);
-                _debug_infos[i].roi_score     = roi_presence_score;
-
-                if (roi_presence_score <= 0) {
-
-                    output.present   = false;
-                    output.score     = 0;
-
-                    work_meta.prediction = false;
-                    // There is simply nothig, gg go next
-                    continue;
-                }
-            }
-
-            const auto prediction = heuristics.predict(
-                                                       roi,
-                                                       landmarks,
-                                                       (int) frames[i].cols,
-                                                       (int) frames[i].rows);
-
-            work_meta.preserved_roi = prediction.preserved;
-            work_meta.discarded_roi = prediction.discarded;
-            work_meta.rollback_roi  = prediction.rollback;
-            work_meta.prediction    = prediction.prediction;
-            roi                     = prediction.roi;
-            output.score            = result.score;
-            output.present          = true;
-
-            memcpy(output.ws_landmarks, result.landmarks_3d, (size_t) 39 * sizeof(eox::dnn::Coord3d));
-            memcpy(output.segmentation, result.segmentation, (size_t) 256 * 256 * sizeof(float));
-            memcpy(output.landmarks, landmarks, (size_t) 39 * sizeof(eox::dnn::Landmark));
+            return; // TODO restart
         }
+
+        work_meta.discarded_roi = false;
+        work_meta.preserved_roi = false;
+        work_meta.rollback_roi  = false;
+
+        eox::dnn::Landmark landmarks[39];
+
+        // decode landmarks and turn it back into image coordinate space (denormalize)
+        for (int t = 0; t < 39; t++) {
+            landmarks[t] = {
+                // turning x,y into common (global) coordinates
+                .x = (result.landmarks_norm[t].x * roi.w) + roi.x,
+                .y = (result.landmarks_norm[t].y * roi.h) + roi.y,
+
+                // z is still normalized (in range of 0 and 1)
+                .z = result.landmarks_norm[t].z,
+
+                .v = result.landmarks_norm[t].v,
+                .p = result.landmarks_norm[t].p,
+            };
+        }
+
+        // temporal filtering (low pass based on velocity (literally))
+        for (int t = 0; t < 39; t++) {
+            const auto idx = t * 3;
+
+            auto fx = velocity_filters[i][idx + 0].filter(now, landmarks[t].x);
+            auto fy = velocity_filters[i][idx + 1].filter(now, landmarks[t].y);
+            auto fz = velocity_filters[i][idx + 2].filter(now, landmarks[t].z);
+
+            landmarks[t].x = fx;
+            landmarks[t].y = fy;
+            landmarks[t].z = fz;
+        }
+
+        if (config.threshold_roi > 0 && config.threshold_roi < 1) {
+            const auto roi_presence_score = heuristics.presence(roi, landmarks, true);
+            _debug_infos[i].roi_score     = roi_presence_score;
+
+            if (roi_presence_score <= 0) {
+
+                output.present = false;
+                output.score   = 0;
+
+                work_meta.prediction = false;
+                // There is simply nothig, gg go next
+                return;;
+            }
+        }
+
+        const auto prediction = heuristics.predict(
+                                                   roi,
+                                                   landmarks,
+                                                   width,
+                                                   height);
+
+        work_meta.preserved_roi = prediction.preserved;
+        work_meta.discarded_roi = prediction.discarded;
+        work_meta.rollback_roi  = prediction.rollback;
+        work_meta.prediction    = prediction.prediction;
+        roi                     = prediction.roi;
+        output.score            = result.score;
+        output.present          = true;
+
+        memcpy(output.ws_landmarks, result.landmarks_3d, (size_t) 39 * sizeof(eox::dnn::Coord3d));
+        memcpy(output.segmentation, result.segmentation, (size_t) 256 * 256 * sizeof(float));
+        memcpy(output.landmarks, landmarks, (size_t) 39 * sizeof(eox::dnn::Landmark));
+    }
+
+    void PoseAgnostic::prepare_results(PoseResult *results, PoseDebug *debug) {
+        const int &n = n_size;
 
         for (int i = 0; i < n; i++) {
             results[i] = _pose_results[i];

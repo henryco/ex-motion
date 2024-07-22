@@ -159,7 +159,7 @@ namespace eox::dnn::pose {
     ) {
         const int &n = n_size;
 
-        for (int i = 0, q = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
             auto &      frame = frames[i];
             const auto &roi   = rois[i];
 
@@ -172,15 +172,16 @@ namespace eox::dnn::pose {
                 _pose_queue[pose_queue_n++] = i;
             }
             else {
-                detector_queue_n++;
-                _detector_queue[q++] = i;
-                _work_frames[q]      = { frame, ocl_command_queue, true }; // TODO FIXME ERROR 1
+                int &q = detector_queue_n;
+                _detector_queue[q] = i;
+                _work_frames[q]      = { frame, ocl_command_queue, true };
                 _detector_conf[q]    = {
                     .margin = configs[i].roi_margin,
                     .padding_x = configs[i].roi_padding_x,
                     .padding_y = configs[i].roi_padding_y,
                     .scale = configs[i].roi_scale
                 };
+                detector_queue_n++;
             }
         }
 

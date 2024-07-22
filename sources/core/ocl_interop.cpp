@@ -368,7 +368,7 @@ namespace xm::ocl::iop {
         completed = other.completed;
         ocl_queue = other.ocl_queue;
         ocl_event = other.ocl_event;
-        image = std::move(other.image); // TODO FIXME 2
+        image = std::move(other.image);
         other.ocl_event = nullptr;
         other.ocl_queue = nullptr;
         other.completed = true;

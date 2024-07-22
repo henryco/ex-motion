@@ -15,7 +15,7 @@ namespace xm::ocl {
 
     void Image2D::release() {
         if (handle != nullptr && !is_detached)
-            clReleaseMemObject(handle); // TODO FIXME 4
+            clReleaseMemObject(handle);
         reset_state(*this);
     }
 
@@ -120,7 +120,7 @@ namespace xm::ocl {
     Image2D &Image2D::operator=(Image2D &&other) noexcept {
         if (this == &other)
             return *this;
-        release(); // TODO FIXME 3
+        release();
         copy_from(other);
         reset_state(other);
         return *this;

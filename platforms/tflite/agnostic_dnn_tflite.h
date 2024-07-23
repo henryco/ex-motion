@@ -30,11 +30,13 @@ namespace platform::dnn {
 
         void reset() override;
 
-        void buffer_f_input(int index, size_t batch_size, size_t size, const float * const*batch_ptr) override;
+        void resize_input(int index, const std::vector<int> &size) override;
 
-        void buffer_f_input(int index, size_t batch_size, size_t size, const float *batch_ptr) override;
+        void buffer_f_input(int index, size_t size, const float *batch_ptr) override;
 
         void buffer_f_output(int index, size_t batch_size, size_t output_size, float **out_batch_ptr) override;
+
+        void buffer_f_output(int index, size_t output_size, float *out_batch_ptr) override;
 
         void invoke() override;
     };

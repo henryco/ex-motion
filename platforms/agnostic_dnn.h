@@ -5,7 +5,7 @@
 #ifndef XMOTION_AGNOSTIC_DNN_H
 #define XMOTION_AGNOSTIC_DNN_H
 
-#include <string>
+#include <vector>
 
 namespace platform::dnn {
 
@@ -17,17 +17,15 @@ namespace platform::dnn {
 
         virtual void reset() = 0;
 
-        /**
-         * @param index index of the input tensor
-         * @param in_batch_ptr 2D array
-         */
-        virtual void buffer_f_input(int index, size_t batch_size, size_t input_size, const float * const*in_batch_ptr) = 0;
+        virtual void resize_input(int index, const std::vector<int> &size) = 0;
 
         /**
          * @param index index of the input tensor
          * @param in_batch_ptr FLATTENED 2D array into 1D
          */
-        virtual void buffer_f_input(int index, size_t batch_size, size_t input_size, const float *in_batch_ptr) = 0;
+        virtual void buffer_f_input(int index, size_t input_size, const float *in_batch_ptr) = 0;
+
+        virtual void buffer_f_output(int index, size_t output_size, float *out_batch_ptr) = 0;
 
         virtual void buffer_f_output(int index, size_t batch_size, size_t output_size, float **out_batch_ptr) = 0;
 

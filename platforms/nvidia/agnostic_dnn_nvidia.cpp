@@ -20,20 +20,22 @@ namespace platform::dnn {
 
     }
 
+    void DnnInferenceNvidia::resize_input(int index, const std::vector<int> &size) {
+    }
+
     void DnnInferenceNvidia::reset() {
 
     }
 
-    void DnnInferenceNvidia::buffer_f_input(int index, size_t batch_size, size_t input_size, const float * const*batch_ptr) {
-
-    }
-
-    void DnnInferenceNvidia::buffer_f_input(int index, size_t batch_size, size_t input_size, const float *batch_ptr) {
+    void DnnInferenceNvidia::buffer_f_input(int index, size_t input_size, const float *batch_ptr) {
 
     }
 
     void DnnInferenceNvidia::buffer_f_output(int index, size_t batch_size, size_t output_size, float **out_batch_ptr) {
 
+    }
+
+    void DnnInferenceNvidia::buffer_f_output(int index, size_t output_size, float *out_batch_ptr) {
     }
 
     void DnnInferenceNvidia::invoke() {

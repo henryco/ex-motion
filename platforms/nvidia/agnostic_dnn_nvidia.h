@@ -16,13 +16,15 @@ namespace platform::dnn {
 
         void init(const char *model, size_t size) override;
 
+        void resize_input(int index, const std::vector<int> &size) override;
+
         void reset() override;
 
-        void buffer_f_input(int index, size_t batch_size, size_t input_size, const float * const*batch_ptr) override;
-
-        void buffer_f_input(int index, size_t batch_size, size_t input_size, const float *batch_ptr) override;
+        void buffer_f_input(int index, size_t input_size, const float *batch_ptr) override;
 
         void buffer_f_output(int index, size_t batch_size, size_t output_size, float **out_batch_ptr) override;
+
+        void buffer_f_output(int index, size_t output_size, float *out_batch_ptr) override;
 
         void invoke() override;
     };

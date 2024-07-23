@@ -78,7 +78,7 @@ namespace platform::dnn {
         return detector::mappings[model].scores;
     }
 
-    void AgnosticDetector::inference(size_t batch_size, size_t input_size, const float * const*in_batch_ptr) {
+    void AgnosticDetector::inference(size_t batch_size, const float *in_batch_ptr) {
         if (batch_size != batch) {
 
             if (bboxes) {
@@ -104,44 +104,12 @@ namespace platform::dnn {
                 scores[i] = new float[n_scores];
             }
 
+            dnn_runner->resize_input(0, {(int) batch_size, (int) get_in_w(), (int) get_in_h(), 3});
             batch = batch_size;
         }
 
-        dnn_runner->buffer_f_input(0, batch_size, input_size, in_batch_ptr);
-        dnn_runner->invoke();
-    }
-
-
-    void AgnosticDetector::inference(size_t batch_size, size_t input_size, const float *in_batch_ptr) {
-        if (batch_size != batch) {
-
-            if (bboxes) {
-                for (int i = 0; i < batch; i++)
-                    delete[] bboxes[i];
-                delete[] bboxes;
-            }
-
-            if (scores) {
-                for (int i = 0; i < batch; i++)
-                    delete[] scores[i];
-                delete[] scores;
-            }
-
-            const auto n_bboxes = get_n_bboxes();
-            const auto n_scores = get_n_scores();
-
-            bboxes = new float *[batch_size];
-            scores = new float *[batch_size];
-
-            for (int i = 0; i < batch_size; i++) {
-                bboxes[i] = new float[n_bboxes];
-                scores[i] = new float[n_scores];
-            }
-
-            batch = batch_size;
-        }
-
-        dnn_runner->buffer_f_input(0, batch_size, input_size, in_batch_ptr); // TODO FIX 1
+        const auto size = get_in_w() * get_in_h() * 3;
+        dnn_runner->buffer_f_input(0, size, in_batch_ptr); // TODO FIX 1
         dnn_runner->invoke();
     }
 

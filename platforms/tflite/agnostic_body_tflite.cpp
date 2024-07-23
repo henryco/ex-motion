@@ -79,7 +79,7 @@ namespace platform::dnn {
             delete[] heatmaps;
     }
 
-    void AgnosticBody::inference(const size_t batch_size, const size_t input_size, const float * const *in_batch_ptr) {
+    void AgnosticBody::inference(const size_t batch_size, const float *in_batch_ptr) {
         if (batch_size != batch) {
 
             if (segmentations) {
@@ -131,69 +131,12 @@ namespace platform::dnn {
                 pose_flags[i]    = new float[1];
             }
 
+            dnn_runner->resize_input(0, {(int) batch_size, (int) get_in_w(), (int) get_in_h(), 3});
             batch = batch_size;
         }
 
-        dnn_runner->buffer_f_input(0, batch_size, input_size, in_batch_ptr);
-        dnn_runner->invoke();
-    }
-
-    void AgnosticBody::inference(const size_t batch_size, const size_t input_size, const float *in_batch_ptr) {
-        if (batch_size != batch) {
-
-            if (segmentations) {
-                for (int i = 0; i < batch; i++)
-                    delete[] segmentations[i];
-                delete[] segmentations;
-            }
-
-            if (landmarks_3d) {
-                for (int i = 0; i < batch; i++)
-                    delete[] landmarks_3d[i];
-                delete[] landmarks_3d;
-            }
-
-            if (landmarks_wd) {
-                for (int i = 0; i < batch; i++)
-                    delete[] landmarks_wd[i];
-                delete[] landmarks_wd;
-            }
-
-            if (pose_flags) {
-                for (int i = 0; i < batch; i++)
-                    delete[] pose_flags[i];
-                delete[] pose_flags;
-            }
-
-            if (heatmaps) {
-                for (int i = 0; i < batch; i++)
-                    delete[] heatmaps[i];
-                delete[] heatmaps;
-            }
-
-            const auto n_heatmap = get_n_heatmap_w() * get_n_heatmap_h();
-            const auto n_seg     = get_n_segmentation_w() * get_n_segmentation_h();
-            const auto n_lm3d    = get_n_lm3d();
-            const auto n_lmwd    = get_n_lmwd();
-
-            segmentations = new float*[batch_size];
-            heatmaps      = new float*[batch_size];
-            landmarks_3d  = new float*[batch_size];
-            landmarks_wd  = new float*[batch_size];
-            pose_flags    = new float*[batch_size];
-
-            for (int i = 0; i < batch_size; i++) {
-                segmentations[i] = new float[n_seg];
-                heatmaps[i]      = new float[n_heatmap];
-                landmarks_3d[i]  = new float[n_lm3d];
-                landmarks_wd[i]  = new float[n_lmwd];
-                pose_flags[i]    = new float[1];
-            }
-
-            batch = batch_size;
-        }
-
-        dnn_runner->buffer_f_input(0, batch_size, input_size, in_batch_ptr);
+        const auto size = get_in_w() * get_in_h() * 3;
+        dnn_runner->buffer_f_input(0, size, in_batch_ptr);
         dnn_runner->invoke();
     }
 

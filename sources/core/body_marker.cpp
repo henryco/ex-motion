@@ -34,6 +34,7 @@ namespace xm::dnn::run {
         auto batch_data = new float[n * m_dim * 3];
 
         for (int i = 0; i < n; i++) {
+            // TODO: not very efficient, replace with ocl kernel on previous step
             const auto mat = eox::dnn::convert_to_squared_blob(
                 mat_promises[i].get(),
                 (int) in_w,
@@ -42,7 +43,7 @@ namespace xm::dnn::run {
             std::memcpy(batch_data + (i * n * 3), mat.data, m_size);
         }
 
-        inferencer->inference(n, m_dim, batch_data);
+        inferencer->inference(n, batch_data);
 
         delete[] batch_data;
         delete[] mat_promises;

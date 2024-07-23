@@ -57,49 +57,34 @@ namespace platform::dnn {
         initialized = true;
     }
 
-    void DnnInferenceTfLite::buffer_f_input(int index, size_t batch_size, size_t input_size, const float * const*batch_ptr) {
+    void DnnInferenceTfLite::resize_input(int index, const std::vector<int> &size) {
         const auto input_index = interpreter->inputs()[index];
-
-        TfLiteStatus status = interpreter->ResizeInputTensor(input_index, { (int) batch_size, (int) input_size });
+        TfLiteStatus status = interpreter->ResizeInputTensor(input_index, size);
         if (status != kTfLiteOk)
             throw std::runtime_error("Failed to resize input tensors for tflite interpreter, status: " + std::to_string(status));
 
         status = interpreter->AllocateTensors();
         if (status != kTfLiteOk)
-            throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: "+ std::to_string(status)); // TODO FIX 2
-
-        auto *input = interpreter->input_tensor(index)->data.f;
-        for (int i = 0; i < batch_size; i++) {
-            std::memcpy(input, batch_ptr[i], input_size * sizeof(float));
-            input += input_size;
-        }
+            throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: "+ std::to_string(status));
     }
 
-    void DnnInferenceTfLite::buffer_f_input(int index, size_t batch_size, size_t input_size, const float *batch_ptr) {
-        const auto input_index = interpreter->inputs()[index];
-
-        TfLiteStatus status = interpreter->ResizeInputTensor(input_index, { (int) batch_size, (int) input_size });
-        if (status != kTfLiteOk)
-            throw std::runtime_error("Failed to resize input tensors for tflite interpreter, status: " + std::to_string(status));
-
-        status = interpreter->AllocateTensors();
-        if (status != kTfLiteOk)
-            throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: "+ std::to_string(status)); // TODO FIX 2
-
-        std::cout << "OK" << std::endl;
-
+    void DnnInferenceTfLite::buffer_f_input(int index, size_t input_size, const float *batch_ptr) {
         auto *input = interpreter->input_tensor(index)->data.f;
-        std::memcpy(input, batch_ptr, input_size * batch_size * sizeof(float));
+        std::memcpy(input, batch_ptr, input_size * sizeof(float));
     }
 
     void DnnInferenceTfLite::buffer_f_output(int index, size_t batch_size, size_t output_size, float **out_batch_ptr) {
-//        const auto output_index = interpreter->outputs()[index];
-//        auto output_tensor = interpreter->tensor(output_index);
         auto output_tensor = interpreter->output_tensor(index);
         const float *output = output_tensor->data.f;
 
         for (int i = 0; i < batch_size; i++)
             std::memcpy(out_batch_ptr[i], output + (i * output_size), output_size * sizeof(float));
+    }
+
+    void DnnInferenceTfLite::buffer_f_output(int index, size_t output_size, float *out_batch_ptr) {
+        auto output_tensor = interpreter->output_tensor(index);
+        const float *output = output_tensor->data.f;
+        std::memcpy(out_batch_ptr, output, output_size * sizeof(float));
     }
 
     void DnnInferenceTfLite::invoke() {

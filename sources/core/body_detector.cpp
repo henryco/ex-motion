@@ -70,7 +70,7 @@ namespace xm::dnn::run {
             std::memcpy(batch_data + (i * n * 3), mat.data, m_size);
         }
 
-        detector->inference(n, m_dim, batch_data);
+        detector->inference(n, batch_data);
 
         delete[] batch_data;
         delete[] mat_promises;

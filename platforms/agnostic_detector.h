@@ -54,14 +54,13 @@ namespace platform::dnn {
         int get_n_scores() const;
 
         /**
-         * @param in_batch_ptr 2D array
+         * @param in_batch_ptr float32[batch_size, N, N, 3] tensor (rgb image) flattened to 1D array.
+         * Basicaly it's a 3D array (array of 2D images) flattened into 1D array.
+         * \code
+         * [i1_R1, i1_G1, i1_B1, i1_R2, i1_G2, i1_B2, ... , i2R1, i2G1, i2B1, ...]
+         * \endcode
          */
-        void inference(size_t batch_size, size_t input_size, const float * const*in_batch_ptr);
-
-        /**
-         * @param in_batch_ptr 2D array FLATTENED INTO 1D
-         */
-        void inference(size_t batch_size, size_t input_size, const float *in_batch_ptr);
+        void inference(size_t batch_size, const float *in_batch_ptr);
 
         const float *const *get_bboxes() const;
 

@@ -46,8 +46,11 @@ namespace platform::dnn {
         }
 
         TfLiteGpuDelegateOptionsV2 options = TfLiteGpuDelegateOptionsV2Default();
-        options.inference_preference = TFLITE_GPU_INFERENCE_PREFERENCE_SUSTAINED_SPEED;
-        gpu_delegate = TfLiteGpuDelegateV2Create(&options);
+        options.inference_preference       = TFLITE_GPU_INFERENCE_PREFERENCE_SUSTAINED_SPEED;
+        options.inference_priority1        = TFLITE_GPU_INFERENCE_PRIORITY_MIN_LATENCY;
+        options.inference_priority2        = TFLITE_GPU_INFERENCE_PRIORITY_MAX_PRECISION;
+        options.inference_priority3        = TFLITE_GPU_INFERENCE_PRIORITY_MIN_MEMORY_USAGE;
+        gpu_delegate                       = TfLiteGpuDelegateV2Create(&options);
 
         if (interpreter->ModifyGraphWithDelegate(gpu_delegate) != kTfLiteOk)
             throw std::runtime_error("Failed to modify graph with GPU delegate");
@@ -63,9 +66,13 @@ namespace platform::dnn {
         if (status != kTfLiteOk)
             throw std::runtime_error("Failed to resize input tensors for tflite interpreter, status: " + std::to_string(status));
 
+        // status = interpreter->ModifyGraphWithDelegate(gpu_delegate);
+        // if (status != kTfLiteOk)
+        //     throw std::runtime_error("Failed to modify graph with GPU delegate: " + std::to_string(status));
+
         status = interpreter->AllocateTensors();
         if (status != kTfLiteOk)
-            throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: "+ std::to_string(status));
+            throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: " + std::to_string(status));
     }
 
     void DnnInferenceTfLite::buffer_f_input(int index, size_t input_size, const float *batch_ptr) {

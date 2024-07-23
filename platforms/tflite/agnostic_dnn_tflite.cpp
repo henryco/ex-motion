@@ -3,6 +3,8 @@
 //
 
 #include "agnostic_dnn_tflite.h"
+
+#include <iostream>
 #include <tensorflow/lite/delegates/gpu/delegate.h>
 
 namespace platform::dnn {
@@ -58,11 +60,13 @@ namespace platform::dnn {
     void DnnInferenceTfLite::buffer_f_input(int index, size_t batch_size, size_t input_size, const float * const*batch_ptr) {
         const auto input_index = interpreter->inputs()[index];
 
-        if (interpreter->ResizeInputTensor(input_index, {(int) batch_size, (int) input_size}) != kTfLiteOk)
-            throw std::runtime_error("Failed to resize input tensors for tflite interpreter");
+        TfLiteStatus status = interpreter->ResizeInputTensor(input_index, { (int) batch_size, (int) input_size });
+        if (status != kTfLiteOk)
+            throw std::runtime_error("Failed to resize input tensors for tflite interpreter, status: " + std::to_string(status));
 
-        if (interpreter->AllocateTensors() != kTfLiteOk)
-            throw std::runtime_error("Failed to allocate tensors for tflite interpreter");
+        status = interpreter->AllocateTensors();
+        if (status != kTfLiteOk)
+            throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: "+ std::to_string(status)); // TODO FIX 2
 
         auto *input = interpreter->input_tensor(index)->data.f;
         for (int i = 0; i < batch_size; i++) {
@@ -74,11 +78,15 @@ namespace platform::dnn {
     void DnnInferenceTfLite::buffer_f_input(int index, size_t batch_size, size_t input_size, const float *batch_ptr) {
         const auto input_index = interpreter->inputs()[index];
 
-        if (interpreter->ResizeInputTensor(input_index, {(int) batch_size, (int) input_size}) != kTfLiteOk)
-            throw std::runtime_error("Failed to resize input tensors for tflite interpreter");
+        TfLiteStatus status = interpreter->ResizeInputTensor(input_index, { (int) batch_size, (int) input_size });
+        if (status != kTfLiteOk)
+            throw std::runtime_error("Failed to resize input tensors for tflite interpreter, status: " + std::to_string(status));
 
-        if (interpreter->AllocateTensors() != kTfLiteOk)
-            throw std::runtime_error("Failed to allocate tensors for tflite interpreter");
+        status = interpreter->AllocateTensors();
+        if (status != kTfLiteOk)
+            throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: "+ std::to_string(status)); // TODO FIX 2
+
+        std::cout << "OK" << std::endl;
 
         auto *input = interpreter->input_tensor(index)->data.f;
         std::memcpy(input, batch_ptr, input_size * batch_size * sizeof(float));

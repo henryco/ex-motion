@@ -141,7 +141,7 @@ namespace platform::dnn {
             batch = batch_size;
         }
 
-        dnn_runner->buffer_f_input(0, batch_size, input_size, in_batch_ptr);
+        dnn_runner->buffer_f_input(0, batch_size, input_size, in_batch_ptr); // TODO FIX 1
         dnn_runner->invoke();
     }
 

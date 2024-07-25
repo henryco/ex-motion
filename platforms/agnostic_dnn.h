@@ -23,11 +23,11 @@ namespace platform::dnn {
          * @param index index of the input tensor
          * @param in_batch_ptr FLATTENED 2D array into 1D
          */
-        virtual void buffer_f_input(int index, size_t input_size, const float *in_batch_ptr) = 0;
+        virtual void buffer_f_input(int index, size_t input_size, const void *in_batch_ptr) = 0;
 
-        virtual void buffer_f_output(int index, size_t output_size, float *out_batch_ptr) = 0;
+        virtual void buffer_f_output(int index, size_t output_size, void *out_batch_ptr) = 0;
 
-        virtual void buffer_f_output(int index, size_t batch_size, size_t output_size, float **out_batch_ptr) = 0;
+        virtual void* buffer_f_output(int index) = 0;
 
         virtual void invoke() = 0;
     };

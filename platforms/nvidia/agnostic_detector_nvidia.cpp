@@ -48,10 +48,8 @@ namespace platform::dnn {
         return 0;
     }
 
-    void AgnosticDetector::inference(size_t batch_size, size_t input_size, const float * const *in_batch_ptr) {
-    }
+    void AgnosticDetector::inference(size_t batch_size, const float *in_batch_ptr) {
 
-    void AgnosticDetector::inference(size_t batch_size, size_t input_size, const float *in_batch_ptr) {
     }
 
     const float * const * AgnosticDetector::get_bboxes() const {

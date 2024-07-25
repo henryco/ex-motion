@@ -112,32 +112,56 @@ namespace platform::dnn {
                 delete[] heatmaps;
             }
 
-            const auto n_heatmap = get_n_heatmap_w() * get_n_heatmap_h();
-            const auto n_seg     = get_n_segmentation_w() * get_n_segmentation_h();
-            const auto n_lm3d    = get_n_lm3d();
-            const auto n_lmwd    = get_n_lmwd();
-
             segmentations = new float*[batch_size];
             heatmaps      = new float*[batch_size];
             landmarks_3d  = new float*[batch_size];
             landmarks_wd  = new float*[batch_size];
             pose_flags    = new float*[batch_size];
 
-            for (int i = 0; i < batch_size; i++) {
-                segmentations[i] = new float[n_seg];
-                heatmaps[i]      = new float[n_heatmap];
-                landmarks_3d[i]  = new float[n_lm3d];
-                landmarks_wd[i]  = new float[n_lmwd];
-                pose_flags[i]    = new float[1];
-            }
-
             dnn_runner->resize_input(0, {(int) batch_size, (int) get_in_w(), (int) get_in_h(), 3});
             batch = batch_size;
         }
 
-        const auto size = get_in_w() * get_in_h() * 3;
+        const auto size = get_in_w() * get_in_h() * 3 * sizeof(float);
         dnn_runner->buffer_f_input(0, size, in_batch_ptr);
         dnn_runner->invoke();
+
+        const auto ptr_seg = (float *) dnn_runner->buffer_f_output(body::mappings[model].seg);
+        const auto ptr_hmp = (float *) dnn_runner->buffer_f_output(body::mappings[model].hm);
+        const auto ptr_l3d = (float *) dnn_runner->buffer_f_output(body::mappings[model].lm_3d);
+        const auto ptr_lwd = (float *) dnn_runner->buffer_f_output(body::mappings[model].world);
+        const auto ptr_flg = (float *) dnn_runner->buffer_f_output(body::mappings[model].flag);
+
+        if (ptr_seg == nullptr || ptr_hmp == nullptr || ptr_l3d == nullptr || ptr_lwd == nullptr || ptr_flg == nullptr)
+            throw std::runtime_error("Output result is nullptr");
+
+        if (!segmentations)
+            segmentations = new float *[batch];
+
+        if (!landmarks_3d)
+            landmarks_3d = new float *[batch];
+
+        if (!landmarks_wd)
+            landmarks_wd = new float *[batch];
+
+        if (!pose_flags)
+            pose_flags = new float *[batch];
+
+        if (!heatmaps)
+            heatmaps = new float *[batch];
+
+        const auto n_seg     = get_n_segmentation_w() * get_n_segmentation_h();
+        const auto n_heatmap = get_n_heatmap_w() * get_n_heatmap_h();
+        const auto n_lm3d    = get_n_lm3d();
+        const auto n_lmwd    = get_n_lmwd();
+
+        for (int i = 0; i < batch; i++) {
+            heatmaps[i]      = &ptr_hmp[i * batch * n_heatmap * 39];
+            landmarks_3d[i]  = &ptr_l3d[i * batch * n_lm3d * 1];
+            landmarks_wd[i]  = &ptr_lwd[i * batch * n_lmwd * 1];
+            segmentations[i] = &ptr_seg[i * batch * n_seg * 1];
+            pose_flags[i]    = &ptr_flg[i * batch * 1];
+        }
     }
 
     const float * const * AgnosticBody::get_segmentations() const {

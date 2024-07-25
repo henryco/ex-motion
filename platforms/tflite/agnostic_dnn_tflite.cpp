@@ -75,23 +75,19 @@ namespace platform::dnn {
             throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: " + std::to_string(status));
     }
 
-    void DnnInferenceTfLite::buffer_f_input(int index, size_t input_size, const float *batch_ptr) {
-        auto *input = interpreter->input_tensor(index)->data.f;
-        std::memcpy(input, batch_ptr, input_size * sizeof(float));
+    void DnnInferenceTfLite::buffer_f_input(int index, size_t input_size, const void *batch_ptr) {
+        auto input = interpreter->input_tensor(index)->data.f;
+        std::memcpy(input, batch_ptr, input_size);
     }
 
-    void DnnInferenceTfLite::buffer_f_output(int index, size_t batch_size, size_t output_size, float **out_batch_ptr) {
+    void DnnInferenceTfLite::buffer_f_output(int index, size_t output_size, void *out_batch_ptr) {
         auto output_tensor = interpreter->output_tensor(index);
         const float *output = output_tensor->data.f;
-
-        for (int i = 0; i < batch_size; i++)
-            std::memcpy(out_batch_ptr[i], output + (i * output_size), output_size * sizeof(float));
+        std::memcpy(out_batch_ptr, output, output_size);
     }
 
-    void DnnInferenceTfLite::buffer_f_output(int index, size_t output_size, float *out_batch_ptr) {
-        auto output_tensor = interpreter->output_tensor(index);
-        const float *output = output_tensor->data.f;
-        std::memcpy(out_batch_ptr, output, output_size * sizeof(float));
+    void * DnnInferenceTfLite::buffer_f_output(int index) {
+        return interpreter->output_tensor(index)->data.f;
     }
 
     void DnnInferenceTfLite::invoke() {

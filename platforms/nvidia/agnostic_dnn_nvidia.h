@@ -20,11 +20,11 @@ namespace platform::dnn {
 
         void reset() override;
 
-        void buffer_f_input(int index, size_t input_size, const float *batch_ptr) override;
+        void buffer_f_input(int index, size_t input_size, const void *batch_ptr) override;
 
-        void buffer_f_output(int index, size_t batch_size, size_t output_size, float **out_batch_ptr) override;
+        void buffer_f_output(int index, size_t output_size, void *out_batch_ptr) override;
 
-        void buffer_f_output(int index, size_t output_size, float *out_batch_ptr) override;
+        void * buffer_f_output(int index) override;
 
         void invoke() override;
     };

@@ -10,6 +10,10 @@ namespace xm::dnn::run {
     BodyDetector::~BodyDetector() {
         if (detector)
             delete detector;
+        if (batch_data)
+            delete[] batch_data;
+        if (mat_promises)
+            delete[] mat_promises;
     }
 
     void BodyDetector::init(const ModelDetector model) {
@@ -47,17 +51,26 @@ namespace xm::dnn::run {
         const DetectorRoiConf *             configs,
         DetectedBody *                      detection
     ) {
-        auto *mat_promises = new ocl::iop::CLPromise<cv::Mat>[n];
+        const auto m_dim  = detector->get_in_w() * detector->get_in_h();
+
+        if (mat_promises == nullptr || batch_size < n) {
+            if (mat_promises)
+                delete[] mat_promises;
+            mat_promises = new ocl::iop::CLPromise<cv::Mat>[n];
+        }
+
+        if (batch_data == nullptr || batch_size < n) {
+            if (batch_data)
+                delete[] batch_data;
+            batch_data = new float[n * m_dim * 3];
+        }
+
+        batch_size = n;
 
         for (int i          = 0; i < n; i++)
             mat_promises[i] = xm::ocl::iop::to_cv_mat(promises[i]);
 
         xm::ocl::iop::CLPromise<cv::Mat>::finalizeAll(mat_promises, n);
-
-        const auto m_dim  = detector->get_in_w() * detector->get_in_h() * 3;
-        const auto m_size = m_dim * sizeof(float) * 3;
-
-        auto batch_data = new float[n * m_dim * 3];
 
         for (int i = 0; i < n; i++) {
             // TODO: not very efficient, replace with ocl kernel on previous step
@@ -67,13 +80,10 @@ namespace xm::dnn::run {
                                                                (int) detector->get_in_h(),
                                                                true);
 
-            std::memcpy(batch_data + (i * n * 3), mat.data, m_size);
+            std::memcpy(batch_data + (i * m_dim * 3), mat.data, m_dim * 3 * sizeof(float));
         }
 
         detector->inference(n, batch_data);
-
-        delete[] batch_data;
-        delete[] mat_promises;
 
         const auto bboxes_a = detector->get_bboxes();
         const auto scores_a = detector->get_scores();
@@ -101,7 +111,6 @@ namespace xm::dnn::run {
             }
         }
     }
-
 
     DetectedBody BodyDetector::decode(
         const float *          bboxes,

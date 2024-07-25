@@ -28,6 +28,10 @@ namespace xm::dnn::run {
     private:
         platform::dnn::AgnosticBody *inferencer = nullptr;
 
+        ocl::iop::CLPromise<cv::Mat> *mat_promises = nullptr;
+        float *batch_data = nullptr;
+        int batch_size = 0;
+
     public:
         BodyMarker() = default;
 

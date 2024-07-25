@@ -9,6 +9,10 @@ namespace xm::dnn::run {
     BodyMarker::~BodyMarker() {
         if (inferencer)
             delete inferencer;
+        if (batch_data)
+            delete[] batch_data;
+        if (mat_promises)
+            delete[] mat_promises;
     }
 
     void BodyMarker::init(const ModelPose model) {
@@ -17,36 +21,47 @@ namespace xm::dnn::run {
         inferencer = new platform::dnn::AgnosticBody(static_cast<platform::dnn::body::Model>((int) model));
     }
 
-    void BodyMarker::inference(const int n, const xm::ocl::iop::ClImagePromise *promises, eox::dnn::PoseOutput *poses, const bool segmenation) {
+    void BodyMarker::inference(
+        const int                           n,
+        const xm::ocl::iop::ClImagePromise *promises,
+        eox::dnn::PoseOutput *              poses,
+        const bool                          segmenation
+    ) {
+        const auto in_w = inferencer->get_in_w();
+        const auto in_h = inferencer->get_in_h();
 
-        auto *mat_promises = new ocl::iop::CLPromise<cv::Mat>[n];
-        for (int i = 0; i < n; i++)
+        const auto m_dim  = in_w * in_h;
+
+        if (mat_promises == nullptr || batch_size < n) {
+            if (mat_promises)
+                delete[] mat_promises;
+            mat_promises = new ocl::iop::CLPromise<cv::Mat>[n];
+        }
+
+        if (batch_data == nullptr || batch_size < n) {
+            if (batch_data)
+                delete[] batch_data;
+            batch_data = new float[n * m_dim * 3];
+        }
+
+        batch_size = n;
+
+        for (int i          = 0; i < n; i++)
             mat_promises[i] = xm::ocl::iop::to_cv_mat(promises[i]);
 
         xm::ocl::iop::CLPromise<cv::Mat>::finalizeAll(mat_promises, n);
 
-        const auto in_w = inferencer->get_in_w();
-        const auto in_h = inferencer->get_in_h();
-
-        const auto m_dim = in_w * in_h;
-        const auto m_size = m_dim * sizeof(float) * 3;
-
-        auto batch_data = new float[n * m_dim * 3];
-
         for (int i = 0; i < n; i++) {
             // TODO: not very efficient, replace with ocl kernel on previous step
             const auto mat = eox::dnn::convert_to_squared_blob(
-                mat_promises[i].get(),
-                (int) in_w,
-                (int) in_h,
-                true);
-            std::memcpy(batch_data + (i * n * 3), mat.data, m_size);
+                                                               mat_promises[i].get(),
+                                                               (int) in_w,
+                                                               (int) in_h,
+                                                               true);
+            std::memcpy(batch_data + (i * m_dim * 3), mat.data, m_dim * 3 * sizeof(float));
         }
 
         inferencer->inference(n, batch_data);
-
-        delete[] batch_data;
-        delete[] mat_promises;
 
         const auto landmarks_3d = inferencer->get_landmarks_3d();
         const auto landmarks_wd = inferencer->get_landmarks_wd();
@@ -55,14 +70,14 @@ namespace xm::dnn::run {
 
         for (int i = 0; i < n; i++) {
             const auto img = promises[i].getImage2D();
-            poses[i] = decode(
-                landmarks_3d[i],
-                landmarks_wd[i],
-                seg_masks[i],
-                pose_flags[i][0],
-                (int) img.cols,
-                (int) img.rows,
-                segmenation);
+            poses[i]       = decode(
+                                    landmarks_3d[i],
+                                    landmarks_wd[i],
+                                    seg_masks[i],
+                                    pose_flags[i][0],
+                                    (int) img.cols,
+                                    (int) img.rows,
+                                    segmenation);
         }
     }
 

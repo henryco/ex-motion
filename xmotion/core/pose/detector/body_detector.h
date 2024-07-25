@@ -58,6 +58,10 @@ namespace xm::dnn::run {
         platform::dnn::AgnosticDetector *detector = nullptr;
         std::vector<std::array<float, 4>> anchors_vec;
 
+        ocl::iop::CLPromise<cv::Mat> *mat_promises = nullptr;
+        float *batch_data = nullptr;
+        int batch_size = 0;
+
     public:
         BodyDetector() = default;
 

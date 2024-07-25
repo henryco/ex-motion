@@ -82,44 +82,52 @@ namespace platform::dnn {
         if (batch_size != batch) {
 
             if (bboxes) {
-                for (int i = 0; i < batch; i++)
-                    delete[] bboxes[i];
                 delete[] bboxes;
             }
 
             if (scores) {
-                for (int i = 0; i < batch; i++)
-                    delete[] scores[i];
                 delete[] scores;
             }
 
-            const auto n_bboxes = get_n_bboxes();
-            const auto n_scores = get_n_scores();
-
             bboxes = new float *[batch_size];
             scores = new float *[batch_size];
-
-            for (int i = 0; i < batch_size; i++) {
-                bboxes[i] = new float[n_bboxes];
-                scores[i] = new float[n_scores];
-            }
 
             dnn_runner->resize_input(0, {(int) batch_size, (int) get_in_w(), (int) get_in_h(), 3});
             batch = batch_size;
         }
 
-        const auto size = get_in_w() * get_in_h() * 3;
+        const size_t size = get_in_w() * get_in_h() * 3 * sizeof(float);
         dnn_runner->buffer_f_input(0, size, in_batch_ptr); // TODO FIX 1
         dnn_runner->invoke();
+
+        const auto ptr_box = (float*) dnn_runner->buffer_f_output(detector::mappings[model].box_loc);
+        const auto ptr_scr = (float*) dnn_runner->buffer_f_output(detector::mappings[model].score_loc);
+
+        if (ptr_box == nullptr || ptr_scr == nullptr)
+            throw std::runtime_error("Output result is nullptr");
+
+        if (!bboxes) {
+            bboxes = new float *[batch_size];
+        }
+
+        if (!scores) {
+            scores = new float *[batch_size];
+        }
+
+        const auto n_bboxes = get_n_bboxes();
+        const auto n_scores = get_n_scores();
+
+        for (int i = 0; i < batch_size; i++) {
+            bboxes[i] = &ptr_box[i * batch * n_bboxes * 12];
+            scores[i] = &ptr_scr[i * batch * n_scores * 1];
+        }
     }
 
     const float *const *AgnosticDetector::get_bboxes() const {
-        dnn_runner->buffer_f_output(detector::mappings[model].box_loc, batch, get_n_bboxes(), bboxes);
         return bboxes;
     }
 
     const float *const *AgnosticDetector::get_scores() const {
-        dnn_runner->buffer_f_output(detector::mappings[model].score_loc, batch, get_n_scores(), scores);
         return scores;
     }
 

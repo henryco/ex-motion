@@ -66,6 +66,8 @@ namespace platform::dnn {
         if (status != kTfLiteOk)
             throw std::runtime_error("Failed to resize input tensors for tflite interpreter, status: " + std::to_string(status));
 
+        // TODO FIXME
+
         status = interpreter->ModifyGraphWithDelegate(gpu_delegate);
         if (status != kTfLiteOk)
             throw std::runtime_error("Failed to modify graph with GPU delegate: " + std::to_string(status));

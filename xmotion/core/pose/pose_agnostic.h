@@ -41,11 +41,6 @@ namespace eox::dnn::pose {
         eox::dnn::Landmark landmarks[39];
 
         /**
-         * pose landmarks in world space
-         */
-        eox::dnn::Coord3d ws_landmarks[39];
-
-        /**
          * segmentation array
          */
         float segmentation[256 * 256];

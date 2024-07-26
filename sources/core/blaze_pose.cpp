@@ -84,7 +84,6 @@ namespace eox::dnn {
         output.score = presence;
 
         const float *land_marks_3d = lm_3d_1x195(*interpreter, model_type);
-        const float *land_marks_wd = lm_world_1x117(*interpreter, model_type);
 
         // correcting letterbox paddings
         const auto p = eox::dnn::get_letterbox_paddings(view_w, view_h, get_in_w(), get_in_h());

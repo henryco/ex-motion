@@ -51,7 +51,7 @@ namespace xm::dnn::run {
         const DetectorRoiConf *             configs,
         DetectedBody *                      detection
     ) {
-        const auto m_dim  = detector->get_in_w() * detector->get_in_h();
+        const size_t m_dim = detector->get_in_w() * detector->get_in_h() * 3;
 
         if (mat_promises == nullptr || batch_size < n) {
             if (mat_promises)
@@ -62,7 +62,7 @@ namespace xm::dnn::run {
         if (batch_data == nullptr || batch_size < n) {
             if (batch_data)
                 delete[] batch_data;
-            batch_data = new float[n * m_dim * 3];
+            batch_data = new float[n * m_dim];
         }
 
         batch_size = n;
@@ -72,7 +72,7 @@ namespace xm::dnn::run {
 
         xm::ocl::iop::CLPromise<cv::Mat>::finalizeAll(mat_promises, n);
 
-        for (int i = 0; i < n; i++) {
+        for (size_t i = 0; i < n; i++) {
             // TODO: not very efficient, replace with ocl kernel on previous step
             const auto mat = eox::dnn::convert_to_squared_blob(
                                                                mat_promises[i].get(),
@@ -80,7 +80,7 @@ namespace xm::dnn::run {
                                                                (int) detector->get_in_h(),
                                                                true);
 
-            std::memcpy(batch_data + (i * m_dim * 3), mat.data, m_dim * 3 * sizeof(float));
+            std::memcpy(batch_data + (i * m_dim), mat.data, m_dim * sizeof(float));
         }
 
         detector->inference(n, batch_data);

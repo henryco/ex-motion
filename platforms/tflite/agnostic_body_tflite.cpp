@@ -148,9 +148,9 @@ namespace platform::dnn {
             if (ptr_seg == nullptr || ptr_l3d == nullptr || ptr_flg == nullptr)
                 throw std::runtime_error("Output result is nullptr");
 
-            memcpy(&segmentations[i], &ptr_seg[i * n_seg * 1], n_seg * 1 * sizeof(float));
-            memcpy(&landmarks_3d[i], &ptr_l3d[i * n_l3d * 1], n_l3d * 1 * sizeof(float));
-            memcpy(&pose_flags[i], &ptr_flg[i * 1], 1 * sizeof(float));
+            memcpy(&segmentations[i], ptr_seg, n_seg * 1 * sizeof(float));
+            memcpy(&landmarks_3d[i], ptr_l3d, n_l3d * 1 * sizeof(float));
+            memcpy(&pose_flags[i], ptr_flg, 1 * sizeof(float));
         }
     }
 

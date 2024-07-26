@@ -106,7 +106,7 @@ namespace platform::dnn {
             batch = batch_size;
         }
 
-        const size_t size     = get_in_w() * get_in_h() * 3 * sizeof(float);
+        const size_t dim      = get_in_w() * get_in_h() * 3;
         const size_t n_bboxes = get_n_bboxes();
         const size_t n_scores = get_n_scores();
 
@@ -123,9 +123,9 @@ namespace platform::dnn {
         }
 
         for (size_t i = 0; i < batch; i++) {
-            const float *ptr = &in_batch_ptr[i * get_in_w() * get_in_h() * 3];
+            const float *ptr = &in_batch_ptr[i * dim];
 
-            dnn_runner->buffer_f_input(0, size, ptr);
+            dnn_runner->buffer_f_input(0, dim * sizeof(float), ptr);
             dnn_runner->invoke();
 
             const auto ptr_box = (float*) dnn_runner->buffer_f_output(detector::mappings[model].box_loc);
@@ -134,8 +134,8 @@ namespace platform::dnn {
             if (ptr_box == nullptr || ptr_scr == nullptr)
                 throw std::runtime_error("Output result is nullptr");
 
-            memcpy(&bboxes[i], &ptr_box[i * n_bboxes * 12], n_bboxes * 12 * sizeof(float));
-            memcpy(&scores[i], &ptr_scr[i * n_scores * 1], n_scores * 1 * sizeof(float));
+            memcpy(&bboxes[i], ptr_box, n_bboxes * 12 * sizeof(float));
+            memcpy(&scores[i], ptr_scr, n_scores * 1 * sizeof(float));
         }
     }
 

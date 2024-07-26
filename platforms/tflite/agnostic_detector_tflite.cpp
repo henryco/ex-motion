@@ -2,6 +2,8 @@
 // Created by henryco on 18/07/24.
 //
 
+#include <cstring>
+
 #include "../agnostic_detector.h"
 #include <filesystem>
 #include <fstream>
@@ -52,10 +54,16 @@ namespace platform::dnn {
     AgnosticDetector::~AgnosticDetector() {
         if (dnn_runner)
             delete dnn_runner;
-        if (bboxes)
+        if (bboxes) {
+            for (int i = 0; i < batch; i++)
+                delete[] bboxes[i];
             delete[] bboxes;
-        if (scores)
+        }
+        if (scores) {
+            for (int i = 0; i < batch; i++)
+                delete[] scores[i];
             delete[] scores;
+        }
     }
 
     detector::Model AgnosticDetector::get_model() const {
@@ -81,45 +89,53 @@ namespace platform::dnn {
     void AgnosticDetector::inference(size_t batch_size, const float *in_batch_ptr) {
         if (batch_size != batch) {
 
-            if (bboxes) {
+            if (bboxes != nullptr) {
+                for (int i = 0; i < batch; i++)
+                    delete[] bboxes[i];
                 delete[] bboxes;
+                bboxes = nullptr;
             }
 
-            if (scores) {
+            if (scores != nullptr) {
+                for (int i = 0; i < batch; i++)
+                    delete[] scores[i];
                 delete[] scores;
+                scores = nullptr;
             }
 
-            bboxes = new float *[batch_size];
-            scores = new float *[batch_size];
-
-            dnn_runner->resize_input(0, {(int) batch_size, (int) get_in_w(), (int) get_in_h(), 3});
             batch = batch_size;
         }
 
-        const size_t size = get_in_w() * get_in_h() * 3 * sizeof(float);
-        dnn_runner->buffer_f_input(0, size, in_batch_ptr); // TODO FIX 1
-        dnn_runner->invoke();
+        const size_t size     = get_in_w() * get_in_h() * 3 * sizeof(float);
+        const size_t n_bboxes = get_n_bboxes();
+        const size_t n_scores = get_n_scores();
 
-        const auto ptr_box = (float*) dnn_runner->buffer_f_output(detector::mappings[model].box_loc);
-        const auto ptr_scr = (float*) dnn_runner->buffer_f_output(detector::mappings[model].score_loc);
-
-        if (ptr_box == nullptr || ptr_scr == nullptr)
-            throw std::runtime_error("Output result is nullptr");
-
-        if (!bboxes) {
-            bboxes = new float *[batch_size];
+        if (bboxes == nullptr) {
+            bboxes = new float *[batch];
+            for (size_t i = 0; i < batch; i++)
+                bboxes[i] = new float[n_bboxes * 12];
         }
 
-        if (!scores) {
-            scores = new float *[batch_size];
+        if (scores == nullptr) {
+            scores = new float *[batch];
+            for (size_t i = 0; i < batch; i++)
+                scores[i] = new float[n_scores * 1];
         }
 
-        const auto n_bboxes = get_n_bboxes();
-        const auto n_scores = get_n_scores();
+        for (size_t i = 0; i < batch; i++) {
+            const float *ptr = &in_batch_ptr[i * get_in_w() * get_in_h() * 3];
 
-        for (int i = 0; i < batch_size; i++) {
-            bboxes[i] = &ptr_box[i * batch * n_bboxes * 12];
-            scores[i] = &ptr_scr[i * batch * n_scores * 1];
+            dnn_runner->buffer_f_input(0, size, ptr);
+            dnn_runner->invoke();
+
+            const auto ptr_box = (float*) dnn_runner->buffer_f_output(detector::mappings[model].box_loc);
+            const auto ptr_scr = (float*) dnn_runner->buffer_f_output(detector::mappings[model].score_loc);
+
+            if (ptr_box == nullptr || ptr_scr == nullptr)
+                throw std::runtime_error("Output result is nullptr");
+
+            memcpy(&bboxes[i], &ptr_box[i * n_bboxes * 12], n_bboxes * 12 * sizeof(float));
+            memcpy(&scores[i], &ptr_scr[i * n_scores * 1], n_scores * 1 * sizeof(float));
         }
     }
 

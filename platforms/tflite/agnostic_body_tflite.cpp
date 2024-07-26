@@ -2,6 +2,8 @@
 // Created by henryco on 19/07/24.
 //
 
+#include <cstring>
+
 #include "../agnostic_body.h"
 #include <filesystem>
 #include <fstream>
@@ -67,70 +69,88 @@ namespace platform::dnn {
     AgnosticBody::~AgnosticBody() {
         if (dnn_runner)
             delete dnn_runner;
-        if (segmentations)
+        if (segmentations) {
+            for (int i = 0; i < batch; i++)
+                delete[] segmentations[i];
             delete[] segmentations;
-        if (landmarks_3d)
+        }
+        if (landmarks_3d) {
+            for (int i = 0; i < batch; i++)
+                delete[] landmarks_3d[i];
             delete[] landmarks_3d;
-        if (pose_flags)
+        }
+        if (pose_flags) {
+            for (int i = 0; i < batch; i++)
+                delete[] pose_flags[i];
             delete[] pose_flags;
+        }
     }
 
     void AgnosticBody::inference(const size_t batch_size, const float *in_batch_ptr) {
         if (batch_size != batch) {
 
-            if (segmentations) {
+            if (segmentations != nullptr) {
                 for (int i = 0; i < batch; i++)
                     delete[] segmentations[i];
                 delete[] segmentations;
+                segmentations = nullptr;
             }
 
-            if (landmarks_3d) {
+            if (landmarks_3d != nullptr) {
                 for (int i = 0; i < batch; i++)
                     delete[] landmarks_3d[i];
                 delete[] landmarks_3d;
+                landmarks_3d = nullptr;
             }
 
-            if (pose_flags) {
+            if (pose_flags != nullptr) {
                 for (int i = 0; i < batch; i++)
                     delete[] pose_flags[i];
                 delete[] pose_flags;
+                pose_flags = nullptr;
             }
 
-            segmentations = new float*[batch_size];
-            landmarks_3d  = new float*[batch_size];
-            pose_flags    = new float*[batch_size];
-
-            dnn_runner->resize_input(0, {(int) batch_size, (int) get_in_w(), (int) get_in_h(), 3});
             batch = batch_size;
         }
 
-        const auto size = get_in_w() * get_in_h() * 3 * sizeof(float);
-        dnn_runner->buffer_f_input(0, size, in_batch_ptr);
-        dnn_runner->invoke();
+        const size_t size   = get_in_w() * get_in_h() * 3 * sizeof(float);
+        const size_t n_seg  = get_n_segmentation_w() * get_n_segmentation_h();
+        const size_t n_l3d = get_n_lm3d();
 
-        const auto ptr_seg = (float *) dnn_runner->buffer_f_output(body::mappings[model].seg);
-        const auto ptr_l3d = (float *) dnn_runner->buffer_f_output(body::mappings[model].lm_3d);
-        const auto ptr_flg = (float *) dnn_runner->buffer_f_output(body::mappings[model].flag);
-
-        if (ptr_seg == nullptr || ptr_l3d == nullptr || ptr_flg == nullptr)
-            throw std::runtime_error("Output result is nullptr");
-
-        if (!segmentations)
+        if (segmentations == nullptr) {
             segmentations = new float *[batch];
+            for (size_t i = 0; i < batch; i++)
+                segmentations[i] = new float[n_seg * 1];
+        }
 
-        if (!landmarks_3d)
+        if (landmarks_3d == nullptr) {
             landmarks_3d = new float *[batch];
+            for (size_t i = 0; i < batch; i++)
+                landmarks_3d[i] = new float[n_l3d * 1];
+        }
 
-        if (!pose_flags)
+        if (pose_flags == nullptr) {
             pose_flags = new float *[batch];
+            for (size_t i = 0; i < batch; i++)
+                pose_flags[i] = new float[1];
+        }
 
-        const auto n_seg     = get_n_segmentation_w() * get_n_segmentation_h();
-        const auto n_lm3d    = get_n_lm3d();
+        for (size_t i = 0; i < batch; i++) {
+            const float *ptr = &in_batch_ptr[i * get_in_w() * get_in_h() * 3];
 
-        for (int i = 0; i < batch; i++) {
-            landmarks_3d[i]  = &ptr_l3d[i * batch * n_lm3d * 1];
-            segmentations[i] = &ptr_seg[i * batch * n_seg * 1];
-            pose_flags[i]    = &ptr_flg[i * batch * 1];
+            dnn_runner->buffer_f_input(0, size, ptr);
+            dnn_runner->invoke();
+
+            const auto ptr_seg = (float *) dnn_runner->buffer_f_output(body::mappings[model].seg);
+            const auto ptr_l3d = (float *) dnn_runner->buffer_f_output(body::mappings[model].lm_3d);
+            const auto ptr_flg = (float *) dnn_runner->buffer_f_output(body::mappings[model].flag);
+
+            if (ptr_seg == nullptr || ptr_l3d == nullptr || ptr_flg == nullptr)
+                throw std::runtime_error("Output result is nullptr");
+
+            memcpy(&segmentations[i], &ptr_seg[i * n_seg * 1], n_seg * 1 * sizeof(float));
+            memcpy(&landmarks_3d[i], &ptr_l3d[i * n_l3d * 1], n_l3d * 1 * sizeof(float));
+            memcpy(&pose_flags[i], &ptr_flg[i * 1], 1 * sizeof(float));
         }
     }
 

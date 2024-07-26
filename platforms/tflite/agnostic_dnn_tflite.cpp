@@ -83,12 +83,14 @@ namespace platform::dnn {
     }
 
     void DnnInferenceTfLite::buffer_f_output(int index, size_t output_size, void *out_batch_ptr) {
+        interpreter->EnsureTensorDataIsReadable(interpreter->outputs()[index]);
         auto output_tensor = interpreter->output_tensor(index);
         const float *output = output_tensor->data.f;
         std::memcpy(out_batch_ptr, output, output_size);
     }
 
     void * DnnInferenceTfLite::buffer_f_output(int index) {
+        interpreter->EnsureTensorDataIsReadable(interpreter->outputs()[index]);
         return interpreter->output_tensor(index)->data.f;
     }
 

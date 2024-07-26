@@ -2,11 +2,10 @@
 // Created by henryco on 18/07/24.
 //
 
-#include <cstring>
-
 #include "../agnostic_detector.h"
 #include <filesystem>
 #include <fstream>
+#include <cstring>
 
 namespace platform::dnn {
 
@@ -134,8 +133,14 @@ namespace platform::dnn {
             if (ptr_box == nullptr || ptr_scr == nullptr)
                 throw std::runtime_error("Output result is nullptr");
 
-            memcpy(&bboxes[i], ptr_box, n_bboxes * 12 * sizeof(float));
-            memcpy(&scores[i], ptr_scr, n_scores * 1 * sizeof(float));
+            for (size_t k = 0; k < n_bboxes * 12; k++)
+                bboxes[i][k] = ptr_box[k];
+            for (size_t k = 0; k < n_scores * 1; k++)
+                scores[i][k] = ptr_scr[k];
+
+            // WTF MEMCPY CAUSING GPU DELEGATE (CL) CRASH ????? !!!!
+            // std::memcpy(&bboxes[i], ptr_box, n_bboxes * 12 * sizeof(float));
+            // std::memcpy(&scores[i], ptr_scr, n_scores * 1 * sizeof(float));
         }
     }
 

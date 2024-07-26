@@ -247,17 +247,11 @@ namespace xm::ocl::iop {
     }
 
     cv::Mat ClImagePromise::getMat() const {
-        cv::UMat u_mat;
-        xm::ocl::iop::to_cv_umat(image, u_mat);
-        cv::Mat mat;
-        u_mat.copyTo(mat);
-        return mat;
+        return xm::ocl::iop::to_cv_mat(*this).waitFor().get();
     }
 
     void ClImagePromise::toMat(cv::Mat &mat) const {
-        cv::UMat u_mat;
-        xm::ocl::iop::to_cv_umat(image, u_mat);
-        u_mat.copyTo(mat);
+        mat = getMat();
     }
 
     xm::ocl::Image2D ClImagePromise::getImage2D() const {

@@ -2,8 +2,6 @@
 // Created by henryco on 19/07/24.
 //
 
-#include <cstring>
-
 #include "../agnostic_body.h"
 #include <filesystem>
 #include <fstream>
@@ -148,9 +146,13 @@ namespace platform::dnn {
             if (ptr_seg == nullptr || ptr_l3d == nullptr || ptr_flg == nullptr)
                 throw std::runtime_error("Output result is nullptr");
 
-            memcpy(&segmentations[i], ptr_seg, n_seg * 1 * sizeof(float));
-            memcpy(&landmarks_3d[i], ptr_l3d, n_l3d * 1 * sizeof(float));
-            memcpy(&pose_flags[i], ptr_flg, 1 * sizeof(float));
+            for (size_t k = 0; k < n_seg * 1; k++)
+                segmentations[i][k] = ptr_seg[k];
+
+            for (size_t k = 0; k < n_l3d * 1; k++)
+                landmarks_3d[i][k] = ptr_l3d[k];
+
+            pose_flags[i][0] = ptr_flg[0];
         }
     }
 

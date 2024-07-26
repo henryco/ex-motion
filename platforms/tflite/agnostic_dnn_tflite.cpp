@@ -61,20 +61,20 @@ namespace platform::dnn {
     }
 
     void DnnInferenceTfLite::resize_input(int index, const std::vector<int> &size) {
-        const auto input_index = interpreter->inputs()[index];
-        TfLiteStatus status = interpreter->ResizeInputTensor(input_index, size);
-        if (status != kTfLiteOk)
-            throw std::runtime_error("Failed to resize input tensors for tflite interpreter, status: " + std::to_string(status));
-
-        // TODO FIXME
-
-        status = interpreter->ModifyGraphWithDelegate(gpu_delegate);
-        if (status != kTfLiteOk)
-            throw std::runtime_error("Failed to modify graph with GPU delegate: " + std::to_string(status));
-
-        status = interpreter->AllocateTensors();
-        if (status != kTfLiteOk)
-            throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: " + std::to_string(status));
+        // const auto input_index = interpreter->inputs()[index];
+        // TfLiteStatus status = interpreter->ResizeInputTensor(input_index, size);
+        // if (status != kTfLiteOk)
+        //     throw std::runtime_error("Failed to resize input tensors for tflite interpreter, status: " + std::to_string(status));
+        //
+        // // TODO FIXME
+        //
+        // status = interpreter->ModifyGraphWithDelegate(gpu_delegate);
+        // if (status != kTfLiteOk)
+        //     throw std::runtime_error("Failed to modify graph with GPU delegate: " + std::to_string(status));
+        //
+        // status = interpreter->AllocateTensors();
+        // if (status != kTfLiteOk)
+        //     throw std::runtime_error("Failed to allocate tensors for tflite interpreter, status: " + std::to_string(status));
     }
 
     void DnnInferenceTfLite::buffer_f_input(int index, size_t input_size, const void *batch_ptr) {

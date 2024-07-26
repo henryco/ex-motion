@@ -64,7 +64,6 @@ namespace xm::dnn::run {
         inferencer->inference(n, batch_data);
 
         const auto landmarks_3d = inferencer->get_landmarks_3d();
-        const auto landmarks_wd = inferencer->get_landmarks_wd();
         const auto seg_masks    = inferencer->get_segmentations();
         const auto pose_flags   = inferencer->get_pose_flags();
 
@@ -72,7 +71,6 @@ namespace xm::dnn::run {
             const auto img = promises[i].getImage2D();
             poses[i]       = decode(
                                     landmarks_3d[i],
-                                    landmarks_wd[i],
                                     seg_masks[i],
                                     pose_flags[i][0],
                                     (int) img.cols,
@@ -83,7 +81,6 @@ namespace xm::dnn::run {
 
     eox::dnn::PoseOutput BodyMarker::decode(
         const float *landmarks_3d,
-        const float *landmarks_wd,
         const float *seg_mask,
         const float  pose_flag,
         const int    view_w,
@@ -101,7 +98,6 @@ namespace xm::dnn::run {
         const auto n_h = (float) in_h - (p.top + p.bottom);
 
         for (int i = 0; i < 39; i++) {
-            const int j = i * 3;
             const int k = i * 5;
             // normalized landmarks_3d
             output.landmarks_norm[i] = {
@@ -110,13 +106,6 @@ namespace xm::dnn::run {
                 .z = landmarks_3d[k + 2] / (float) std::max(in_w, in_h),
                 .v = landmarks_3d[k + 3],
                 .p = landmarks_3d[k + 4],
-            };
-
-            // world-space landmarks
-            output.landmarks_3d[i] = {
-                .x = landmarks_wd[j + 0],
-                .y = landmarks_wd[j + 1],
-                .z = landmarks_wd[j + 2],
             };
         }
 

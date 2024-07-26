@@ -102,13 +102,6 @@ namespace eox::dnn {
                     .v = land_marks_3d[k + 3],
                     .p = land_marks_3d[k + 4],
             };
-
-            // world-space landmarks
-            output.landmarks_3d[i] = {
-                    .x = land_marks_wd[j + 0],
-                    .y = land_marks_wd[j + 1],
-                    .z = land_marks_wd[j + 2],
-            };
         }
 
         if (SEGMENTATION) {

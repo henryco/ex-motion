@@ -92,11 +92,6 @@ namespace eox::dnn {
          */
         eox::dnn::Landmark landmarks_norm[39];
 
-        /*
-         * 39x3 world space landmarks
-         */
-        eox::dnn::Coord3d landmarks_3d[39];
-
         /**
          * 1D 256x256 float32 array
          */

@@ -31,8 +31,6 @@ namespace platform::dnn {
             int o_w;
             int o_h;
             int lm_3d;
-            int world;
-            int hm;
             int seg;
             int flag;
         };
@@ -48,9 +46,7 @@ namespace platform::dnn {
 
         float **segmentations = nullptr;
         float **landmarks_3d = nullptr;
-        float **landmarks_wd = nullptr;
         float **pose_flags = nullptr;
-        float **heatmaps = nullptr;
 
         size_t batch = 0;
 
@@ -66,12 +62,6 @@ namespace platform::dnn {
         size_t get_in_h() const;
 
         size_t get_n_lm3d() const;
-
-        size_t get_n_lmwd() const;
-
-        size_t get_n_heatmap_w() const;
-
-        size_t get_n_heatmap_h() const;
 
         size_t get_n_segmentation_w() const;
 
@@ -90,11 +80,8 @@ namespace platform::dnn {
 
         const float *const *get_landmarks_3d() const;
 
-        const float *const *get_landmarks_wd() const;
-
         const float *const *get_pose_flags() const;
 
-        const float *const *get_heatmaps() const;
     };
 
 }

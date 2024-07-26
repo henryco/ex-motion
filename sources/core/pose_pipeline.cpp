@@ -326,13 +326,12 @@ namespace eox::dnn {
                 segmented.copyTo(*debug);
                 printMetadata(*debug, t0, rec_n);
                 drawJoints(landmarks, *debug);
-                drawLandmarks(landmarks, result.landmarks_3d, *debug);
+                drawLandmarks(landmarks, nullptr, *debug);
                 drawRoi(*debug);
             }
 
             // preparing output
             memcpy(output.segmentation, result.segmentation, 256 * 256 * sizeof(float));
-            memcpy(output.ws_landmarks, result.landmarks_3d, 39 * sizeof(eox::dnn::Coord3d));
             memcpy(output.landmarks, landmarks, 39 * sizeof(eox::dnn::Landmark));
             output.score = result.score;
             output.present = true;

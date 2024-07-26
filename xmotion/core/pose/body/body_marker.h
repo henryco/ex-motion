@@ -44,7 +44,6 @@ namespace xm::dnn::run {
     protected:
         eox::dnn::PoseOutput decode(
             const float *landmarks_3d,
-            const float *landmarks_wd,
             const float *seg_mask,
             float        pose_flag,
             int          view_w,

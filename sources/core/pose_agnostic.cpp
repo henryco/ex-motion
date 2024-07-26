@@ -317,7 +317,6 @@ namespace eox::dnn::pose {
         output.score            = result.score;
         output.present          = true;
 
-        memcpy(output.ws_landmarks, result.landmarks_3d, (size_t) 39 * sizeof(eox::dnn::Coord3d));
         memcpy(output.segmentation, result.segmentation, (size_t) 256 * 256 * sizeof(float));
         memcpy(output.landmarks, landmarks, (size_t) 39 * sizeof(eox::dnn::Landmark));
     }

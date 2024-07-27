@@ -122,7 +122,13 @@ namespace xm::ocl::iop {
                                    out);
     }
 
-    ClImagePromise copy_ocl(const Image2D &image, cl_command_queue queue, xm::ocl::ACCESS access) {
+    ClImagePromise copy_ocl(const ClImagePromise &promise, xm::ocl::ACCESS access) {
+        return copy_ocl(promise, promise.queue(), access);
+    }
+
+    ClImagePromise copy_ocl(const ClImagePromise &promise, cl_command_queue queue, xm::ocl::ACCESS access) {
+        const auto &image = promise.getImage2D();
+
         cl_int err;
         cl_mem buffer = clCreateBuffer(image.context,
                                        access_to_cl(access), image.size(), nullptr, &err);
@@ -136,12 +142,24 @@ namespace xm::ocl::iop {
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot enqueue copy data between cl buffers: " + std::to_string(err));
 
-        return ClImagePromise(xm::ocl::Image2D(image, buffer, access), queue);
+        return ClImagePromise(xm::ocl::Image2D(image, buffer, access), queue)
+        .withCleanup(promise);
     }
 
-    ClImagePromise copy_ocl(const Image2D &image, cl_command_queue queue,
+    ClImagePromise copy_ocl(
+        const ClImagePromise &promise,
+        int xo, int yo,
+        int width, int height,
+        xm::ocl::ACCESS access
+    ) {
+        return copy_ocl(promise, promise.queue(),
+            xo, yo, width, height, access);
+    }
+
+    ClImagePromise copy_ocl(const ClImagePromise &promise, cl_command_queue queue,
                             int xo, int yo, int width, int height,
                             ACCESS access) {
+        const auto &image = promise.getImage2D();
         cl_int err;
         const size_t c_size = image.channels * image.channel_size;
         const size_t size   = (size_t) width * (size_t) height * c_size;
@@ -178,16 +196,18 @@ namespace xm::ocl::iop {
                                                buffer,
                                                image.context,
                                                image.device,
-                                               access), queue);
+                                               access), queue)
+        .withCleanup(promise);
     }
 
     void to_cv_mat(const Image2D &image, cv::Mat &out, cl_command_queue queue, int cv_type) {
         out = to_cv_mat(image, queue, cv_type).waitFor().get();
     }
 
-    CLPromise<cv::Mat> to_cv_mat(const Image2D &image, cl_command_queue queue, int cv_type) {
-        cv::Mat dst((int) image.rows, (int) image.cols, (cv_type < 0 ? (CV_8UC((int) image.channels)) : cv_type));
-        cl_int  err = clEnqueueReadBuffer(queue,
+    CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &p_im, cl_command_queue queue, int cv_type) {
+        const auto &image = p_im.getImage2D();
+        cv::Mat     dst((int) image.rows, (int) image.cols, (cv_type < 0 ? (CV_8UC((int) image.channels)) : cv_type));
+        cl_int      err = clEnqueueReadBuffer(queue,
                                           image.handle,
                                           CL_FALSE,
                                           0,
@@ -199,7 +219,10 @@ namespace xm::ocl::iop {
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot enqueue read buffer: " + std::to_string(err));
 
-        return CLPromise(dst, queue);
+        return CLPromise(dst, queue).withCleanup(
+        new std::function([promise = p_im]() mutable {
+            promise.release();
+        }));
     }
 
     CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &promise, int cv_type) {
@@ -216,26 +239,38 @@ namespace xm::ocl::iop {
     ): ocl_queue(_queue),
        ocl_event(nullptr),
        image(out),
-       completed(_completed) {}
+       completed(_completed) {
+        if (_queue != nullptr)
+            clRetainCommandQueue(_queue);
+    }
 
-    ClImagePromise::ClImagePromise(const Image2D &out,
-                                   cl_command_queue _queue,
-                                   cl_event _event):
-            ocl_queue(_queue),
-            ocl_event(_event),
-            image(out),
-            completed(false) {}
+    ClImagePromise::ClImagePromise(
+        const Image2D &  out,
+        cl_command_queue _queue,
+        cl_event         _event
+    ): ocl_queue(_queue),
+       ocl_event(_event),
+       image(out),
+       completed(false) {
+        if (_queue != nullptr)
+            clRetainCommandQueue(_queue);
+        if (_event != nullptr)
+            clRetainEvent(_event);
+    }
 
-    ClImagePromise::ClImagePromise(const Image2D &out,
-                                   cl_event ocl_event):
-            ocl_queue(nullptr),
-            ocl_event(ocl_event),
-            image(out),
-            completed(true) {}
+    ClImagePromise::ClImagePromise(
+        const Image2D &out,
+        cl_event       ocl_event
+    ): ocl_queue(nullptr),
+       ocl_event(ocl_event),
+       image(out),
+       completed(true) {
+        if (ocl_event != nullptr)
+            clRetainEvent(ocl_event);
+    }
 
     ClImagePromise::~ClImagePromise() {
-        if (ocl_event != nullptr)
-            clReleaseEvent(ocl_event);
+        release();
     }
 
     void ClImagePromise::toUMat(cv::UMat &mat) const {
@@ -281,6 +316,15 @@ namespace xm::ocl::iop {
             }
         }
         return *this;
+    }
+
+    void ClImagePromise::release() {
+        if (ocl_event != nullptr)
+            clReleaseEvent(ocl_event);
+        if (ocl_queue != nullptr)
+            clReleaseCommandQueue(ocl_queue);
+        ocl_event = nullptr;
+        ocl_queue = nullptr;
     }
 
     ClImagePromise &ClImagePromise::withCleanup(std::function<void()> *cb_ptr) {
@@ -351,6 +395,7 @@ namespace xm::ocl::iop {
         ocl_event = other.ocl_event;
         image = other.image;
         clRetainEvent(ocl_event);
+        clRetainCommandQueue(ocl_queue);
     }
 
     ClImagePromise &ClImagePromise::operator=(ClImagePromise &&other) noexcept {
@@ -358,6 +403,8 @@ namespace xm::ocl::iop {
             return *this;
         if (ocl_event != nullptr)
             clReleaseEvent(ocl_event);
+        if (ocl_queue != nullptr)
+            clReleaseCommandQueue(ocl_queue);
         cleanup_container = std::move(other.cleanup_container);
         completed = other.completed;
         ocl_queue = other.ocl_queue;
@@ -374,12 +421,15 @@ namespace xm::ocl::iop {
             return *this;
         if (ocl_event != nullptr)
             clReleaseEvent(ocl_event);
+        if (ocl_queue != nullptr)
+            clReleaseCommandQueue(ocl_queue);
         cleanup_container = other.cleanup_container;
         completed = other.completed;
         ocl_event = other.ocl_event;
         ocl_queue = other.ocl_queue;
         image = other.image;
         clRetainEvent(ocl_event);
+        clRetainCommandQueue(ocl_queue);
         return *this;
     }
 

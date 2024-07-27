@@ -229,6 +229,29 @@ namespace xm::ocl {
             bool rotate
     );
 
+    xm::ocl::iop::ClImagePromise letterbox_rgb_f32(
+        cl_command_queue queue,
+
+        const xm::ocl::iop::ClImagePromise &in,
+
+        int  new_w,
+        int  new_h,
+        int  padding_w,
+        int  padding_h,
+        bool linear
+    );
+
+    xm::ocl::iop::ClImagePromise letterbox_rgb_f32(
+        const xm::ocl::iop::ClImagePromise &in,
+
+        int  new_w,
+        int  new_h,
+        int  padding_w,
+        int  padding_h,
+        bool linear,
+        int  queue_index = -1
+    );
+
 }
 
 #endif //XMOTION_OCL_FILTERS_H

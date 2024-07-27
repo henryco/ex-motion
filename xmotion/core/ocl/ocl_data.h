@@ -24,9 +24,24 @@ namespace xm::ocl {
     class Image2D {
 
     public:
+        /**
+         * Number of columns (width)
+         */
         std::size_t cols = 0;
+
+        /**
+         * Number of rows (height)
+         */
         std::size_t rows = 0;
+
+        /**
+         * Number of (color) channels, I.e.: 3 for BGR
+         */
         std::size_t channels = 0;
+
+        /**
+         * Size (in bytes) of singular color channel
+         */
         std::size_t channel_size = 0;
 
         cl_mem handle = nullptr;

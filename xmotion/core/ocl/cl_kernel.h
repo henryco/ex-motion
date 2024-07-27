@@ -55,16 +55,14 @@ kernel.run(2, g_size, l_size, true)
 
     /**
      * Sets kernel argument and returns incremented argument index.
-     *
-     * @example \code
-cl_mem buffer = (cl_mem)umat_src.handle(cv::ACCESS_RW);
-int width = 1920;
-int height = 1080;
-
-int idx = 0;
-idx = set_kernel_arg(kernel, idx, sizeof(cl_mem), &buffer);
-idx = set_kernel_arg(kernel, idx, sizeof(int), &width);
-idx = set_kernel_arg(kernel, idx, sizeof(int), &height);
+     * \code
+     * cl_mem buffer = (cl_mem)umat_src.handle(cv::ACCESS_RW);
+     * int width = 1920;
+     * int height = 1080;
+     * int idx = 0;
+     * idx = set_kernel_arg(kernel, idx, sizeof(cl_mem), &buffer);
+     * idx = set_kernel_arg(kernel, idx, sizeof(int), &width);
+     * idx = set_kernel_arg(kernel, idx, sizeof(int), &height);
      * \endcode
      *
      * @param kernel opencl kernel

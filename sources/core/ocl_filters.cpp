@@ -803,5 +803,98 @@ namespace xm::ocl {
                 .withCleanup(in_p);
     }
 
+    xm::ocl::iop::ClImagePromise letterbox_rgb_f32(
+        cl_command_queue queue,
+        const xm::ocl::iop::ClImagePromise &in_p,
+        int new_w,
+        int new_h,
+        int padding_w,
+        int padding_h,
+        bool linear
+    ) {
+        const auto &in = in_p.getImage2D();
+
+        ushort out_w = new_w + (padding_w * 2);
+        ushort out_h = new_h + (padding_h * 2);
+
+        const auto context    = in.context;
+        const auto kernel     = Kernels::instance().kernel_letterbox;
+        const auto pref_size  = Kernels::instance().letterbox_local_size;
+        const auto inter_size = (size_t) out_w * out_h * in.channels * sizeof(float);
+
+        size_t l_size[2] = { pref_size, pref_size };
+        size_t g_size[2] = {
+            xm::ocl::optimal_global_size(out_w, pref_size),
+            xm::ocl::optimal_global_size(out_h, pref_size)
+        };
+
+        cl_int err;
+        cl_mem buffer_in  = in.handle;
+        cl_mem buffer_out = clCreateBuffer(context, CL_MEM_READ_WRITE, inter_size, nullptr, &err);
+        if (err != CL_SUCCESS)
+            throw std::runtime_error("Cannot create cl buffer: " + std::to_string(err));
+
+        auto in_w      = (ushort) in.cols;
+        auto in_h      = (ushort) in.rows;
+        auto p_w       = (ushort) padding_w;
+        auto p_h       = (ushort) padding_h;
+        auto scale_w   = (float) in.cols / (float) new_w;
+        auto scale_h   = (float) in.rows / (float) new_h;
+        auto channels  = (uchar) in.channels;
+        auto is_linear = (uchar) linear ? 1 : 0;
+
+        cl_uint idx = 0;
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(cl_mem), &buffer_in);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(cl_mem), &buffer_out);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(ushort), &in_w);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(ushort), &in_h);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(ushort), &out_w);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(ushort), &out_h);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(ushort), &p_w);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(ushort), &p_h);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(float), &scale_w);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(float), &scale_h);
+        idx         = xm::ocl::set_kernel_arg(kernel, idx, sizeof(uchar), &channels);
+        xm::ocl::set_kernel_arg(kernel, idx, sizeof(uchar), &is_linear);
+
+        cl_event letterbox_event = xm::ocl::enqueue_kernel_fast(
+                                                                queue,
+                                                                kernel,
+                                                                2,
+                                                                g_size,
+                                                                l_size,
+                                                                aux::DEBUG);
+
+        return xm::ocl::iop::ClImagePromise(
+                                            xm::ocl::Image2D(
+                                                             out_w,
+                                                             out_h,
+                                                             in.channels,
+                                                             sizeof(float),
+                                                             buffer_out,
+                                                             in.context,
+                                                             in.device,
+                                                             xm::ocl::ACCESS::RW),
+                                            queue, letterbox_event)
+               .withCleanup(in_p);
+    }
+
+    xm::ocl::iop::ClImagePromise letterbox_rgb_f32(
+        const xm::ocl::iop::ClImagePromise &in,
+
+        int  new_w,
+        int  new_h,
+        int  padding_w,
+        int  padding_h,
+        bool linear,
+        int  queue_index
+    ) {
+        auto queue = queue_index < 0 && in.queue() != nullptr
+                         ? in.queue()
+                         : Kernels::instance().retrieve_queue(queue_index);
+        return letterbox_rgb_f32(queue, in, new_w, new_h,
+                                 padding_w, padding_h, linear);
+    }
+
 }
 #pragma clang diagnostic pop

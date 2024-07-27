@@ -3,6 +3,7 @@
 //
 
 #include "../../xmotion/core/pose/body/body_marker.h"
+#include "../../xmotion/core/ocl/ocl_filters.h"
 
 namespace xm::dnn::run {
 
@@ -33,32 +34,45 @@ namespace xm::dnn::run {
         const auto m_dim  = in_w * in_h;
 
         if (mat_promises == nullptr || batch_size < n) {
-            if (mat_promises)
+            if (mat_promises != nullptr)
                 delete[] mat_promises;
             mat_promises = new ocl::iop::CLPromise<cv::Mat>[n];
         }
 
         if (batch_data == nullptr || batch_size < n) {
-            if (batch_data)
+            if (batch_data != nullptr)
                 delete[] batch_data;
             batch_data = new float[n * m_dim * 3];
         }
 
         batch_size = n;
 
-        for (int i          = 0; i < n; i++)
-            mat_promises[i] = xm::ocl::iop::to_cv_mat(promises[i]);
+        // const auto t0 = std::chrono::system_clock::now();
+
+        for (int i = 0; i < n; i++) {
+            const auto p = eox::dnn::get_letterbox_paddings((int) promises[i].getImage2D().cols,
+                                                            (int) promises[i].getImage2D().rows,
+                                                            (int) in_w,
+                                                            (int) in_h);
+            auto promise = xm::ocl::letterbox_rgb_f32(promises[i],
+                                                      p.width,
+                                                      p.height,
+                                                      (int) p.left,
+                                                      (int) p.bottom,
+                                                      true);
+            mat_promises[i] = xm::ocl::iop::to_cv_mat(promise);
+        }
 
         xm::ocl::iop::CLPromise<cv::Mat>::finalizeAll(mat_promises, n);
 
+        // const auto t1 = std::chrono::system_clock::now();
+        // log->info("T: {}", duration_cast<std::chrono::nanoseconds>((t1 - t0)).count());
+
         for (int i = 0; i < n; i++) {
-            // TODO: not very efficient, replace with ocl kernel on previous step
-            const auto mat = eox::dnn::convert_to_squared_blob(
-                                                               mat_promises[i].get(),
-                                                               (int) in_w,
-                                                               (int) in_h,
-                                                               true);
-            std::memcpy(batch_data + (i * m_dim * 3), mat.data, m_dim * 3 * sizeof(float));
+            const auto &mat = mat_promises[i].get();
+            std::memcpy(batch_data + (i * m_dim * 3),
+                        mat.data,
+                        m_dim * 3 * sizeof(float));
         }
 
         inferencer->inference(n, batch_data);

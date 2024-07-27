@@ -219,10 +219,11 @@ namespace xm::ocl::iop {
         if (err != CL_SUCCESS)
             throw std::runtime_error("Cannot enqueue read buffer: " + std::to_string(err));
 
-        return CLPromise(dst, queue).withCleanup(
-        new std::function([promise = p_im]() mutable {
-            promise.release();
-        }));
+        return CLPromise(dst, queue);
+        // .withCleanup(
+        // new std::function([promise = p_im]() mutable {
+        //     promise.release();
+        // }));
     }
 
     CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &promise, int cv_type) {
@@ -270,7 +271,7 @@ namespace xm::ocl::iop {
     }
 
     ClImagePromise::~ClImagePromise() {
-        release();
+        release(); // TODO FIXME
     }
 
     void ClImagePromise::toUMat(cv::UMat &mat) const {

@@ -175,7 +175,6 @@ namespace eox::dnn::pose {
         bool prediction  = false;
         bool initialized = false;
 
-        cl_command_queue ocl_command_queue = nullptr;
         cl_device_id     device_id         = nullptr;
         cl_context       ocl_context       = nullptr;
 
@@ -183,6 +182,7 @@ namespace eox::dnn::pose {
         xm::dnn::run::BodyMarker   marker;
 
         // ARRAYS
+        cl_command_queue *                ocl_command_queues                  = nullptr;
         xm::filters::BgSubtract *         bg_filters                          = nullptr;
         xm::pose::roi::RoiBodyHeuristics *roi_body_heuristics                 = nullptr;
         eox::sig::VelocityFilter (*       velocity_filters)[FILTERS_DIM_SIZE] = nullptr;

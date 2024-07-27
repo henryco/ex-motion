@@ -65,16 +65,14 @@ namespace xm::dnn::run {
                                                       CV_32FC3);
         }
 
-        xm::ocl::iop::CLPromise<cv::Mat>::finalizeAll(mat_promises, n);
-
-        // log->info("T: {}", duration_cast<std::chrono::nanoseconds>((std::chrono::system_clock::now() - t0)).count());
-
         for (int i = 0; i < n; i++) {
-            const auto &mat = mat_promises[i].get();
+            const auto &mat = mat_promises[i].waitFor().get();
             std::memcpy(batch_data + (i * m_dim * 3),
                         mat.data,
                         m_dim * 3 * sizeof(float));
         }
+
+        // log->info("T: {}", duration_cast<std::chrono::nanoseconds>((std::chrono::system_clock::now() - t0)).count());
 
         inferencer->inference(n, batch_data);
 

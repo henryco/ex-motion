@@ -41,8 +41,11 @@ namespace eox::dnn::pose {
         if (_pose_queue)
             delete[] _pose_queue;
 
-        if (ocl_command_queue)
-            clReleaseCommandQueue(ocl_command_queue);
+        if (ocl_command_queues != nullptr) {
+            for (int i = 0; i < n_size; i++)
+                clReleaseCommandQueue(ocl_command_queues[i]);
+            delete[] ocl_command_queues;
+        }
         if (ocl_context)
             clReleaseContext(ocl_context);
         if (device_id)
@@ -63,12 +66,8 @@ namespace eox::dnn::pose {
 
         device_id         = (cl_device_id) cv::ocl::Device::getDefault().ptr();
         ocl_context       = (cl_context) cv::ocl::Context::getDefault().ptr();
-        ocl_command_queue = xm::ocl::create_queue_device(
-                                                         ocl_context,
-                                                         device_id,
-                                                         true,
-                                                         false);
 
+        ocl_command_queues  = new cl_command_queue[n];
         rois                = new eox::dnn::RoI[n];
         configs             = new eox::dnn::pose::PoseInput[n];
         bg_filters          = new xm::filters::BgSubtract[n];
@@ -86,6 +85,12 @@ namespace eox::dnn::pose {
         _pose_queue         = new int[n];
 
         for (int i = 0; i < n; i++) {
+            ocl_command_queues[i] = xm::ocl::create_queue_device(
+                                                                 ocl_context,
+                                                                 device_id,
+                                                                 true,
+                                                                 false);
+
             const auto config = _configs[i];
             configs[i] = config;
 
@@ -162,7 +167,7 @@ namespace eox::dnn::pose {
 
             if (_work_metadata[i].prediction) {
                 sources[i] = xm::ocl::iop::copy_ocl(
-                                                    frame, ocl_command_queue,
+                                                    frame, ocl_command_queues[i],
                                                     (int) roi.x, (int) roi.y,
                                                     (int) roi.w, (int) roi.h);
 
@@ -171,7 +176,7 @@ namespace eox::dnn::pose {
             else {
                 int &q = detector_queue_n;
                 _detector_queue[q] = i;
-                _work_frames[q]      = { frame, ocl_command_queue, true };
+                _work_frames[q]      = { frame, ocl_command_queues[i], true };
                 _detector_conf[q]    = {
                     .margin = configs[i].roi_margin,
                     .padding_x = configs[i].roi_padding_x,
@@ -208,7 +213,7 @@ namespace eox::dnn::pose {
 
             roi        = detections.roi;
             sources[i] = xm::ocl::iop::copy_ocl(
-                                                frame, ocl_command_queue,
+                                                frame, ocl_command_queues[i],
                                                 (int) roi.x, (int) roi.y,
                                                 (int) roi.w, (int) roi.h);
 

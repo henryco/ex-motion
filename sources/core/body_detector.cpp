@@ -4,6 +4,7 @@
 
 #include "../../xmotion/core/pose/detector/body_detector.h"
 #include "../../xmotion/core/dnn/net/ssd_anchors.h"
+#include "../../xmotion/core/ocl/ocl_filters.h"
 
 namespace xm::dnn::run {
 
@@ -51,7 +52,10 @@ namespace xm::dnn::run {
         const DetectorRoiConf *             configs,
         DetectedBody *                      detection
     ) {
-        const size_t m_dim = detector->get_in_w() * detector->get_in_h() * 3;
+        const auto in_w = detector->get_in_w();
+        const auto in_h = detector->get_in_h();
+
+        const auto m_dim  = in_w * in_h;
 
         if (mat_promises == nullptr || batch_size < n) {
             if (mat_promises)
@@ -62,25 +66,31 @@ namespace xm::dnn::run {
         if (batch_data == nullptr || batch_size < n) {
             if (batch_data)
                 delete[] batch_data;
-            batch_data = new float[n * m_dim];
+            batch_data = new float[n * m_dim * 3];
         }
 
         batch_size = n;
 
-        for (int i          = 0; i < n; i++)
-            mat_promises[i] = xm::ocl::iop::to_cv_mat(promises[i]);
+        for (int i = 0; i < n; i++) {
+            const auto &p = eox::dnn::get_letterbox_paddings((int) promises[i].getImage2D().cols,
+                                                            (int) promises[i].getImage2D().rows,
+                                                            (int) in_w,
+                                                            (int) in_h);
+            const auto &promise = xm::ocl::letterbox_rgb_f32(promises[i],
+                                                      p.width,
+                                                      p.height,
+                                                      (int) p.left,
+                                                      (int) p.bottom,
+                                                      true);
+            mat_promises[i] = xm::ocl::iop::to_cv_mat(promise,
+                                                      CV_32FC3);
+        }
 
-        xm::ocl::iop::CLPromise<cv::Mat>::finalizeAll(mat_promises, n);
-
-        for (size_t i = 0; i < n; i++) {
-            // TODO: not very efficient, replace with ocl kernel on previous step
-            const auto mat = eox::dnn::convert_to_squared_blob(
-                                                               mat_promises[i].get(),
-                                                               (int) detector->get_in_w(),
-                                                               (int) detector->get_in_h(),
-                                                               true);
-
-            std::memcpy(batch_data + (i * m_dim), mat.data, m_dim * sizeof(float));
+        for (int i = 0; i < n; i++) {
+            const auto &mat = mat_promises[i].waitFor().get();
+            std::memcpy(batch_data + (i * m_dim * 3),
+                        mat.data,
+                        m_dim * 3 * sizeof(float));
         }
 
         detector->inference(n, batch_data);

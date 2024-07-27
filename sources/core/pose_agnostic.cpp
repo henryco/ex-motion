@@ -124,13 +124,10 @@ namespace eox::dnn::pose {
     }
 
     void PoseAgnostic::pass(const xm::ocl::Image2D *frames, PoseResult *results, PoseDebug *debug, long &duration) {
-        const int &n                 = n_size;
         int        _detector_queue_n = 0;
         int        _pose_queue_n     = 0;
 
         prepare_input(frames, _detector_queue_n, _pose_queue_n, debug);
-
-        xm::ocl::iop::ClImagePromise::finalizeAll(sources, n);
 
         for (int i = 0; i < _pose_queue_n; i++) {
             _work_frames[i] = sources[_pose_queue[i]];

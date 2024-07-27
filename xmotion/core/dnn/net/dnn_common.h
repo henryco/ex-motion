@@ -10,12 +10,16 @@
 
 namespace eox::dnn {
 
-    using Paddings = struct {
+    typedef struct Paddings {
         float left;
         float right;
         float top;
         float bottom;
-    };
+
+        float scale;
+        int width;
+        int height;
+    } Paddings;
 
     using Point = struct {
         float x, y;

@@ -104,11 +104,15 @@ namespace eox::dnn {
         const int s_y = (int) ((float) (box_h - n_h) / 2.f);
 
         return {
-                .left = (float) s_x,
-                .right = (float) s_x,
-                .top = (float) s_y,
-                .bottom = (float) s_y,
+            .left = (float) s_x,
+            .right = (float) s_x,
+            .top = (float) s_y,
+            .bottom = (float) s_y,
+            .scale = (float) scale,
+            .width = (int) n_w,
+            .height = (int) n_h
         };
+
     }
 
     cv::UMat remove_paddings(const cv::UMat &in, int width, int height) {

@@ -70,6 +70,12 @@ namespace xm::ocl::iop {
         void toImage2D(xm::ocl::Image2D &img) const;
 
         /**
+         * Cleanup resources (dependencies)
+         * @param force cleanup even if not completed
+         */
+        void cleanup(bool force = false);
+
+        /**
          * Often you should call waitFor() first
          */
         xm::ocl::Image2D getImage2D() const;

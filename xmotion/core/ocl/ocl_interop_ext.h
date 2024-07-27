@@ -117,6 +117,19 @@ namespace xm::ocl::iop {
         }
 
         /**
+         * Cleanup resources (dependencies)
+         * @param force cleanup even if not completed
+         */
+        void cleanup(bool force = false) {
+            if (!completed && !force)
+                return;
+            if (cleanup_container) {
+                (*cleanup_container)();
+                cleanup_container = nullptr;
+            }
+        }
+
+        /**
          * Waits for data to be ready
          */
         CLPromise<T> &waitFor() {

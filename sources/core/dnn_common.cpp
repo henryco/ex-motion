@@ -112,7 +112,6 @@ namespace eox::dnn {
             .width = (int) n_w,
             .height = (int) n_h
         };
-
     }
 
     cv::UMat remove_paddings(const cv::UMat &in, int width, int height) {

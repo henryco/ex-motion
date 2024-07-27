@@ -49,21 +49,18 @@ namespace xm::dnn::run {
 
         // const auto t0 = std::chrono::system_clock::now();
 
-        auto pp = new ocl::iop::ClImagePromise[n];
         for (int i = 0; i < n; i++) {
-            const auto p = eox::dnn::get_letterbox_paddings((int) promises[i].getImage2D().cols,
+            const auto &p = eox::dnn::get_letterbox_paddings((int) promises[i].getImage2D().cols,
                                                             (int) promises[i].getImage2D().rows,
                                                             (int) in_w,
                                                             (int) in_h);
-            // TODO FIXME
-            pp[i] = xm::ocl::letterbox_rgb_f32(promises[i],
+            const auto &promise = xm::ocl::letterbox_rgb_f32(promises[i],
                                                       p.width,
                                                       p.height,
                                                       (int) p.left,
                                                       (int) p.bottom,
                                                       true);
-
-            mat_promises[i] = xm::ocl::iop::to_cv_mat(pp[i],
+            mat_promises[i] = xm::ocl::iop::to_cv_mat(promise,
                                                       CV_32FC3);
         }
 
@@ -95,7 +92,6 @@ namespace xm::dnn::run {
                                     (int) img.rows,
                                     segmenation);
         }
-        delete[] pp;
     }
 
     eox::dnn::PoseOutput BodyMarker::decode(

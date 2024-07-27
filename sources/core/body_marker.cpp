@@ -28,6 +28,7 @@ namespace xm::dnn::run {
         eox::dnn::PoseOutput *              poses,
         const bool                          segmenation
     ) {
+
         const auto in_w = inferencer->get_in_w();
         const auto in_h = inferencer->get_in_h();
 
@@ -66,8 +67,7 @@ namespace xm::dnn::run {
 
         xm::ocl::iop::CLPromise<cv::Mat>::finalizeAll(mat_promises, n);
 
-        // const auto t1 = std::chrono::system_clock::now();
-        // log->info("T: {}", duration_cast<std::chrono::nanoseconds>((t1 - t0)).count());
+        // log->info("T: {}", duration_cast<std::chrono::nanoseconds>((std::chrono::system_clock::now() - t0)).count());
 
         for (int i = 0; i < n; i++) {
             const auto &mat = mat_promises[i].get();

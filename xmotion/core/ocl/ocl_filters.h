@@ -12,7 +12,6 @@
 #include <CL/cl.h>
 
 #include "kernel.h"
-#include "cl_kernel.h"
 #include "ocl_data.h"
 #include "ocl_interop.h"
 #include "../utils/xm_data.h"
@@ -62,6 +61,10 @@ namespace xm::ocl {
         cl_program program_flip_rotate;
         cl_kernel kernel_flip_rotate;
         size_t flip_rotate_local_size;
+
+        cl_program program_letterbox;
+        cl_kernel kernel_letterbox;
+        size_t letterbox_local_size;
 
         /* ==================== CACHE KERNELS ==================== */
         xm::ocl::Image2D blur_kernels[(31 - 1) / 2];

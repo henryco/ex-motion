@@ -66,6 +66,7 @@ set(KERNEL_FILES
         kernels/flip_rotate.h
         kernels/color_space.h
         kernels/filter_conv.h
+        kernels/letter_box.h
 )
 
 set(HEADER_FILES

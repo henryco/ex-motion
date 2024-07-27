@@ -5,6 +5,7 @@
 #include <utility>
 #include <opencv2/core/ocl.hpp>
 
+#include "../../xmotion/core/ocl/cl_kernel.h"
 #include "../../xmotion/core/camera/stereo_camera.h"
 #include "../../xmotion/core/ocl/ocl_filters.h"
 

@@ -4,6 +4,7 @@
 
 #include "../../xmotion/core/filter/bg_subtract.h"
 #include "../../xmotion/core/ocl/ocl_filters.h"
+#include "../../xmotion/core/ocl/cl_kernel.h"
 #include "../../kernels/subsense.h"
 
 #pragma clang diagnostic push

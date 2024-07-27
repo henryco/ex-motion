@@ -214,9 +214,9 @@ namespace xm::ocl::iop {
 
     void to_cv_mat(const xm::ocl::Image2D &image, cv::Mat &out, cl_command_queue queue, int cv_type = -1);
 
-    CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &image, cl_command_queue queue, int cv_type = -1);
+    CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &image_promise, cl_command_queue queue, int cv_type = -1);
 
-    CLPromise<cv::Mat> to_cv_mat(const xm::ocl::iop::ClImagePromise &image, int cv_type = -1);
+    CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &image_promise, int cv_type = -1);
 }
 
 #endif //XMOTION_OCL_INTEROP_H

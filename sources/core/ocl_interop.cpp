@@ -229,8 +229,7 @@ namespace xm::ocl::iop {
     CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &promise, int cv_type) {
         if (promise.queue() == nullptr)
             throw std::invalid_argument("CLPromise cl_command_queue is NULL");
-        const auto image = promise.getImage2D();
-        return to_cv_mat(image, promise.queue(), cv_type);
+        return to_cv_mat(promise, promise.queue(), cv_type);
     }
 
     ClImagePromise::ClImagePromise(

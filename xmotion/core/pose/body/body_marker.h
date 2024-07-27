@@ -8,6 +8,9 @@
 #include "../../dnn/net/dnn_common.h"
 #include "../../ocl/ocl_filters.h"
 
+#include <spdlog/logger.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 namespace xm::dnn::run {
 
     enum ModelPose {
@@ -25,6 +28,8 @@ namespace xm::dnn::run {
     };
 
     class BodyMarker {
+        static inline const auto log =
+                spdlog::stdout_color_mt("body_marker");
     private:
         platform::dnn::AgnosticBody *inferencer = nullptr;
 
@@ -50,7 +55,6 @@ namespace xm::dnn::run {
             int          view_h,
             bool         segmentation
         );
-
 
     };
 

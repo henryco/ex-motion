@@ -62,7 +62,6 @@ endif ()
 
 set(KERNEL_FILES
         kernels/subsense.h
-        kernels/background.h
         kernels/chroma_key.h
         kernels/flip_rotate.h
         kernels/color_space.h

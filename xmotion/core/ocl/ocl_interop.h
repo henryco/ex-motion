@@ -60,6 +60,11 @@ namespace xm::ocl::iop {
         ClImagePromise &waitFor();
 
         /**
+         * Most of the time called by destructor
+         */
+        void release();
+
+        /**
          * Often you should call waitFor() first
          */
         void toImage2D(xm::ocl::Image2D &img) const;
@@ -150,13 +155,36 @@ namespace xm::ocl::iop {
             xm::ocl::ACCESS access = ACCESS::RW);
 
     /**
+         * Copy whole image on gpu
+         * @param image source image
+         * @return new image
+         */
+    ClImagePromise copy_ocl(
+            const ClImagePromise &image,
+            xm::ocl::ACCESS access = ACCESS::RW);
+
+    /**
      * Copy whole image on gpu
      * @param image source image
      * @return new image
      */
     ClImagePromise copy_ocl(
-            const xm::ocl::Image2D &image,
+            const ClImagePromise &image,
             cl_command_queue queue,
+            xm::ocl::ACCESS access = ACCESS::RW);
+
+    /**
+         * Copy sub-region of source image on gpu
+         * @param image source image
+         * @param xo origin coordinate of the RoI
+         * @param yo origin coordinate of the RoI
+         * @param width of the RoI
+         * @param height of the RoI
+         * @return new image
+         */
+    ClImagePromise copy_ocl(
+            const ClImagePromise &image,
+            int xo, int yo, int width, int height,
             xm::ocl::ACCESS access = ACCESS::RW);
 
     /**
@@ -169,7 +197,7 @@ namespace xm::ocl::iop {
      * @return new image
      */
     ClImagePromise copy_ocl(
-            const xm::ocl::Image2D &image,
+            const ClImagePromise &image,
             cl_command_queue queue,
             int xo, int yo, int width, int height,
             xm::ocl::ACCESS access = ACCESS::RW);
@@ -186,7 +214,7 @@ namespace xm::ocl::iop {
 
     void to_cv_mat(const xm::ocl::Image2D &image, cv::Mat &out, cl_command_queue queue, int cv_type = -1);
 
-    CLPromise<cv::Mat> to_cv_mat(const xm::ocl::Image2D &image, cl_command_queue queue, int cv_type = -1);
+    CLPromise<cv::Mat> to_cv_mat(const ClImagePromise &image, cl_command_queue queue, int cv_type = -1);
 
     CLPromise<cv::Mat> to_cv_mat(const xm::ocl::iop::ClImagePromise &image, int cv_type = -1);
 }

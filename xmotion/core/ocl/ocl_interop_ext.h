@@ -22,16 +22,23 @@ namespace xm::ocl::iop {
 
     public:
         CLPromise<T>(T obj, cl_command_queue queue, cl_event event = nullptr):
-                data(obj), ocl_queue(queue), ocl_event(event), completed(false) {}
+                ocl_queue(queue), ocl_event(event), completed(false), data(obj) {
+            if (queue != nullptr)
+                clRetainCommandQueue(queue);
+            if (event != nullptr)
+                clRetainEvent(event);
+        }
 
         CLPromise<T>(T obj, cl_event event = nullptr): // NOLINT(*-explicit-constructor)
-                data(obj), ocl_queue(nullptr), ocl_event(event), completed(true) {}
+                ocl_queue(nullptr), ocl_event(event), completed(true), data(obj) {
+            if (event != nullptr)
+                clRetainEvent(event);
+        }
 
         CLPromise<T>() = default;
 
         ~CLPromise() {
-            if (ocl_event != nullptr)
-                clReleaseEvent(ocl_event);
+            release();
         }
 
         CLPromise<T>(CLPromise<T> &&other) noexcept {
@@ -52,12 +59,15 @@ namespace xm::ocl::iop {
             ocl_event = other.ocl_event;
             data = other.data;
             clRetainEvent(ocl_event);
+            clRetainCommandQueue(ocl_queue);
         }
 
         CLPromise<T> &operator=(CLPromise<T> &&other) noexcept {
             if (this != &other) {
                 if (ocl_event != nullptr)
                     clReleaseEvent(ocl_event);
+                if (ocl_queue != nullptr)
+                    clReleaseCommandQueue(ocl_queue);
                 cleanup_container = std::move(other.cleanup_container);
                 completed = other.completed;
                 ocl_queue = other.ocl_queue;
@@ -75,12 +85,15 @@ namespace xm::ocl::iop {
                 *this;
             if (ocl_event != nullptr)
                 clReleaseEvent(ocl_event);
+            if (ocl_queue != nullptr)
+                clReleaseCommandQueue(ocl_queue);
             cleanup_container = other.cleanup_container;
             completed = other.completed;
             ocl_queue = other.ocl_queue;
             ocl_event = other.ocl_event;
             data = other.data;
             clRetainEvent(ocl_event);
+            clRetainCommandQueue(ocl_queue);
             return *this;
         }
 
@@ -89,6 +102,18 @@ namespace xm::ocl::iop {
          */
         T get() const {
             return data;
+        }
+
+        /**
+         * Most of the time called by constructor
+         */
+        void release() {
+            if (ocl_event != nullptr)
+                clReleaseEvent(ocl_event);
+            if (ocl_queue != nullptr)
+                clReleaseCommandQueue(ocl_queue);
+            ocl_event = nullptr;
+            ocl_queue = nullptr;
         }
 
         /**

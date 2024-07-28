@@ -3,6 +3,7 @@
 //
 
 #include "agnostic_dnn_nvidia.h"
+#include <onnxruntime_cxx_api.h>
 
 namespace platform::dnn {
 

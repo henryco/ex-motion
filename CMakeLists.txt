@@ -20,18 +20,22 @@ set(CL_TARGET_OPENCL_VERSION 300)
 # ========================================
 
 if (WITH_NVIDIA)
-    add_subdirectory(external/onnxruntime/cmake)
-
-    set(onnxruntime_USE_CUDA ON)
-    set(onnxruntime_BUILD_SHARED_LIB ON)
-    set(onnxruntime_CUDA_HOME ${CUDA_TOOLKIT_ROOT_DIR})
-
+    find_package(CUDAToolkit 12 REQUIRED)
     include_directories(${CUDA_INCLUDE_DIRS})
+
+    set(ONNXRUNTIME_ROOT external/onnxruntime-gpu-cuda12)
+    include_directories(${ONNXRUNTIME_ROOT}/include)
+    link_directories(${ONNXRUNTIME_ROOT}/lib)
+
+#    set(onnxruntime_USE_CUDA ON)
+#    set(onnxruntime_BUILD_SHARED_LIB ON)
+#    set(onnxruntime_CUDA_HOME ${CUDA_TOOLKIT_ROOT_DIR})
+#    add_subdirectory(external/onnxruntime/cmake)
 else ()
-    add_subdirectory(external/json)
     add_subdirectory(external/tensorflow/tensorflow/lite)
 endif ()
 
+add_subdirectory(external/json)
 add_subdirectory(external/argparse)
 add_subdirectory(external/glm)
 
@@ -287,7 +291,6 @@ if (WIN32)
                 PRIVATE OpenGL::GL
                 PRIVATE spdlog::spdlog
                 PRIVATE nlohmann_json::nlohmann_json
-                PRIVATE tensorflow-lite
                 PRIVATE argparse
                 PRIVATE glm)
     else ()
@@ -329,7 +332,6 @@ elseif (UNIX AND NOT APPLE)
                 PRIVATE spdlog::spdlog
                 PRIVATE ${V4L2_LIBRARIES}
                 PRIVATE nlohmann_json::nlohmann_json
-                PRIVATE tensorflow-lite
                 PRIVATE argparse
                 PRIVATE glm)
     else ()

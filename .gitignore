@@ -99,3 +99,6 @@ example/cam
 *.xcam
 /map_streams.sh
 map_streams.sh
+
+external/onnxruntime-*
+/external/onnxruntime-*

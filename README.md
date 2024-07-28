@@ -30,9 +30,16 @@ apt install -y          \
     libgtkmm-3.0-dev    \
     libgtkmm-4.0-dev    \
     libspdlog-dev       \
-    libprotobuf-dev     \
-    protobuf-compiler   \
     nvidia-cuda-toolkit \
     cudnn-cuda-12       \
     libv4l-dev
 ```
+
+#### How to build 
+* CUDA: `-DWITH_NVIDIA=ON`
+* TFLite: `-DWITH_NVIDIA=OFF`
+
+#### Nvidia CUDA support
+For Nvidia CUDA support you also need to download and link ONNX runtime shared library:
+https://github.com/microsoft/onnxruntime/releases/tag/v1.18.1
+And place it under **`external/onnxruntime-gpu-cuda12`** directory

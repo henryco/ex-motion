@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.27)
 project(xmotion VERSION 0.2 LANGUAGES CXX)
 
+# By default support for nvidia is disabled
 option(WITH_NVIDIA "Build for NVidia gpu" OFF)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
@@ -18,9 +19,20 @@ set(CL_HPP_TARGET_OPENCL_VERSION 300)
 set(CL_TARGET_OPENCL_VERSION 300)
 # ========================================
 
+if (WITH_NVIDIA)
+    add_subdirectory(external/onnxruntime/cmake)
+
+    set(onnxruntime_USE_CUDA ON)
+    set(onnxruntime_BUILD_SHARED_LIB ON)
+    set(onnxruntime_CUDA_HOME ${CUDA_TOOLKIT_ROOT_DIR})
+
+    include_directories(${CUDA_INCLUDE_DIRS})
+else ()
+    add_subdirectory(external/json)
+endif ()
+
 add_subdirectory(external/tensorflow/tensorflow/lite)
 add_subdirectory(external/argparse)
-add_subdirectory(external/json)
 add_subdirectory(external/glm)
 
 set(CMAKE_C_COMPILER "clang-18")
@@ -258,8 +270,8 @@ set(RESULT_SOURCES
 add_executable(xmotion
         ${RESULT_SOURCES})
 
-message(STATUS
-        "FILES: ${RESULT_SOURCES}")
+#message(STATUS
+#        "FILES: ${RESULT_SOURCES}")
 
 add_dependencies(xmotion
         generate_cl_sources)
@@ -272,18 +284,35 @@ if (WIN32)
             PRIVATE ${GTKMM_INCLUDE_DIRS})
 
     # Link libraries
-    target_link_libraries(${PROJECT_NAME}
-            mfplat mf mfreadwrite
-            PRIVATE ${OpenCV_LIBS}
-            PRIVATE OpenCL::OpenCL
-            PRIVATE OpenCL::Headers
-            PRIVATE ${GTKMM_LIBRARIES}
-            PRIVATE OpenGL::GL
-            PRIVATE spdlog::spdlog
-            PRIVATE nlohmann_json::nlohmann_json
-            PRIVATE tensorflow-lite
-            PRIVATE argparse
-            PRIVATE glm)
+    if (WITH_NVIDIA)
+        target_link_libraries(${PROJECT_NAME}
+                mfplat mf mfreadwrite
+                PRIVATE onnxruntime
+                PRIVATE ${CUDA_LIBRARIES}
+                PRIVATE ${OpenCV_LIBS}
+                PRIVATE OpenCL::OpenCL
+                PRIVATE OpenCL::Headers
+                PRIVATE ${GTKMM_LIBRARIES}
+                PRIVATE OpenGL::GL
+                PRIVATE spdlog::spdlog
+                PRIVATE nlohmann_json::nlohmann_json
+                PRIVATE tensorflow-lite
+                PRIVATE argparse
+                PRIVATE glm)
+    else ()
+        target_link_libraries(${PROJECT_NAME}
+                mfplat mf mfreadwrite
+                PRIVATE ${OpenCV_LIBS}
+                PRIVATE OpenCL::OpenCL
+                PRIVATE OpenCL::Headers
+                PRIVATE ${GTKMM_LIBRARIES}
+                PRIVATE OpenGL::GL
+                PRIVATE spdlog::spdlog
+                PRIVATE nlohmann_json::nlohmann_json
+                PRIVATE tensorflow-lite
+                PRIVATE argparse
+                PRIVATE glm)
+    endif ()
 
     target_compile_options(${PROJECT_NAME}
             PRIVATE ${GTKMM_CFLAGS_OTHER})
@@ -297,18 +326,35 @@ elseif (UNIX AND NOT APPLE)
             PRIVATE ${V4L2_INCLUDE_DIRS})
 
     # Link libraries
-    target_link_libraries(${PROJECT_NAME}
-            PRIVATE ${OpenCV_LIBS}
-            PRIVATE ${GTKMM_LIBRARIES}
-            PRIVATE OpenGL::GL
-            PRIVATE OpenCL::OpenCL
-            PRIVATE OpenCL::Headers
-            PRIVATE spdlog::spdlog
-            PRIVATE ${V4L2_LIBRARIES}
-            PRIVATE nlohmann_json::nlohmann_json
-            PRIVATE tensorflow-lite
-            PRIVATE argparse
-            PRIVATE glm)
+    if (WITH_NVIDIA)
+        target_link_libraries(${PROJECT_NAME}
+                PRIVATE onnxruntime
+                PRIVATE ${CUDA_LIBRARIES}
+                PRIVATE ${OpenCV_LIBS}
+                PRIVATE ${GTKMM_LIBRARIES}
+                PRIVATE OpenGL::GL
+                PRIVATE OpenCL::OpenCL
+                PRIVATE OpenCL::Headers
+                PRIVATE spdlog::spdlog
+                PRIVATE ${V4L2_LIBRARIES}
+                PRIVATE nlohmann_json::nlohmann_json
+                PRIVATE tensorflow-lite
+                PRIVATE argparse
+                PRIVATE glm)
+    else ()
+        target_link_libraries(${PROJECT_NAME}
+                PRIVATE ${OpenCV_LIBS}
+                PRIVATE ${GTKMM_LIBRARIES}
+                PRIVATE OpenGL::GL
+                PRIVATE OpenCL::OpenCL
+                PRIVATE OpenCL::Headers
+                PRIVATE spdlog::spdlog
+                PRIVATE ${V4L2_LIBRARIES}
+                PRIVATE nlohmann_json::nlohmann_json
+                PRIVATE tensorflow-lite
+                PRIVATE argparse
+                PRIVATE glm)
+    endif ()
 
     target_compile_options(${PROJECT_NAME}
             PRIVATE ${GTKMM_CFLAGS_OTHER}

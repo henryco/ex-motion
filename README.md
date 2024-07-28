@@ -22,13 +22,17 @@ git clone \
 
 #### How to install dependencies (Debian/Nvidia)
 ```shell
-apt install -y         \
-    opencl-headers     \
-    ocl-icd-libopencl1 \
-    nvidia-opencl-dev  \
-    libopencv-dev      \
-    libgtkmm-3.0-dev   \
-    libgtkmm-4.0-dev   \
-    libspdlog-dev      \
+apt install -y          \
+    opencl-headers      \
+    ocl-icd-libopencl1  \
+    nvidia-opencl-dev   \
+    libopencv-dev       \
+    libgtkmm-3.0-dev    \
+    libgtkmm-4.0-dev    \
+    libspdlog-dev       \
+    libprotobuf-dev     \
+    protobuf-compiler   \
+    nvidia-cuda-toolkit \
+    cudnn-cuda-12       \
     libv4l-dev
 ```

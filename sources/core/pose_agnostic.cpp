@@ -276,7 +276,7 @@ namespace eox::dnn::pose {
 
         // temporal filtering (low pass based on velocity (literally))
         for (int t = 0; t < 39; t++) {
-            const auto idx = t * 3;
+            const auto idx = t * 2;
 
             auto fx = velocity_filters[i][idx + 0].filter(now, landmarks[t].x);
             auto fy = velocity_filters[i][idx + 1].filter(now, landmarks[t].y);

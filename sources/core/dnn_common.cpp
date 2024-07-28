@@ -204,7 +204,6 @@ namespace eox::dnn {
         return {
             .x = arr[0],
             .y = arr[1],
-            .z = 0.f,
             .v = 1.f,
             .p = 1.f
         };

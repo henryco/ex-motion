@@ -25,8 +25,8 @@ namespace eox::dnn {
 
     PoseRoiInput roiFromPoints(const float mid[2], const float end[2]) {
         PoseRoiInput output;
-        output.landmarks[eox::dnn::LM::R_MID] = {.x = mid[0], .y = mid[1], .z = 0, .v = 1, .p = 1};
-        output.landmarks[eox::dnn::LM::R_END] = {.x = end[0], .y = end[1], .z = 0, .v = 1, .p = 1};
+        output.landmarks[eox::dnn::LM::R_MID] = {.x = mid[0], .y = mid[1], .v = 1, .p = 1};
+        output.landmarks[eox::dnn::LM::R_END] = {.x = end[0], .y = end[1], .v = 1, .p = 1};
         return output;
     }
 

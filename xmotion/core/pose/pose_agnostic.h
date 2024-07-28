@@ -20,7 +20,7 @@
 
 namespace eox::dnn::pose {
 
-#define FILTERS_DIM_SIZE 117
+#define FILTERS_DIM_SIZE 78
 
     using PoseDebug = struct {
         float detector_score;

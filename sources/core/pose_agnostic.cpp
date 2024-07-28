@@ -269,9 +269,6 @@ namespace eox::dnn::pose {
                 .x = (result.landmarks_norm[t].x * roi.w) + roi.x,
                 .y = (result.landmarks_norm[t].y * roi.h) + roi.y,
 
-                // z is still normalized (in range of 0 and 1)
-                .z = result.landmarks_norm[t].z,
-
                 .v = result.landmarks_norm[t].v,
                 .p = result.landmarks_norm[t].p,
             };
@@ -283,11 +280,9 @@ namespace eox::dnn::pose {
 
             auto fx = velocity_filters[i][idx + 0].filter(now, landmarks[t].x);
             auto fy = velocity_filters[i][idx + 1].filter(now, landmarks[t].y);
-            auto fz = velocity_filters[i][idx + 2].filter(now, landmarks[t].z);
 
             landmarks[t].x = fx;
             landmarks[t].y = fy;
-            landmarks[t].z = fz;
         }
 
         if (config.threshold_roi > 0 && config.threshold_roi < 1) {

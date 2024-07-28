@@ -116,7 +116,6 @@ namespace xm::dnn::run {
             output.landmarks_norm[i] = {
                 .x = (landmarks_3d[k + 0] - p.left) / n_w,
                 .y = (landmarks_3d[k + 1] - p.top) / n_h,
-                .z = landmarks_3d[k + 2] / (float) std::max(in_w, in_h),
                 .v = landmarks_3d[k + 3],
                 .p = landmarks_3d[k + 4],
             };

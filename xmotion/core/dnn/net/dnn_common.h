@@ -73,11 +73,6 @@ namespace eox::dnn {
         float y;
 
         /**
-         * Z
-         */
-        float z;
-
-        /**
          * visibility (need to apply sigmoid)
          */
         float v;

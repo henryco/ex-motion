@@ -37,8 +37,7 @@ namespace xm {
             const auto width = config.captures[i].region.w;
             const auto height = config.captures[i].region.h;
             vec.push_back({
-                                  .detector_model = static_cast<xm::nview::DetectorModel>(static_cast<int>(device.model.detector)),
-                                  .body_model = static_cast<xm::nview::BodyModel>(static_cast<int>(device.model.body)),
+
                                   .roi_rollback_window = device.roi.rollback_window,
                                   .roi_center_window = device.roi.center_window,
                                   .roi_clamp_window = device.roi.clamp_window,

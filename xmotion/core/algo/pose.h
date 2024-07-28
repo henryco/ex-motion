@@ -10,7 +10,6 @@
 
 #include "i_logic.h"
 #include "../utils/thread_pool.h"
-#include "../dnn/pose_pipeline.h"
 #include "../utils/epi_util.h"
 
 #include <spdlog/logger.h>
@@ -19,9 +18,6 @@
 #include "../pose/pose_agnostic.h"
 
 namespace xm::nview {
-
-    using DetectorModel = eox::dnn::box::Model;
-    using BodyModel = eox::dnn::pose::Model;
 
     typedef struct StereoPair {
         /**
@@ -55,12 +51,12 @@ namespace xm::nview {
         /**
          * BlazePose detector model
          */
-        DetectorModel detector_model = eox::dnn::box::F_16;
+        // DetectorModel detector_model = eox::dnn::box::F_16;
 
         /**
          * BlazePose body model
          */
-        BodyModel body_model = eox::dnn::pose::FULL_F32;
+        // BodyModel body_model = eox::dnn::pose::FULL_F32;
 
         /**
          * Distance between detectors and actual ROI middle point
@@ -287,14 +283,6 @@ namespace xm {
 
     protected:
         void release();
-
-        void enqueue_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &io_features,
-                               const std::vector<cv::UMat> & in_frames,
-                               std::vector<cv::UMat> & out_frames
-        );
-
-        static bool resolve_inference(std::vector<std::future<eox::dnn::PosePipelineOutput>> &in_features,
-                                      std::vector<eox::dnn::PosePipelineOutput> &out_results);
 
         cv::UMat undistorted(const cv::UMat &in, int index) const;
 

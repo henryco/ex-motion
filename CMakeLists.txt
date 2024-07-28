@@ -29,9 +29,9 @@ if (WITH_NVIDIA)
     include_directories(${CUDA_INCLUDE_DIRS})
 else ()
     add_subdirectory(external/json)
+    add_subdirectory(external/tensorflow/tensorflow/lite)
 endif ()
 
-add_subdirectory(external/tensorflow/tensorflow/lite)
 add_subdirectory(external/argparse)
 add_subdirectory(external/glm)
 
@@ -85,13 +85,9 @@ set(HEADER_FILES
         platforms/agnostic_cap.h
         xmotion/core/utils/velocity_filter.h
         xmotion/core/utils/low_pass_filter.h
-        xmotion/core/dnn/net/pose_detector.h
-        xmotion/core/dnn/net/dnn_runner.h
-        xmotion/core/dnn/net/blaze_pose.h
         xmotion/core/dnn/net/dnn_common.h
         xmotion/core/dnn/net/ssd_anchors.h
         xmotion/core/dnn/net/pose_roi.h
-        xmotion/core/dnn/pose_pipeline.h
         xmotion/core/utils/thread_pool.h
         xmotion/core/utils/timer.h
         xmotion/core/utils/delta_loop.h
@@ -150,8 +146,6 @@ set(HEADER_FILES
 set(SOURCE_FILES
         sources/core/velocity_filter.cpp
         sources/core/low_pass_filter.cpp
-        sources/core/pose_detector.cpp
-        sources/core/blaze_pose.cpp
         sources/core/dnn_common.cpp
         sources/core/ssd_anchors.cpp
         sources/core/pose_roi.cpp
@@ -179,9 +173,6 @@ set(SOURCE_FILES
         sources/core/cv_utils.cpp
         sources/fbgtk/json_ocv.cpp
         sources/core/chain.cpp
-        sources/core/pose_pipeline.cpp
-        sources/core/pose_pipeline_debug.cpp
-        sources/core/pose_pipeline_aux.cpp
         sources/core/d_dummy_camera.cpp
         sources/core/pose_aux.cpp
         sources/core/epi_util.cpp

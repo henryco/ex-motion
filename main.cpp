@@ -113,6 +113,4 @@ int main(int argc, char **argv) {
         xm::error::printStackTrace();
         return 1;
     }
-
-    return 0;
 }

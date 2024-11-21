@@ -1,15 +1,18 @@
 [submodule "external/glm"]
 	path = external/glm
-	url = https://github.com/g-truc/glm.git
+	url = git@github.com:g-truc/glm.git
 [submodule "external/tensorflow"]
 	path = external/tensorflow
-	url = https://github.com/tensorflow/tensorflow.git
+	url = git@github.com:tensorflow/tensorflow.git
 [submodule "external/json"]
 	path = external/json
-	url = https://github.com/nlohmann/json.git
+	url = git@github.com:nlohmann/json.git
 [submodule "external/argparse"]
 	path = external/argparse
-	url = https://github.com/p-ranav/argparse.git
+	url = git@github.com:p-ranav/argparse.git
 [submodule "external/onnxruntime"]
 	path = external/onnxruntime
-	url = https://github.com/microsoft/onnxruntime.git
+	url = git@github.com:microsoft/onnxruntime.git
+[submodule "external/imgui"]
+	path = external/imgui
+	url = git@github.com:ocornut/imgui.git
